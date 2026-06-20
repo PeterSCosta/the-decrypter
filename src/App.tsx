@@ -23,7 +23,10 @@ export function App() {
     <div className="min-h-screen bg-[var(--surface-page)]">
       <Topbar />
       <main className="mx-auto max-w-5xl px-4 py-6">
-        <nav className="mb-6 flex gap-1 border-b border-[var(--border-subtle)]" role="tablist">
+        <nav
+          className="mb-6 flex gap-1 overflow-x-auto border-b border-[var(--border-subtle)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="tablist"
+        >
           {TABS.map((t) => {
             const active = tab === t.id;
             const Icon = t.icon;
@@ -35,13 +38,13 @@ export function App() {
                 aria-selected={active}
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  "-mb-px flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
+                  "-mb-px flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors sm:px-4",
                   active
                     ? "border-[var(--brand)] text-[var(--text-primary)]"
                     : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
                 )}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-4 w-4 shrink-0" />
                 {t.label}
               </button>
             );

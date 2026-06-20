@@ -34,16 +34,16 @@ const CAT_LABEL: Record<DecoderCategory, string> = {
 export function ResultCard({ c, rank }: { c: ScoredCandidate; rank: number }) {
   return (
     <Card className="overflow-hidden">
-      <div className="flex items-center gap-3 border-b border-[var(--border-subtle)] bg-[var(--surface-sunken)]/50 px-4 py-2.5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[var(--border-subtle)] bg-[var(--surface-sunken)]/50 px-4 py-2.5">
         <span className="font-mono text-xs tabular-nums text-[var(--text-muted)]">#{rank}</span>
         <span className="font-display text-sm text-[var(--text-primary)]">{c.decoderName}</span>
         {c.label ? (
           <span className="font-mono text-xs text-[var(--text-secondary)]">{c.label}</span>
         ) : null}
-        <Badge tone={TONE[c.category]} className="ml-auto">
-          {CAT_LABEL[c.category]}
-        </Badge>
-        <ConfidenceBar score={c.score} />
+        <div className="ml-auto flex items-center gap-3">
+          <Badge tone={TONE[c.category]}>{CAT_LABEL[c.category]}</Badge>
+          <ConfidenceBar score={c.score} />
+        </div>
       </div>
 
       <div className="p-3">
