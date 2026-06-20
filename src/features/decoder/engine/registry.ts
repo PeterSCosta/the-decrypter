@@ -16,15 +16,18 @@ type DecoderModule = {
   default?: Decoder | Decoder[];
 };
 
-const customModules = import.meta.glob<DecoderModule>("./decoders/*.ts", { eager: true });
+// Exclui os *.test.ts do glob: importá-los traria o "vitest" pro bundle de
+// produção (quebra em runtime). A exclusão no padrão evita que sejam importados.
+const customModules = import.meta.glob<DecoderModule>(
+  ["./decoders/*.ts", "!./decoders/*.test.ts"],
+  { eager: true },
+);
 
-const customDecoders: Decoder[] = Object.entries(customModules)
-  .filter(([path]) => !path.includes(".test.")) // ignore colocated tests
-  .flatMap(([, mod]) =>
-    [mod.decoders, mod.default]
-      .flatMap((value) => (Array.isArray(value) ? value : value ? [value] : []))
-      .filter((d): d is Decoder => typeof d?.id === "string" && typeof d?.decode === "function"),
-  );
+const customDecoders: Decoder[] = Object.values(customModules).flatMap((mod) =>
+  [mod.decoders, mod.default]
+    .flatMap((value) => (Array.isArray(value) ? value : value ? [value] : []))
+    .filter((d): d is Decoder => typeof d?.id === "string" && typeof d?.decode === "function"),
+);
 
 const all: Decoder[] = [...lookupDecoders, ...codecDecoders, ...cipherDecoders, ...customDecoders];
 
