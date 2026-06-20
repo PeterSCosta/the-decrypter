@@ -11,7 +11,8 @@ describe("tabela periódica", () => {
     expect(outputs("1")).toContain("H");
     expect(decode("1").some((c) => c.notes?.includes("Hidrogênio"))).toBe(true);
     expect(outputs("1 2 3")).toContain("H He Li");
-    expect(decode("1 2 3").some((c) => c.notes?.includes("Hidrogênio · Hélio · Lítio"))).toBe(true);
+    // notas trazem nome + peso atômico
+    expect(decode("1 2 3").some((c) => c.notes?.includes("Hidrogênio (peso 1.008)"))).toBe(true);
   });
 
   it("símbolos → números atômicos (mantém comportamento antigo)", () => {

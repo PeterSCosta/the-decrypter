@@ -66,14 +66,17 @@ export const decoders = defineDecoder({
     if (tokens.length === 0) return [];
     const out: DecodeCandidate[] = [];
 
-    // número(s) atômico(s) → símbolos (+ nomes nas notas)
+    // nome + peso atômico de um elemento (índice n), p/ a linha de notas.
+    const desc = (n: number) => `${E[n][1]} (peso ${E[n][2]})`;
+
+    // número(s) atômico(s) → símbolos (+ nome e peso nas notas)
     if (tokens.every((t) => /^\d{1,3}$/.test(t) && +t >= 1 && +t <= 118)) {
-      const els = tokens.map((t) => E[+t]);
+      const nums = tokens.map(Number);
       out.push(
         cand(
           "número atômico",
-          els.map((e) => e[0]).join(" "),
-          els.map((e) => e[1]).join(" · "),
+          nums.map((n) => E[n][0]).join(" "),
+          nums.map(desc).join(" · "),
           0.75,
         ),
       );
@@ -83,7 +86,7 @@ export const decoders = defineDecoder({
     const up = tokens.map((t) => t.toUpperCase());
     if (up.every((t) => BY_SYM.has(t))) {
       const nums = up.map((t) => BY_SYM.get(t) as number);
-      out.push(cand("símbolos", nums.join(" "), nums.map((n) => E[n][1]).join(" · "), 0.7));
+      out.push(cand("símbolos", nums.join(" "), nums.map(desc).join(" · "), 0.7));
     }
 
     // peso atômico (um valor) → elemento(s)
