@@ -33,7 +33,7 @@ const rot13 = mapDecoder({
 // ---- Atbash ---------------------------------------------------------------
 const atbash = mapDecoder({
   id: "atbash",
-  name: "Atbash",
+  name: "Atbash (alfabeto invertido A↔Z)",
   category: "classical",
   decode(input) {
     let out = "";
