@@ -38,3 +38,12 @@ export function isUseful(output: string, input: string): boolean {
   const o = output.trim();
   return o.length > 0 && o !== input.trim();
 }
+
+/** Decode bytes as strict UTF-8; returns null if the bytes aren't valid text. */
+export function bytesToText(bytes: Uint8Array): string | null {
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    return null;
+  }
+}
