@@ -24,7 +24,16 @@ export interface DecodeCandidate {
   /** For lookups: bypass plaintext scoring with a fixed plausibility. */
   forcedScore?: number;
   /** Hint for a custom result renderer. */
-  render?: "text" | "street" | "cep" | "caesar-table" | "documento" | "map" | "isbn" | "ncm";
+  render?:
+    | "text"
+    | "street"
+    | "cep"
+    | "caesar-table"
+    | "documento"
+    | "map"
+    | "isbn"
+    | "ncm"
+    | "elements";
   /** Structured payload for custom renderers. */
   data?: unknown;
 }

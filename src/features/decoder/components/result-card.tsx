@@ -11,9 +11,11 @@ import type { DocResult } from "../engine/decoders/documents";
 import type { IsbnHint } from "../engine/decoders/isbn";
 import type { LocationData } from "../engine/decoders/location";
 import type { NcmHint } from "../engine/decoders/ncm";
+import type { ElementInfo } from "../engine/decoders/periodic-table";
 import type { DecoderCategory, ScoredCandidate } from "../engine/types";
 import { CaesarTable } from "./caesar-table";
 import { DocumentCard } from "./document-card";
+import { ElementsCard } from "./elements-card";
 import { IsbnCard } from "./isbn-card";
 import { MapCard } from "./map-card";
 import { NcmCard } from "./ncm-card";
@@ -74,6 +76,8 @@ export function ResultCard({ c, rank }: { c: ScoredCandidate; rank: number }) {
           <IsbnCard hint={c.data as IsbnHint} />
         ) : c.render === "ncm" ? (
           <NcmCard hint={c.data as NcmHint} />
+        ) : c.render === "elements" ? (
+          <ElementsCard elements={c.data as ElementInfo[]} />
         ) : (
           <div className="flex items-start gap-2">
             <pre className="min-w-0 flex-1 whitespace-pre-wrap break-words font-mono text-sm text-[var(--text-primary)]">

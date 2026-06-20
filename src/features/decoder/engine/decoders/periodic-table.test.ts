@@ -20,6 +20,14 @@ describe("tabela periódica", () => {
     expect(outputs("Au Ag")).toContain("79 47");
   });
 
+  it("símbolos → card de elementos com info", () => {
+    const c = decode("H O Cu").find((x) => x.render === "elements");
+    expect(c).toBeDefined();
+    const els = c?.data as { z: number; sym: string; name: string; weight: number }[];
+    expect(els.map((e) => e.sym)).toEqual(["H", "O", "Cu"]);
+    expect(els.find((e) => e.sym === "Cu")).toMatchObject({ z: 29, name: "Cobre" });
+  });
+
   it("peso atômico → elemento", () => {
     expect(outputs("12.011").join(" ")).toContain("Carbono");
     expect(outputs("196.97").join(" ")).toContain("Ouro");

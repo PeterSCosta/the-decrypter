@@ -42,15 +42,31 @@ E.forEach(([sym], n) => {
   if (sym) BY_SYM.set(sym.toUpperCase(), n);
 });
 
-function cand(label: string, output: string, notes: string, forcedScore: number): DecodeCandidate {
+export interface ElementInfo {
+  z: number; // número atômico
+  sym: string;
+  name: string;
+  weight: number;
+}
+
+const info = (n: number): ElementInfo => ({ z: n, sym: E[n][0], name: E[n][1], weight: E[n][2] });
+
+function cand(
+  label: string,
+  output: string,
+  els: ElementInfo[],
+  forcedScore: number,
+): DecodeCandidate {
   return {
     decoderId: "periodic-table",
     decoderName: "Tabela periódica",
     category: "transform",
     label,
     output,
-    notes,
+    notes: els.map((e) => `${e.name} (peso ${e.weight})`).join(" · "),
     forcedScore,
+    render: "elements",
+    data: els,
   };
 }
 
@@ -66,27 +82,17 @@ export const decoders = defineDecoder({
     if (tokens.length === 0) return [];
     const out: DecodeCandidate[] = [];
 
-    // nome + peso atômico de um elemento (índice n), p/ a linha de notas.
-    const desc = (n: number) => `${E[n][1]} (peso ${E[n][2]})`;
-
-    // número(s) atômico(s) → símbolos (+ nome e peso nas notas)
+    // número(s) atômico(s) → elementos
     if (tokens.every((t) => /^\d{1,3}$/.test(t) && +t >= 1 && +t <= 118)) {
-      const nums = tokens.map(Number);
-      out.push(
-        cand(
-          "número atômico",
-          nums.map((n) => E[n][0]).join(" "),
-          nums.map(desc).join(" · "),
-          0.75,
-        ),
-      );
+      const els = tokens.map((t) => info(Number(t)));
+      out.push(cand("número atômico", els.map((e) => e.sym).join(" "), els, 0.75));
     }
 
-    // símbolo(s) → número(s) atômico(s)
+    // símbolo(s) → elementos (com nome, nº atômico e peso)
     const up = tokens.map((t) => t.toUpperCase());
     if (up.every((t) => BY_SYM.has(t))) {
-      const nums = up.map((t) => BY_SYM.get(t) as number);
-      out.push(cand("símbolos", nums.join(" "), nums.map(desc).join(" · "), 0.7));
+      const els = up.map((t) => info(BY_SYM.get(t) as number));
+      out.push(cand("símbolos", els.map((e) => e.z).join(" "), els, 0.7));
     }
 
     // peso atômico (um valor) → elemento(s)
@@ -95,15 +101,17 @@ export const decoders = defineDecoder({
       if (/^\d+(\.\d+)?$/.test(raw)) {
         const w = Number(raw);
         const dec = raw.includes(".");
-        const hits = E.filter(
-          (e, n) => n >= 1 && (dec ? Math.abs(e[2] - w) < 0.5 : Math.round(e[2]) === w),
-        );
+        const hits: ElementInfo[] = [];
+        E.forEach((e, n) => {
+          if (n >= 1 && (dec ? Math.abs(e[2] - w) < 0.5 : Math.round(e[2]) === w))
+            hits.push(info(n));
+        });
         if (hits.length) {
           out.push(
             cand(
-              "peso atômico",
-              hits.map((e) => `${e[1]} (${e[0]})`).join(", "),
               `peso atômico ${dec ? "≈" : "~"}${w}`,
+              hits.map((e) => `${e.name} (${e.sym})`).join(", "),
+              hits,
               0.7,
             ),
           );
