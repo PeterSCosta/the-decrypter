@@ -1,0 +1,17 @@
+node_modules
+dist
+.git
+.github
+.vscode
+.claude
+*.log
+.env
+.env.*
+!.env.example
+Dockerfile
+.dockerignore
+README.md
+DEPLOY.md
+tsconfig.tsbuildinfo
+# fontes brutas dos dados (o JSON gerado em public/data já está versionado)
+data-sources

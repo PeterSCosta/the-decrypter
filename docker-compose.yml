@@ -1,0 +1,19 @@
+services:
+  the-decrypter:
+    image: petercosta/the-decrypter:latest
+    pull_policy: always
+    hostname: the-decrypter
+    environment:
+      - TZ=America/Sao_Paulo
+      # Senha de acesso (Basic Auth). Definidas no Dokploy; vazias = sem senha.
+      - BASIC_AUTH_USER=${BASIC_AUTH_USER:-}
+      - BASIC_AUTH_PASSWORD=${BASIC_AUTH_PASSWORD:-}
+    restart: always
+    networks:
+      - logiclabnetwork
+
+# Domínio (arromba.thelogiclab.com.br) e porta (80) são configurados no Dokploy.
+networks:
+  logiclabnetwork:
+    name: logiclabnetwork
+    external: true

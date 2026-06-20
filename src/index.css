@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+/* Dark variant is opt-in via `html.dark` (toggled in the topbar). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* =====================================================================
+   The Decrypter — Voltage lime + ink design tokens
+   (carried from The Logic Lab). Light-first, structurally-dark chrome,
+   voltage lime = signature accent, pulse coral = urgency/match highlight.
+   ===================================================================== */
+@theme {
+  --font-sans: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Archivo", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Ink (structural near-black → white) */
+  --color-ink-950: #0a0c11;
+  --color-ink-900: #14161d;
+  --color-ink-800: #1e212b;
+  --color-ink-700: #2b2f3a;
+  --color-ink-600: #3c4150;
+  --color-ink-500: #565c6b;
+  --color-ink-400: #767d8c;
+  --color-ink-300: #9ba2af;
+  --color-ink-200: #c7ccd4;
+  --color-ink-150: #dcdfe6;
+  --color-ink-100: #eceef1;
+  --color-ink-75: #f2f3f6;
+  --color-ink-50: #f7f8fa;
+  --color-ink-0: #ffffff;
+
+  /* Voltage (signature lime) */
+  --color-voltage-800: #3f5300;
+  --color-voltage-700: #5e7a00;
+  --color-voltage-600: #84ad00;
+  --color-voltage-500: #a6ce13;
+  --color-voltage-400: #c6f135;
+  --color-voltage-300: #d7fb60;
+  --color-voltage-200: #e7fd97;
+  --color-voltage-100: #f2fec8;
+  --color-voltage-50: #faffe8;
+
+  /* Pulse (coral — urgency / match highlight) */
+  --color-pulse-700: #b82e16;
+  --color-pulse-600: #db3a1d;
+  --color-pulse-500: #ff5436;
+  --color-pulse-400: #ff7a60;
+  --color-pulse-200: #ffcdc1;
+  --color-pulse-100: #ffe3db;
+  --color-pulse-50: #fff1ed;
+
+  /* Semantic hues */
+  --color-success-600: #16a34a;
+  --color-success-500: #22c55e;
+  --color-success-100: #dcfce7;
+  --color-warning-600: #d97706;
+  --color-warning-100: #fef3c7;
+  --color-danger-600: #e11d48;
+  --color-danger-100: #ffe4e6;
+  --color-info-600: #2563eb;
+  --color-info-100: #dbeafe;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.125rem;
+}
+
+/* ---- Semantic aliases (light default). Dark block overrides below. ---- */
+:root {
+  --brand: var(--color-voltage-400);
+  --brand-strong: var(--color-voltage-600);
+  --brand-ink: var(--color-ink-900); /* text/icons that sit on the lime */
+  --pulse: var(--color-pulse-500);
+
+  --surface-page: var(--color-ink-50);
+  --surface-card: var(--color-ink-0);
+  --surface-raised: var(--color-ink-0);
+  --surface-sunken: var(--color-ink-75);
+  --surface-chrome: var(--color-ink-900); /* topbar — always dark */
+
+  --text-primary: var(--color-ink-900);
+  --text-secondary: var(--color-ink-500);
+  --text-muted: var(--color-ink-400);
+  --text-on-chrome: var(--color-ink-0);
+
+  --border-subtle: var(--color-ink-150);
+  --border-strong: var(--color-ink-300);
+
+  --ring: var(--color-voltage-500);
+}
+
+html.dark {
+  --brand: var(--color-voltage-400);
+  --brand-strong: var(--color-voltage-300);
+  --brand-ink: var(--color-ink-900);
+
+  --surface-page: var(--color-ink-950);
+  --surface-card: var(--color-ink-900);
+  --surface-raised: var(--color-ink-800);
+  --surface-sunken: var(--color-ink-950);
+  --surface-chrome: var(--color-ink-950);
+
+  --text-primary: var(--color-ink-50);
+  --text-secondary: var(--color-ink-300);
+  --text-muted: var(--color-ink-400);
+  --text-on-chrome: var(--color-ink-0);
+
+  --border-subtle: var(--color-ink-700);
+  --border-strong: var(--color-ink-600);
+}
+
+@layer base {
+  * {
+    border-color: var(--border-subtle);
+  }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    background: var(--surface-page);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Display headings: Archivo 800, slightly expanded. */
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+  ::selection {
+    background: var(--color-voltage-300);
+    color: var(--color-ink-900);
+  }
+}
