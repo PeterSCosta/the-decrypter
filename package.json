@@ -14,10 +14,11 @@
     "format": "biome check --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:data": "pnpm build:streets && pnpm build:ceps && pnpm build:municipios",
+    "build:data": "pnpm build:streets && pnpm build:ceps && pnpm build:municipios && pnpm build:words",
     "build:streets": "tsx scripts/build-streets.ts",
     "build:ceps": "tsx scripts/build-ceps.ts",
-    "build:municipios": "tsx scripts/build-municipios.ts"
+    "build:municipios": "tsx scripts/build-municipios.ts",
+    "build:words": "tsx scripts/build-words.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

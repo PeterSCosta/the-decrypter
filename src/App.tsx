@@ -1,17 +1,19 @@
 import { Topbar } from "@/components/layout/topbar";
+import { AnagramPanel } from "@/features/anagram/components/anagram-panel";
 import { CepSearch } from "@/features/cep/components/cep-search";
 import { DecoderWorkbench } from "@/features/decoder/components/decoder-workbench";
 import { PositionsPanel } from "@/features/positions/components/positions-panel";
 import { StreetGuide } from "@/features/street-guide/components/street-guide";
 import { cn } from "@/lib/cn";
-import { Hash, MapPin, Signpost, Wand2 } from "lucide-react";
+import { Hash, MapPin, Shuffle, Signpost, Wand2 } from "lucide-react";
 import { type ComponentType, useState } from "react";
 
-type TabId = "decoder" | "positions" | "streets" | "ceps";
+type TabId = "decoder" | "positions" | "anagram" | "streets" | "ceps";
 
 const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { id: "decoder", label: "Decodificador", icon: Wand2 },
   { id: "positions", label: "Posições", icon: Hash },
+  { id: "anagram", label: "Anagramas", icon: Shuffle },
   { id: "streets", label: "Guia de Ruas", icon: Signpost },
   { id: "ceps", label: "CEPs (SC)", icon: MapPin },
 ];
@@ -53,6 +55,7 @@ export function App() {
 
         {tab === "decoder" && <DecoderWorkbench />}
         {tab === "positions" && <PositionsPanel />}
+        {tab === "anagram" && <AnagramPanel />}
         {tab === "streets" && <StreetGuide />}
         {tab === "ceps" && <CepSearch />}
       </main>

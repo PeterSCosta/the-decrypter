@@ -64,3 +64,16 @@ export function loadMunicipios(): Promise<MunicipiosData> {
 export function getMunicipios(): MunicipiosData | null {
   return municipiosCache;
 }
+
+export type WordLang = "pt" | "en";
+const wordsPromise: Partial<Record<WordLang, Promise<string[]>>> = {};
+
+/** Carrega a lista de palavras (uma por linha) do idioma, com cache. */
+export function loadWords(lang: WordLang): Promise<string[]> {
+  if (!wordsPromise[lang]) {
+    wordsPromise[lang] = fetch(`/data/words-${lang}.txt`)
+      .then((r) => r.text())
+      .then((t) => t.split("\n").filter(Boolean));
+  }
+  return wordsPromise[lang] as Promise<string[]>;
+}
