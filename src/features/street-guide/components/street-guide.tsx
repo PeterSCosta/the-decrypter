@@ -9,6 +9,7 @@ const KIND_LABEL: Record<StreetMatchKind, string> = {
   codigo: "código",
   lei: "nº da lei",
   nome: "nome",
+  data: "data da lei",
 };
 
 export function StreetGuide() {
@@ -19,7 +20,8 @@ export function StreetGuide() {
       <div>
         <h2 className="font-display text-xl text-[var(--text-primary)]">Guia de Ruas — Blumenau</h2>
         <p className="mt-1 text-sm text-[var(--text-secondary)]">
-          Busque por <strong>código</strong>, <strong>Nº da Lei</strong>, nome da rua ou bairro.{" "}
+          Busque por <strong>código</strong>, <strong>Nº da Lei</strong>,{" "}
+          <strong>data da lei</strong>, nome da rua ou bairro.{" "}
           {total > 0 ? `${total.toLocaleString("pt-BR")} ruas catalogadas.` : ""}
         </p>
       </div>
@@ -29,7 +31,7 @@ export function StreetGuide() {
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Ex.: 3722 · 6416 · Açores · Itoupava Norte"
+          placeholder="Ex.: 3722 · 6416 · 09/02/2004 · 2004 · Açores"
           aria-label="Buscar ruas"
           className="pl-9"
           autoFocus
@@ -49,11 +51,8 @@ export function StreetGuide() {
           </span>
           {matches.map((m, i) => (
             <div key={`${m.row.codigo}-${m.row.bairro}-${i}`} className="relative">
-              {/^\d+$/.test(query.trim()) && (
-                <Badge
-                  tone={m.kind === "nome" ? "neutral" : "brand"}
-                  className="absolute -top-2 left-3 z-10"
-                >
+              {m.kind !== "nome" && (
+                <Badge tone="brand" className="absolute -top-2 left-3 z-10">
                   {KIND_LABEL[m.kind]}
                 </Badge>
               )}

@@ -56,6 +56,12 @@ describe("runDecoders", () => {
     expect(results.some((r) => r.decoderId === "street-law")).toBe(true);
   });
 
+  it("resolves a Data da Lei (date query)", () => {
+    const hit = runDecoders("09/02/2004", ctx).results.find((r) => r.decoderId === "street-date");
+    expect(hit).toBeDefined();
+    expect((hit?.data as StreetRow[])[0].nome).toBe("ABACATE");
+  });
+
   it("resolves an exact CEP (with dash)", () => {
     const { results } = runDecoders("88010-500", ctx);
     expect(results.some((r) => r.decoderId === "cep-exact")).toBe(true);

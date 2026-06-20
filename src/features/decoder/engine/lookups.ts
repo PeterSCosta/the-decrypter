@@ -90,6 +90,34 @@ const streetLaw: Decoder = {
   },
 };
 
+// ---- Data da Lei → rua(s) -------------------------------------------------
+const streetDate: Decoder = {
+  id: "street-date",
+  name: "Data da Lei (Blumenau)",
+  category: "lookup",
+  decode(input, ctx) {
+    if (!ctx.streets) return [];
+    const q = input.trim();
+    // formato de data: só dígitos/barras, com ao menos uma barra e um dígito
+    if (!/^[\d/]+$/.test(q) || !q.includes("/") || !/\d/.test(q)) return [];
+    const rows = ctx.streets.rows.filter((r) => r.dataLei?.includes(q));
+    if (rows.length === 0) return [];
+    const shown = rows.slice(0, 50);
+    return [
+      {
+        decoderId: "street-date",
+        decoderName: "Data da Lei (Blumenau)",
+        category: "lookup",
+        label: `data ${q} · ${rows.length} rua(s)`,
+        output: summarize(shown),
+        forcedScore: 0.85,
+        render: "street",
+        data: shown,
+      },
+    ];
+  },
+};
+
 // ---- Exact CEP → endereço -------------------------------------------------
 const cepLookup: Decoder = {
   id: "cep-exact",
@@ -119,4 +147,4 @@ const cepLookup: Decoder = {
   },
 };
 
-export const lookupDecoders: Decoder[] = [streetCode, streetLaw, cepLookup];
+export const lookupDecoders: Decoder[] = [streetCode, streetLaw, streetDate, cepLookup];
