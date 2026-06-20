@@ -7,6 +7,7 @@ import type { CepHit } from "@/features/cep/types";
 import type { CodeHit } from "@/features/reference/phone-codes";
 import { StreetCard } from "@/features/street-guide/components/street-card";
 import type { StreetRow } from "@/features/street-guide/types";
+import type { BarcodeHint } from "../engine/decoders/barcode";
 import type { CaesarShiftRow } from "../engine/decoders/caesar-bruteforce";
 import type { DocResult } from "../engine/decoders/documents";
 import type { IsbnHint } from "../engine/decoders/isbn";
@@ -14,6 +15,7 @@ import type { LocationData } from "../engine/decoders/location";
 import type { NcmHint } from "../engine/decoders/ncm";
 import type { ElementInfo } from "../engine/decoders/periodic-table";
 import type { DecoderCategory, ScoredCandidate } from "../engine/types";
+import { BarcodeCard } from "./barcode-card";
 import { CaesarTable } from "./caesar-table";
 import { CodeListCard } from "./code-list-card";
 import { DocumentCard } from "./document-card";
@@ -82,6 +84,8 @@ export function ResultCard({ c, rank }: { c: ScoredCandidate; rank: number }) {
           <ElementsCard elements={c.data as ElementInfo[]} />
         ) : c.render === "code-list" ? (
           <CodeListCard items={c.data as CodeHit[]} />
+        ) : c.render === "barcode" ? (
+          <BarcodeCard hint={c.data as BarcodeHint} />
         ) : (
           <div className="flex items-start gap-2">
             <pre className="min-w-0 flex-1 whitespace-pre-wrap break-words font-mono text-sm text-[var(--text-primary)]">

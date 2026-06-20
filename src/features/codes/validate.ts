@@ -28,7 +28,9 @@ export type IsbnType = "ISBN-10" | "ISBN-13" | null;
 export function isbnType(value: string): IsbnType {
   const v = cleanIsbn(value);
   if (v.length === 10 && isValidIsbn10(v)) return "ISBN-10";
-  if (v.length === 13 && isValidIsbn13(v)) return "ISBN-13";
+  // ISBN-13 só existe na faixa Bookland (prefixo 978/979); sem isso, é um EAN-13
+  // comum (produto) — tratado pelo decoder de código de barras.
+  if (v.length === 13 && /^97[89]/.test(v) && isValidIsbn13(v)) return "ISBN-13";
   return null;
 }
 
