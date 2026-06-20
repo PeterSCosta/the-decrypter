@@ -33,7 +33,8 @@ export interface DecodeCandidate {
     | "map"
     | "isbn"
     | "ncm"
-    | "elements";
+    | "elements"
+    | "code-list";
   /** Structured payload for custom renderers. */
   data?: unknown;
 }

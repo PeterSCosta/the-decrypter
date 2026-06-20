@@ -4,6 +4,7 @@ import { ConfidenceBar } from "@/components/ui/confidence-bar";
 import { CopyButton } from "@/components/ui/copy-button";
 import { CepCard } from "@/features/cep/components/cep-card";
 import type { CepHit } from "@/features/cep/types";
+import type { CodeHit } from "@/features/reference/phone-codes";
 import { StreetCard } from "@/features/street-guide/components/street-card";
 import type { StreetRow } from "@/features/street-guide/types";
 import type { CaesarShiftRow } from "../engine/decoders/caesar-bruteforce";
@@ -14,6 +15,7 @@ import type { NcmHint } from "../engine/decoders/ncm";
 import type { ElementInfo } from "../engine/decoders/periodic-table";
 import type { DecoderCategory, ScoredCandidate } from "../engine/types";
 import { CaesarTable } from "./caesar-table";
+import { CodeListCard } from "./code-list-card";
 import { DocumentCard } from "./document-card";
 import { ElementsCard } from "./elements-card";
 import { IsbnCard } from "./isbn-card";
@@ -78,6 +80,8 @@ export function ResultCard({ c, rank }: { c: ScoredCandidate; rank: number }) {
           <NcmCard hint={c.data as NcmHint} />
         ) : c.render === "elements" ? (
           <ElementsCard elements={c.data as ElementInfo[]} />
+        ) : c.render === "code-list" ? (
+          <CodeListCard items={c.data as CodeHit[]} />
         ) : (
           <div className="flex items-start gap-2">
             <pre className="min-w-0 flex-1 whitespace-pre-wrap break-words font-mono text-sm text-[var(--text-primary)]">
