@@ -3,6 +3,8 @@
  * decimais (WGS84). Cobre os formatos mais comuns; `detectLocation` tenta todos
  * e devolve o primeiro que casar, com o nome do formato.
  */
+import { cellToLatLng, isValidCell } from "h3-js";
+
 export interface GeoPoint {
   lat: number;
   lng: number;
@@ -212,6 +214,20 @@ export function decodeQuadkey(raw: string): GeoPoint | null {
   return valid((latRad * 180) / Math.PI, lng);
 }
 
+// ---- H3 (índice hexagonal da Uber) — "8928308280fffff" -------------------
+export function parseH3(raw: string): GeoPoint | null {
+  const h = raw.trim().toLowerCase();
+  // índice de célula H3: 15–16 dígitos hex. `isValidCell` faz a checagem real,
+  // a regex só é um pré-filtro barato (evita rodar a lib em strings quaisquer).
+  if (!/^[0-9a-f]{15,16}$/.test(h) || !isValidCell(h)) return null;
+  try {
+    const [lat, lng] = cellToLatLng(h);
+    return valid(lat, lng);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Endereço what3words: 3 palavras separadas por ponto, com "///" opcional
  * (ex.: "filled.count.soap"). Resolução em coordenada é assíncrona (API).
@@ -233,6 +249,8 @@ export function detectLocation(raw: string): DetectedLocation | null {
     ["UTM", parseUTM(input)],
     ["Maidenhead", decodeMaidenhead(input)],
     ["Quadkey", decodeQuadkey(input)],
+    // H3 antes do Geohash: um índice H3 (hex) também passaria no teste base32.
+    ["H3", parseH3(input)],
     ["Geohash", decodeGeohash(input)],
   ];
   for (const [format, pt] of attempts) if (pt) return { ...pt, format };

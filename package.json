@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "h3-js": "^4.4.0",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

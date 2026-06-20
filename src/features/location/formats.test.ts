@@ -9,6 +9,7 @@ import {
   parseDD,
   parseDDM,
   parseDMS,
+  parseH3,
   parseUTM,
 } from "./formats";
 
@@ -30,6 +31,7 @@ describe("parsers de coordenadas (mesmo ponto)", () => {
   it("UTM", () => near(parseUTM("22J 734643E 7012408N"), 0.01));
   it("Maidenhead", () => near(decodeMaidenhead("GG53qa32"), 0.02));
   it("Quadkey", () => near(decodeQuadkey("210311232332101222"), 0.01));
+  it("H3", () => near(parseH3("89a835d5acbffff"), 0.02));
 });
 
 describe("detectLocation", () => {
@@ -38,6 +40,7 @@ describe("detectLocation", () => {
     expect(detectLocation("585H2957+QQ6")?.format).toBe("Plus Code");
     expect(detectLocation("6gjqmq88k7k")?.format).toBe("Geohash");
     expect(detectLocation("210311232332101222")?.format).toBe("Quadkey");
+    expect(detectLocation("89a835d5acbffff")?.format).toBe("H3");
   });
   it("não confunde texto comum, CEP nem ISBN", () => {
     expect(detectLocation("hello world")).toBeNull();

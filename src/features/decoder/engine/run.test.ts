@@ -69,6 +69,10 @@ describe("runDecoders", () => {
 
   it("produces nothing for empty data lookups when datasets are absent", () => {
     const { results } = runDecoders("3722", noData);
-    expect(results.some((r) => r.category === "lookup")).toBe(false);
+    // Lookups que dependem de dataset (ruas/CEP/IBGE) ficam silenciosos sem dados.
+    // `digit-count` é um lookup de tabela estática (não precisa de dataset) e pode aparecer.
+    expect(results.some((r) => r.category === "lookup" && r.decoderId !== "digit-count")).toBe(
+      false,
+    );
   });
 });

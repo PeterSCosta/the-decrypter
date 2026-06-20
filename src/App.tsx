@@ -3,19 +3,23 @@ import { AnagramPanel } from "@/features/anagram/components/anagram-panel";
 import { CepSearch } from "@/features/cep/components/cep-search";
 import { DecoderWorkbench } from "@/features/decoder/components/decoder-workbench";
 import { PositionsPanel } from "@/features/positions/components/positions-panel";
+import { ReferencePanel } from "@/features/reference/components/reference-panel";
 import { StreetGuide } from "@/features/street-guide/components/street-guide";
+import { TextExtractPanel } from "@/features/text-extract/components/text-extract-panel";
 import { cn } from "@/lib/cn";
-import { Hash, MapPin, Shuffle, Signpost, Wand2 } from "lucide-react";
+import { BookOpen, Hash, MapPin, Shuffle, Signpost, Type, Wand2 } from "lucide-react";
 import { type ComponentType, useState } from "react";
 
-type TabId = "decoder" | "positions" | "anagram" | "streets" | "ceps";
+type TabId = "decoder" | "text" | "positions" | "anagram" | "streets" | "ceps" | "reference";
 
 const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { id: "decoder", label: "Decodificador", icon: Wand2 },
+  { id: "text", label: "Texto", icon: Type },
   { id: "positions", label: "Posições", icon: Hash },
   { id: "anagram", label: "Anagramas", icon: Shuffle },
   { id: "streets", label: "Guia de Ruas", icon: Signpost },
   { id: "ceps", label: "CEPs (SC)", icon: MapPin },
+  { id: "reference", label: "Cola", icon: BookOpen },
 ];
 
 export function App() {
@@ -54,10 +58,12 @@ export function App() {
         </nav>
 
         {tab === "decoder" && <DecoderWorkbench />}
+        {tab === "text" && <TextExtractPanel />}
         {tab === "positions" && <PositionsPanel />}
         {tab === "anagram" && <AnagramPanel />}
         {tab === "streets" && <StreetGuide />}
         {tab === "ceps" && <CepSearch />}
+        {tab === "reference" && <ReferencePanel />}
       </main>
 
       <footer className="mx-auto max-w-5xl px-4 pb-10 pt-4 text-xs text-[var(--text-muted)]">
