@@ -62,6 +62,17 @@ describe("runDecoders", () => {
     expect((hit?.data as StreetRow[])[0].nome).toBe("ABACATE");
   });
 
+  it("resolves a street by name (text query)", () => {
+    const exact = runDecoders("ABACATE", ctx).results.find((r) => r.decoderId === "street-name");
+    expect(exact).toBeDefined();
+    expect((exact?.data as StreetRow[])[0].nome).toBe("ABACATE");
+    expect(exact?.score ?? 0).toBeGreaterThan(0.9); // nome exato
+    // prefixo também acha
+    expect(runDecoders("abac", ctx).results.some((r) => r.decoderId === "street-name")).toBe(true);
+    // texto curto demais não dispara
+    expect(runDecoders("ab", ctx).results.some((r) => r.decoderId === "street-name")).toBe(false);
+  });
+
   it("resolves an exact CEP (with dash)", () => {
     const { results } = runDecoders("88010-500", ctx);
     expect(results.some((r) => r.decoderId === "cep-exact")).toBe(true);

@@ -1,10 +1,23 @@
 import { type CepHit, formatCep, toHit } from "@/features/cep/types";
 import { type StreetRow, type StreetsData, nomeCompleto } from "@/features/street-guide/types";
 import type { Decoder } from "./types";
+import { stripDiacritics } from "./util";
 
 // Lazily-built indexes, cached per dataset instance.
 const codeIdx = new WeakMap<StreetsData, Map<number, StreetRow[]>>();
 const lawIdx = new WeakMap<StreetsData, Map<number, StreetRow[]>>();
+const nameIdx = new WeakMap<StreetsData, { row: StreetRow; folded: string }[]>();
+
+const fold = (s: string) => stripDiacritics(s).toLowerCase().trim();
+
+function streetNameIndex(data: StreetsData): { row: StreetRow; folded: string }[] {
+  let arr = nameIdx.get(data);
+  if (!arr) {
+    arr = data.rows.map((row) => ({ row, folded: fold(row.nome) }));
+    nameIdx.set(data, arr);
+  }
+  return arr;
+}
 
 function buildIndex(
   rows: StreetRow[],
@@ -118,6 +131,44 @@ const streetDate: Decoder = {
   },
 };
 
+// ---- Nome da rua → rua(s) -------------------------------------------------
+const streetName: Decoder = {
+  id: "street-name",
+  name: "Nome de rua (Blumenau)",
+  category: "lookup",
+  decode(input, ctx) {
+    if (!ctx.streets) return [];
+    const q = input.trim();
+    // texto curto, com letra (ignora números/datas — tratados pelos outros)
+    if (q.length < 3 || q.length > 40 || q.includes("\n") || !/\p{L}/u.test(q)) return [];
+    const fq = fold(q);
+    if (fq.length < 3) return [];
+
+    const matches = streetNameIndex(ctx.streets).filter((e) => e.folded.includes(fq));
+    if (matches.length === 0) return [];
+
+    // ranqueia: nome exato > começa com > contém; depois nome mais curto
+    const rank = (f: string) => (f === fq ? 0 : f.startsWith(fq) ? 1 : 2);
+    matches.sort((a, b) => rank(a.folded) - rank(b.folded) || a.folded.length - b.folded.length);
+    const best = rank(matches[0].folded);
+    const score = best === 0 ? 0.92 : best === 1 ? 0.78 : 0.62;
+    const rows = matches.slice(0, 8).map((m) => m.row);
+
+    return [
+      {
+        decoderId: "street-name",
+        decoderName: "Nome de rua (Blumenau)",
+        category: "lookup",
+        label: `"${q}" · ${matches.length} rua(s)`,
+        output: summarize(rows),
+        forcedScore: score,
+        render: "street",
+        data: rows,
+      },
+    ];
+  },
+};
+
 // ---- Exact CEP → endereço -------------------------------------------------
 const cepLookup: Decoder = {
   id: "cep-exact",
@@ -147,4 +198,4 @@ const cepLookup: Decoder = {
   },
 };
 
-export const lookupDecoders: Decoder[] = [streetCode, streetLaw, streetDate, cepLookup];
+export const lookupDecoders: Decoder[] = [streetCode, streetLaw, streetDate, streetName, cepLookup];

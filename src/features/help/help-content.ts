@@ -269,6 +269,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "3722", out: "Rua ABACATE…" },
       },
       {
+        name: "Nome de rua (Blumenau)",
+        desc: "Trecho do nome → ruas que combinam (exato e parcial, ignora acentos).",
+        example: { in: "abacate", out: "Rua ABACATE…" },
+      },
+      {
         name: "Nº da Lei (Blumenau)",
         desc: "Número da lei → rua correspondente.",
         example: { in: "6416", out: "rua da lei 6416" },
