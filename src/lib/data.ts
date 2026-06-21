@@ -1,3 +1,4 @@
+import type { AirportsData } from "@/features/airport/types";
 import type { CepsData } from "@/features/cep/types";
 import type { MunicipiosData } from "@/features/ibge/types";
 import type { StreetsData } from "@/features/street-guide/types";
@@ -63,6 +64,25 @@ export function loadMunicipios(): Promise<MunicipiosData> {
 
 export function getMunicipios(): MunicipiosData | null {
   return municipiosCache;
+}
+
+let airportsPromise: Promise<AirportsData> | null = null;
+let airportsCache: AirportsData | null = null;
+
+export function loadAirports(): Promise<AirportsData> {
+  if (!airportsPromise) {
+    airportsPromise = fetch("/data/airports.json")
+      .then((r) => r.json() as Promise<AirportsData>)
+      .then((d) => {
+        airportsCache = d;
+        return d;
+      });
+  }
+  return airportsPromise;
+}
+
+export function getAirports(): AirportsData | null {
+  return airportsCache;
 }
 
 export type WordLang = "pt" | "en";

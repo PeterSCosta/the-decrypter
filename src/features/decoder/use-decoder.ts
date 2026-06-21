@@ -1,10 +1,13 @@
+import type { AirportsData } from "@/features/airport/types";
 import type { CepsData } from "@/features/cep/types";
 import type { MunicipiosData } from "@/features/ibge/types";
 import type { StreetsData } from "@/features/street-guide/types";
 import {
+  getAirports,
   getCeps,
   getMunicipios,
   getStreets,
+  loadAirports,
   loadCeps,
   loadMunicipios,
   loadStreets,
@@ -19,6 +22,7 @@ export function useDecoder() {
   const [streets, setStreets] = useState<StreetsData | null>(getStreets);
   const [ceps, setCeps] = useState<CepsData | null>(getCeps);
   const [municipios, setMunicipios] = useState<MunicipiosData | null>(getMunicipios);
+  const [airports, setAirports] = useState<AirportsData | null>(getAirports);
 
   const debInput = useDebouncedValue(input, 160);
   const debKey = useDebouncedValue(key, 160);
@@ -47,10 +51,20 @@ export function useDecoder() {
     }
   }, [digits, ceps]);
 
+  // Airports: only fetch when the input is a lone 3 (IATA) or 4 (ICAO) letters.
+  const isCode = /^[a-z]{3,4}$/i.test(debInput.trim());
+  useEffect(() => {
+    if (isCode && !airports) {
+      loadAirports()
+        .then(setAirports)
+        .catch(() => {});
+    }
+  }, [isCode, airports]);
+
   const run = useMemo(() => {
     if (!debInput.trim()) return { results: [], hitCount: 0 };
-    return runDecoders(debInput, { key: debKey, streets, ceps, municipios });
-  }, [debInput, debKey, streets, ceps, municipios]);
+    return runDecoders(debInput, { key: debKey, streets, ceps, municipios, airports });
+  }, [debInput, debKey, streets, ceps, municipios, airports]);
 
   const { likely, unlikely } = useMemo(() => partition(run.results), [run.results]);
 

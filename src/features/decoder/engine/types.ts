@@ -1,3 +1,4 @@
+import type { AirportsData } from "@/features/airport/types";
 import type { CepsData } from "@/features/cep/types";
 import type { MunicipiosData } from "@/features/ibge/types";
 import type { StreetsData } from "@/features/street-guide/types";
@@ -11,6 +12,7 @@ export interface DecodeContext {
   streets: StreetsData | null;
   ceps: CepsData | null;
   municipios?: MunicipiosData | null;
+  airports?: AirportsData | null;
 }
 
 export interface DecodeCandidate {
