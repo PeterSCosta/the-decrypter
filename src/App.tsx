@@ -3,6 +3,7 @@ import { AnagramPanel } from "@/features/anagram/components/anagram-panel";
 import { CepSearch } from "@/features/cep/components/cep-search";
 import { DecoderWorkbench } from "@/features/decoder/components/decoder-workbench";
 import { HelpPage } from "@/features/help/components/help-page";
+import { RoadmapPage } from "@/features/help/components/roadmap-page";
 import { PositionsPanel } from "@/features/positions/components/positions-panel";
 import { ReferencePanel } from "@/features/reference/components/reference-panel";
 import { StreetGuide } from "@/features/street-guide/components/street-guide";
@@ -23,15 +24,20 @@ const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string
   { id: "reference", label: "Cola", icon: BookOpen },
 ];
 
+type View = "app" | "help" | "roadmap";
+
 export function App() {
   const [tab, setTab] = useState<TabId>("decoder");
-  const [help, setHelp] = useState(false);
+  const [view, setView] = useState<View>("app");
+  const toggle = (v: Exclude<View, "app">) => setView((cur) => (cur === v ? "app" : v));
 
   return (
     <div className="min-h-screen bg-[var(--surface-page)]">
-      <Topbar onHelp={() => setHelp((h) => !h)} />
-      {help ? (
-        <HelpPage onClose={() => setHelp(false)} />
+      <Topbar onHelp={() => toggle("help")} onRoadmap={() => toggle("roadmap")} />
+      {view === "help" ? (
+        <HelpPage onClose={() => setView("app")} />
+      ) : view === "roadmap" ? (
+        <RoadmapPage onClose={() => setView("app")} />
       ) : (
         <main className="mx-auto max-w-5xl px-4 py-6">
           <nav
