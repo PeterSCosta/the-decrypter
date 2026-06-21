@@ -3,6 +3,7 @@
  * decimais (WGS84). Cobre os formatos mais comuns; `detectLocation` tenta todos
  * e devolve o primeiro que casar, com o nome do formato.
  */
+import { getCellByCode, getCellByLocation } from "geohex";
 import { cellToLatLng, isValidCell } from "h3-js";
 
 export interface GeoPoint {
@@ -228,6 +229,48 @@ export function parseH3(raw: string): GeoPoint | null {
   }
 }
 
+// ---- GeoHex (geohex.net, @sa2da) — "Nb11458750330" -----------------------
+// Caixa de Blumenau e vizinhança (todos os códigos de nível 11 ali começam com "Nb").
+const BLU_BBOX = { latMin: -27.25, latMax: -26.7, lonMin: -49.35, lonMax: -48.75 };
+
+/** Decodifica um código GeoHex (2 letras + dígitos) validando por ida-e-volta. */
+function decodeGeohexCode(code: string): GeoPoint | null {
+  try {
+    const cell = getCellByCode(code);
+    if (!Number.isFinite(cell.lat) || !Number.isFinite(cell.lon)) return null;
+    // o centro da célula tem que re-codificar exatamente no mesmo código (canônico)
+    if (getCellByLocation(cell.lat, cell.lon, code.length - 2).code !== code) return null;
+    return valid(cell.lat, cell.lon);
+  } catch {
+    return null;
+  }
+}
+
+/** Código GeoHex completo: 2 letras + dígitos (ex.: "Nb11458750330"). */
+export function parseGeoHex(raw: string): GeoPoint | null {
+  const s = raw.trim();
+  if (!/^[A-Za-z]{2}\d{2,}$/.test(s)) return null;
+  return decodeGeohexCode(s);
+}
+
+/**
+ * Atalho de Blumenau: os códigos GeoHex da cidade começam com "Nb"; então um
+ * número puro pode ser só a "cauda" — tenta "Nb" + número e só aceita se cair
+ * dentro da caixa de Blumenau.
+ */
+export function parseGeoHexBlumenau(raw: string): GeoPoint | null {
+  const s = raw.trim();
+  if (!/^\d{4,}$/.test(s)) return null;
+  const pt = decodeGeohexCode(`Nb${s}`);
+  if (!pt) return null;
+  const inside =
+    pt.lat >= BLU_BBOX.latMin &&
+    pt.lat <= BLU_BBOX.latMax &&
+    pt.lng >= BLU_BBOX.lonMin &&
+    pt.lng <= BLU_BBOX.lonMax;
+  return inside ? pt : null;
+}
+
 /**
  * Endereço what3words: 3 palavras separadas por ponto, com "///" opcional
  * (ex.: "filled.count.soap"). Resolução em coordenada é assíncrona (API).
@@ -249,9 +292,13 @@ export function detectLocation(raw: string): DetectedLocation | null {
     ["UTM", parseUTM(input)],
     ["Maidenhead", decodeMaidenhead(input)],
     ["Quadkey", decodeQuadkey(input)],
-    // H3 antes do Geohash: um índice H3 (hex) também passaria no teste base32.
+    // H3 e GeoHex antes do Geohash: ambos (hex / 2 letras + dígitos) também
+    // passariam no teste base32 do Geohash.
     ["H3", parseH3(input)],
+    ["GeoHex", parseGeoHex(input)],
     ["Geohash", decodeGeohash(input)],
+    // Atalho de Blumenau: número puro como cauda de um código "Nb…".
+    ["GeoHex (Blumenau)", parseGeoHexBlumenau(input)],
   ];
   for (const [format, pt] of attempts) if (pt) return { ...pt, format };
   return null;

@@ -9,6 +9,8 @@ import {
   parseDD,
   parseDDM,
   parseDMS,
+  parseGeoHex,
+  parseGeoHexBlumenau,
   parseH3,
   parseUTM,
 } from "./formats";
@@ -32,6 +34,32 @@ describe("parsers de coordenadas (mesmo ponto)", () => {
   it("Maidenhead", () => near(decodeMaidenhead("GG53qa32"), 0.02));
   it("Quadkey", () => near(decodeQuadkey("210311232332101222"), 0.01));
   it("H3", () => near(parseH3("89a835d5acbffff"), 0.02));
+});
+
+describe("GeoHex", () => {
+  it("código completo decodifica perto de Blumenau", () => {
+    const pt = parseGeoHex("Nb11458750330");
+    expect(pt).not.toBeNull();
+    expect((pt as { lat: number }).lat).toBeCloseTo(-26.9226, 2);
+    expect((pt as { lng: number }).lng).toBeCloseTo(-49.1162, 2);
+  });
+
+  it("número puro vira código 'Nb…' quando cai em Blumenau", () => {
+    const pt = parseGeoHexBlumenau("11458750330");
+    expect(pt).not.toBeNull();
+    expect((pt as { lat: number }).lat).toBeCloseTo(-26.9226, 2);
+  });
+
+  it("rejeita código inválido e cauda fora de Blumenau", () => {
+    expect(parseGeoHex("Nb99999999999")).toBeNull(); // não casa o ida-e-volta
+    expect(parseGeoHexBlumenau("88010500")).toBeNull(); // 'Nb88010500' cai na Bahia
+    expect(parseGeoHex("hello")).toBeNull();
+  });
+
+  it("detectLocation identifica o formato GeoHex", () => {
+    expect(detectLocation("Nb11458750330")?.format).toBe("GeoHex");
+    expect(detectLocation("11458750330")?.format).toBe("GeoHex (Blumenau)");
+  });
 });
 
 describe("detectLocation", () => {

@@ -195,6 +195,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "89a835d5acbffff", out: "H3 → mapa" },
       },
       {
+        name: "GeoHex (geohex.net)",
+        desc: "Código GeoHex → mapa. Em Blumenau os códigos começam com “Nb”, então um número puro também é tentado como “Nb” + número.",
+        example: { in: "Nb11458750330", out: "Blumenau no mapa" },
+      },
+      {
         name: "what3words",
         desc: "Endereço de 3 palavras (precisa de chave de API).",
         example: { in: "///palavra.palavra.palavra", out: "ponto no mapa" },
