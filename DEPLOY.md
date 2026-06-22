@@ -23,20 +23,26 @@ docker run --rm -p 8080:80 the-decrypter   # abre http://localhost:8080
    HTTPS/Let's Encrypt ligado.
 5. Deploy. Pushes na `main` podem ser auto-deployados (webhook do Dokploy).
 
-## Opção B — Imagem no Docker Hub + Compose (igual ao Logic Lab)
+## Opção B — Imagem no Docker Hub + Compose (igual ao Logic Lab) — recomendada
 
-O workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) builda
-e publica `petercosta/the-decrypter:latest` a cada push na `main`.
+O workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml), a cada
+push na `main`: (1) builda e publica `petercosta/the-decrypter:latest`, e **só
+então** (2) dispara o Dokploy pela API (`POST /api/compose.deploy`). Como o trigger
+é o **último passo**, o deploy **espera a imagem nova** — não dá mais a corrida de
+deployar o `latest` antigo.
 
-Secrets do GitHub necessários: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` e
-(opcional) `VITE_W3W_API_KEY`.
+Secrets do GitHub necessários: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`,
+`DOKPLOY_URL`, `DOKPLOY_API_KEY`, `DOKPLOY_COMPOSE_ID` e (opcional) `VITE_W3W_API_KEY`.
 
 No Dokploy:
 1. **Create → Docker Compose**, apontando para
    [`docker-compose.yml`](docker-compose.yml) (usa a rede externa
    `logiclabnetwork`, a mesma do Logic Lab).
 2. **Domains**: `arromba.thelogiclab.com.br` → serviço `the-decrypter`, porta 80.
-3. Deploy. Para atualizar: re-deploy (puxa a tag `latest`).
+3. **Desligue o "Auto Deploy"** — quem deploya é a Action (depois do push da imagem).
+   Pegue o **API key** (Settings) e o **`composeId`** (URL do serviço) → coloque nos
+   secrets do GitHub acima.
+4. Deploy. A partir daí, todo push na `main` faz build → push → deploy na ordem certa.
 
 ## Senha de acesso (opcional)
 
