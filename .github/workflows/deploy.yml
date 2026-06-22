@@ -1,8 +1,21 @@
-name: Build and Push
+name: Build, Push & Deploy
+
+# Builds the image, pushes it to Docker Hub, and ONLY THEN calls the Dokploy API
+# to deploy. Because the steps are sequential, the deploy waits for the new image
+# to be published first (no "deploys before image is ready" race).
+#
+# Uses the Dokploy API (x-api-key + composeId), which works with "Auto Deploy" OFF
+# (the per-compose deploy *webhook* only works when Auto Deploy is ON). If the API
+# secrets are absent, the step warns and skips — push the image, deploy manually.
 
 on:
   push:
     branches: [main]
+
+# A newer push cancels an in-flight deploy, so the last push is the last to deploy.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -21,9 +34,9 @@ jobs:
 
       - name: Generate tag
         id: tag
-        run: echo "TAG=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
+        run: echo "TAG=$(date +%Y%m%d%H%M%S)" >> "$GITHUB_OUTPUT"
 
-      - name: Build and push image
+      - name: Build & push image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -37,18 +50,39 @@ jobs:
           cache-from: type=registry,ref=petercosta/the-decrypter:buildcache
           cache-to: type=registry,ref=petercosta/the-decrypter:buildcache,mode=max
 
-      # Last step: now that the new image is on Docker Hub, tell Dokploy to deploy.
-      # Turn OFF Dokploy "Auto Deploy" so this is the only trigger (otherwise it
-      # deploys on push, before this build finishes, and pulls the stale image).
+      - name: Clean old Docker Hub tags
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          LOGIN=$(jq -n --arg u "$DOCKERHUB_USERNAME" --arg p "$DOCKERHUB_TOKEN" '{username:$u,password:$p}')
+          TOKEN=$(curl -s -X POST "https://hub.docker.com/v2/users/login" \
+            -H "Content-Type: application/json" -d "$LOGIN" | jq -r .token)
+          for REPO in the-decrypter; do
+            TAGS=$(curl -s "https://hub.docker.com/v2/repositories/petercosta/$REPO/tags?page_size=100" \
+              -H "Authorization: Bearer $TOKEN" \
+              | jq -r '.results | map(select(.name != "latest" and .name != "buildcache")) | sort_by(.last_updated) | reverse | .[5:] | .[].name')
+            for TAG in $TAGS; do
+              echo "Deleting $REPO:$TAG"
+              curl -s -X DELETE "https://hub.docker.com/v2/repositories/petercosta/$REPO/tags/$TAG/" \
+                -H "Authorization: Bearer $TOKEN"
+            done
+          done
+
       - name: Trigger Dokploy deploy
         env:
           DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
           DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
           DOKPLOY_COMPOSE_ID: ${{ secrets.DOKPLOY_COMPOSE_ID }}
         run: |
+          if [ -z "$DOKPLOY_API_KEY" ] || [ -z "$DOKPLOY_COMPOSE_ID" ]; then
+            echo "::warning::Dokploy API secrets not set — image pushed, deploy manually in Dokploy."
+            exit 0
+          fi
           BODY=$(jq -n --arg id "$DOKPLOY_COMPOSE_ID" '{composeId: $id}')
-          curl -fsSL -X POST "$DOKPLOY_URL/api/compose.deploy" \
+          curl -fsSL -X POST "${DOKPLOY_URL:-https://dokploy.thelogiclab.com.br}/api/compose.deploy" \
             -H "accept: application/json" \
             -H "Content-Type: application/json" \
             -H "x-api-key: $DOKPLOY_API_KEY" \
             -d "$BODY"
+          echo "Dokploy deploy triggered."
