@@ -1,26 +1,22 @@
 import { Topbar } from "@/components/layout/topbar";
 import { AnagramPanel } from "@/features/anagram/components/anagram-panel";
-import { CepSearch } from "@/features/cep/components/cep-search";
 import { DecoderWorkbench } from "@/features/decoder/components/decoder-workbench";
 import { HelpPage } from "@/features/help/components/help-page";
 import { RoadmapPage } from "@/features/help/components/roadmap-page";
 import { PositionsPanel } from "@/features/positions/components/positions-panel";
 import { ReferencePanel } from "@/features/reference/components/reference-panel";
-import { StreetGuide } from "@/features/street-guide/components/street-guide";
 import { TextExtractPanel } from "@/features/text-extract/components/text-extract-panel";
 import { cn } from "@/lib/cn";
-import { BookOpen, Hash, MapPin, Shuffle, Signpost, Type, Wand2 } from "lucide-react";
+import { BookOpen, Hash, Shuffle, Type, Wand2 } from "lucide-react";
 import { type ComponentType, useState } from "react";
 
-type TabId = "decoder" | "text" | "positions" | "anagram" | "streets" | "ceps" | "reference";
+type TabId = "decoder" | "text" | "positions" | "anagram" | "reference";
 
 const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { id: "decoder", label: "Decodificador", icon: Wand2 },
   { id: "text", label: "Texto", icon: Type },
   { id: "positions", label: "Posições", icon: Hash },
   { id: "anagram", label: "Anagramas", icon: Shuffle },
-  { id: "streets", label: "Guia de Ruas", icon: Signpost },
-  { id: "ceps", label: "CEPs (SC)", icon: MapPin },
   { id: "reference", label: "Cola", icon: BookOpen },
 ];
 
@@ -72,8 +68,6 @@ export function App() {
           {tab === "text" && <TextExtractPanel />}
           {tab === "positions" && <PositionsPanel />}
           {tab === "anagram" && <AnagramPanel />}
-          {tab === "streets" && <StreetGuide />}
-          {tab === "ceps" && <CepSearch />}
           {tab === "reference" && <ReferencePanel />}
         </main>
       )}

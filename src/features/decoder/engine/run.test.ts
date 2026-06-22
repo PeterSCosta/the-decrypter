@@ -78,6 +78,16 @@ describe("runDecoders", () => {
     expect(results.some((r) => r.decoderId === "cep-exact")).toBe(true);
   });
 
+  it("resolves CEPs by wildcard pattern", () => {
+    const hit = runDecoders("880105x0", ctx).results.find((r) => r.decoderId === "cep-wildcard");
+    expect(hit).toBeDefined();
+    expect((hit?.data as { cep: string }[])[0].cep).toBe("88010500");
+    // sem curinga, o decoder de curinga não dispara (fica com o cep-exact)
+    expect(runDecoders("88010500", ctx).results.some((r) => r.decoderId === "cep-wildcard")).toBe(
+      false,
+    );
+  });
+
   it("produces nothing for empty data lookups when datasets are absent", () => {
     const { results } = runDecoders("3722", noData);
     // Lookups que dependem de dataset (ruas/CEP/IBGE) ficam silenciosos sem dados.

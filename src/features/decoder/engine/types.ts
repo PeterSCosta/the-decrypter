@@ -5,6 +5,14 @@ import type { StreetsData } from "@/features/street-guide/types";
 
 export type DecoderCategory = "encoding" | "classical" | "transform" | "lookup";
 
+/** Rótulos pt-BR das categorias, para a barra lateral de seleção. */
+export const CATEGORY_LABELS: Record<DecoderCategory, string> = {
+  encoding: "Codificações",
+  classical: "Cifras",
+  transform: "Transformações",
+  lookup: "Consultas",
+};
+
 export interface DecodeContext {
   /** Optional key for keyed ciphers (Vigenère, etc.). */
   key: string;

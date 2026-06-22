@@ -1,7 +1,10 @@
+import { searchCeps } from "@/features/cep/search";
 import { type CepHit, formatCep, toHit } from "@/features/cep/types";
 import { type StreetRow, type StreetsData, nomeCompleto } from "@/features/street-guide/types";
 import type { Decoder } from "./types";
 import { stripDiacritics } from "./util";
+
+const CEP_WILDCARD = /[xX*_?]/;
 
 // Lazily-built indexes, cached per dataset instance.
 const codeIdx = new WeakMap<StreetsData, Map<number, StreetRow[]>>();
@@ -169,6 +172,35 @@ const streetName: Decoder = {
   },
 };
 
+// ---- CEP com curinga → CEPs que casam -------------------------------------
+const cepWildcard: Decoder = {
+  id: "cep-wildcard",
+  name: "CEP curinga (SC)",
+  category: "lookup",
+  decode(input, ctx) {
+    if (!ctx.ceps) return [];
+    const q = input.trim();
+    // só dispara com curinga explícito (ex.: 88xxx500); CEP exato é outro decoder
+    if (!CEP_WILDCARD.test(q)) return [];
+    const res = searchCeps(ctx.ceps, q, 12);
+    if (!res.valid || res.total === 0) return [];
+    return [
+      {
+        decoderId: "cep-wildcard",
+        decoderName: "CEP curinga (SC)",
+        category: "lookup",
+        label: `${q} · ${res.total} CEP(s)`,
+        output: res.hits
+          .map((h) => `${formatCep(h.cep)} ${h.logradouro || h.localidade}, ${h.municipio}`)
+          .join("; "),
+        forcedScore: 0.7,
+        render: "cep",
+        data: res.hits,
+      },
+    ];
+  },
+};
+
 // ---- Exact CEP → endereço -------------------------------------------------
 const cepLookup: Decoder = {
   id: "cep-exact",
@@ -198,4 +230,11 @@ const cepLookup: Decoder = {
   },
 };
 
-export const lookupDecoders: Decoder[] = [streetCode, streetLaw, streetDate, streetName, cepLookup];
+export const lookupDecoders: Decoder[] = [
+  streetCode,
+  streetLaw,
+  streetDate,
+  streetName,
+  cepWildcard,
+  cepLookup,
+];
