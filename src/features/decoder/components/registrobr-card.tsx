@@ -37,7 +37,7 @@ export function RegistroBrCard({ hint }: { hint: RegistroBrHint }) {
     };
   }, [hint.domain]);
 
-  const expires = data?.["expires-at"]?.slice(0, 10);
+  const expires = data?.expiresAt?.slice(0, 10);
 
   return (
     <div className="flex flex-col gap-2">
@@ -56,9 +56,7 @@ export function RegistroBrCard({ hint }: { hint: RegistroBrHint }) {
             {STATUS_LABEL[data.status] ?? data.status}
           </div>
           <div className="mt-1 text-xs text-[var(--text-secondary)]">
-            {[expires ? `expira em ${expires}` : null, data["publication-status"]]
-              .filter(Boolean)
-              .join(" · ")}
+            {expires ? `expira em ${expires}` : null}
           </div>
         </div>
       ) : (

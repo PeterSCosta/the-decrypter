@@ -43,7 +43,7 @@ jobs:
           file: ./Dockerfile
           push: true
           build-args: |
-            VITE_W3W_API_KEY=${{ secrets.VITE_W3W_API_KEY }}
+            VITE_API_BASE_URL=https://apiarromba.thelogiclab.com.br
           tags: |
             petercosta/the-decrypter:latest
             petercosta/the-decrypter:${{ steps.tag.outputs.TAG }}

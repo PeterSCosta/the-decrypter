@@ -1,4 +1,5 @@
-/** Cliente da Open Food Facts (grátis, sem chave, CORS liberado). Só alimentos. */
+/** Busca de produto (Open Food Facts) via backend the-decrypter-api. Só alimentos. */
+import { api } from "./api";
 
 export interface ProductInfo {
   name: string | null;
@@ -8,20 +9,14 @@ export interface ProductInfo {
 
 export async function fetchProduct(barcode: string): Promise<ProductInfo> {
   const code = barcode.replace(/\D/g, "");
-  const res = await fetch(
-    `https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,quantity`,
-  );
-  if (!res.ok) throw new Error(`Falha na consulta (HTTP ${res.status}).`);
-  const d = (await res.json()) as {
-    status?: number;
-    product?: { product_name?: string; brands?: string; quantity?: string };
-  };
-  if (d.status !== 1 || !d.product) {
+  const res = await fetch(api(`/produto/${code}`));
+  if (res.status === 404) {
     throw new Error("Produto não encontrado (Open Food Facts cobre só alimentos).");
   }
-  const p = d.product;
+  if (!res.ok) throw new Error(`Falha na consulta (HTTP ${res.status}).`);
+  const p = (await res.json()) as { name?: string; brands?: string; quantity?: string };
   return {
-    name: p.product_name || null,
+    name: p.name || null,
     brands: p.brands || null,
     quantity: p.quantity || null,
   };

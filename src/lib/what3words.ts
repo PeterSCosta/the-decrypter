@@ -1,6 +1,5 @@
 import type { GeoPoint } from "@/features/location/formats";
-
-const KEY = import.meta.env.VITE_W3W_API_KEY;
+import { api } from "./api";
 
 export interface W3WResult extends GeoPoint {
   words: string;
@@ -8,30 +7,31 @@ export interface W3WResult extends GeoPoint {
   country: string;
 }
 
-export const hasW3WKey = () => Boolean(KEY);
+/** A chave do what3words agora vive no backend; o front só chama /api/what3words. */
+export const hasW3WKey = () => true;
 
 /** Resolve um endereço de 3 palavras (ex.: "filled.count.soap") em coordenada. */
 export async function w3wToCoordinates(words: string): Promise<W3WResult> {
-  if (!KEY) throw new Error("Defina VITE_W3W_API_KEY no .env.local.");
-  const url = `https://api.what3words.com/v3/convert-to-coordinates?words=${encodeURIComponent(
-    words,
-  )}&key=${KEY}`;
-  const res = await fetch(url);
-  const data = (await res.json().catch(() => ({}))) as {
-    coordinates?: { lat: number; lng: number };
+  const res = await fetch(api(`/what3words/${encodeURIComponent(words)}`));
+  if (!res.ok) {
+    throw new Error(
+      res.status === 404
+        ? "what3words indisponível (sem chave no servidor ou endereço inválido)."
+        : `Falha na consulta what3words (HTTP ${res.status}).`,
+    );
+  }
+  const d = (await res.json()) as {
     words?: string;
+    lat: number;
+    lng: number;
     nearestPlace?: string;
     country?: string;
-    error?: { message?: string };
   };
-  if (!res.ok || data.error || !data.coordinates) {
-    throw new Error(data.error?.message || `Falha na consulta what3words (HTTP ${res.status}).`);
-  }
   return {
-    lat: data.coordinates.lat,
-    lng: data.coordinates.lng,
-    words: data.words ?? words,
-    nearestPlace: data.nearestPlace ?? "",
-    country: data.country ?? "",
+    lat: d.lat,
+    lng: d.lng,
+    words: d.words ?? words,
+    nearestPlace: d.nearestPlace ?? "",
+    country: d.country ?? "",
   };
 }
