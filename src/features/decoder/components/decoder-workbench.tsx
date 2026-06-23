@@ -1,5 +1,6 @@
+import { CopyButton } from "@/components/ui/copy-button";
 import { Input, Textarea } from "@/components/ui/input";
-import { ChevronDown, KeyRound, Sparkles, X } from "lucide-react";
+import { ArrowDownUp, ChevronDown, KeyRound, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 import { decoders } from "../engine/registry";
 import { useDecoder } from "../use-decoder";
@@ -9,8 +10,21 @@ import { ResultCard } from "./result-card";
 const EXAMPLES = ["SGVsbG8gbXVuZG8=", "Wklab xli gshi", "3722", "88xxx500", "Nb11458750330"];
 
 export function DecoderWorkbench() {
-  const { input, setInput, key, setKey, selectedId, setSelectedId, likely, unlikely, results } =
-    useDecoder();
+  const {
+    input,
+    setInput,
+    key,
+    setKey,
+    selectedId,
+    setSelectedId,
+    likely,
+    unlikely,
+    results,
+    canEncode,
+    encodeInput,
+    setEncodeInput,
+    encoded,
+  } = useDecoder();
   const [showUnlikely, setShowUnlikely] = useState(false);
 
   const selectedName = selectedId
@@ -72,6 +86,31 @@ export function DecoderWorkbench() {
             >
               <X className="h-3.5 w-3.5" /> todas
             </button>
+          </div>
+        )}
+
+        {/* Codificar nessa cifra (inverso) */}
+        {selectedId && canEncode && (
+          <div className="flex flex-col gap-2 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-sunken)] p-3">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)]">
+              <ArrowDownUp className="h-3.5 w-3.5 text-[var(--brand-strong)]" />
+              Codificar em {selectedName}
+            </div>
+            <Textarea
+              value={encodeInput}
+              onChange={(e) => setEncodeInput(e.target.value)}
+              placeholder={`Digite o texto para codificar em ${selectedName}…`}
+              aria-label={`Texto para codificar em ${selectedName}`}
+              className="min-h-[4.5rem]"
+            />
+            {encoded != null && (
+              <div className="flex items-start gap-2 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-raised)] px-3 py-2">
+                <p className="min-w-0 flex-1 break-words font-mono text-sm text-[var(--text-primary)]">
+                  {encoded}
+                </p>
+                <CopyButton value={encoded} className="-mr-1 shrink-0" />
+              </div>
+            )}
           </div>
         )}
 

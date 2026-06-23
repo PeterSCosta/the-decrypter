@@ -239,24 +239,100 @@ function decodeBraille(input: string): string | null {
   return out.replace(/\?+/g, "").trim() ? out : null;
 }
 
+// ==== Codificadores (inverso) =============================================
+const utf8 = (s: string) => new TextEncoder().encode(s);
+const TEXT_TO_MORSE = Object.fromEntries(Object.entries(MORSE).map(([k, v]) => [v, k]));
+const TEXT_TO_BRAILLE = Object.fromEntries(Object.entries(BRAILLE).map(([k, v]) => [v, k]));
+
+const encodeBase64 = (s: string) => btoa(String.fromCharCode(...utf8(s)));
+
+function encodeBase32(s: string): string {
+  let bits = 0;
+  let value = 0;
+  let out = "";
+  for (const b of utf8(s)) {
+    value = (value << 8) | b;
+    bits += 8;
+    while (bits >= 5) {
+      bits -= 5;
+      out += B32[(value >>> bits) & 31];
+    }
+  }
+  if (bits > 0) out += B32[(value << (5 - bits)) & 31];
+  while (out.length % 8 !== 0) out += "=";
+  return out;
+}
+
+const encodeHex = (s: string) => [...utf8(s)].map((b) => b.toString(16).padStart(2, "0")).join("");
+
+const encodeBinary = (s: string) =>
+  [...utf8(s)].map((b) => b.toString(2).padStart(8, "0")).join(" ");
+
+const encodeRadixCodes = (s: string, radix: number) =>
+  [...s].map((ch) => (ch.codePointAt(0) ?? 0).toString(radix)).join(" ");
+
+const HTML_ESC: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+};
+const encodeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => HTML_ESC[c]);
+
+const encodeMorse = (s: string) =>
+  s
+    .toUpperCase()
+    .split(/\s+/)
+    .map((w) =>
+      [...w]
+        .map((ch) => TEXT_TO_MORSE[ch] ?? "")
+        .filter(Boolean)
+        .join(" "),
+    )
+    .filter(Boolean)
+    .join(" / ");
+
+const encodeBraille = (s: string) =>
+  [...s.toLowerCase()].map((ch) => TEXT_TO_BRAILLE[ch] ?? "").join("");
+
 const single = (
   id: string,
   name: string,
   category: Decoder["category"],
   fn: (input: string) => string | null,
-): Decoder => mapDecoder({ id, name, category, decode: fn });
+  encode?: (input: string) => string | null,
+): Decoder => mapDecoder({ id, name, category, decode: fn, encode });
 
 export const codecDecoders: Decoder[] = [
-  single("base64", "Base64", "encoding", decodeBase64),
-  single("base32", "Base32", "encoding", decodeBase32),
-  single("hex", "Hexadecimal", "encoding", decodeHex),
-  single("binary", "Binário", "encoding", decodeBinary),
-  single("decimal", "Decimal (códigos ASCII)", "encoding", (s) => decodeRadixCodes(s, 10)),
-  single("octal", "Octal", "encoding", (s) => decodeRadixCodes(s, 8)),
-  single("url", "URL (percent-encoding)", "encoding", decodeUrl),
-  single("html", "Entidades HTML", "encoding", decodeHtml),
-  single("morse", "Código Morse", "encoding", decodeMorse),
-  single("braille", "Braille", "encoding", decodeBraille),
-  single("rot47", "ROT47", "transform", (s) => rot47(s)),
-  single("reverse", "Texto invertido", "transform", (s) => [...s].reverse().join("")),
+  single("base64", "Base64", "encoding", decodeBase64, encodeBase64),
+  single("base32", "Base32", "encoding", decodeBase32, encodeBase32),
+  single("hex", "Hexadecimal", "encoding", decodeHex, encodeHex),
+  single("binary", "Binário", "encoding", decodeBinary, encodeBinary),
+  single(
+    "decimal",
+    "Decimal (códigos ASCII)",
+    "encoding",
+    (s) => decodeRadixCodes(s, 10),
+    (s) => encodeRadixCodes(s, 10),
+  ),
+  single(
+    "octal",
+    "Octal",
+    "encoding",
+    (s) => decodeRadixCodes(s, 8),
+    (s) => encodeRadixCodes(s, 8),
+  ),
+  single("url", "URL (percent-encoding)", "encoding", decodeUrl, (s) => encodeURIComponent(s)),
+  single("html", "Entidades HTML", "encoding", decodeHtml, encodeHtml),
+  single("morse", "Código Morse", "encoding", decodeMorse, encodeMorse),
+  single("braille", "Braille", "encoding", decodeBraille, encodeBraille),
+  single("rot47", "ROT47", "transform", rot47, rot47),
+  single(
+    "reverse",
+    "Texto invertido",
+    "transform",
+    (s) => [...s].reverse().join(""),
+    (s) => [...s].reverse().join(""),
+  ),
 ];

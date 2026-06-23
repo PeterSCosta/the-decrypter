@@ -3,11 +3,12 @@ import { codecDecoders } from "./codecs";
 import type { DecodeContext } from "./types";
 
 const ctx: DecodeContext = { key: "", streets: null, ceps: null };
+const find = (id: string) => codecDecoders.find((d) => d.id === id)!;
 const outputs = (id: string, input: string) =>
-  codecDecoders
-    .find((d) => d.id === id)!
+  find(id)
     .decode(input, ctx)
     .map((c) => c.output);
+const encode = (id: string, input: string) => find(id).encode?.(input, ctx);
 
 describe("codec decoders", () => {
   it("decodes Base64", () => {
@@ -42,5 +43,38 @@ describe("codec decoders", () => {
   it("rejects invalid input (no candidate)", () => {
     expect(outputs("base64", "!!!not base64!!!")).toHaveLength(0);
     expect(outputs("binary", "0102")).toHaveLength(0);
+  });
+});
+
+describe("codec encoders (round-trip)", () => {
+  // encode(text) deve produzir algo que decode() volta a ler como o texto.
+  const roundTrip = ["base64", "base32", "hex", "binary", "decimal", "octal", "url", "html"];
+  for (const id of roundTrip) {
+    it(`${id}: encode → decode = original`, () => {
+      const text = "Olá <b> & 42!"; // inclui caracteres escapáveis p/ HTML/URL
+      const enc = encode(id, text);
+      expect(enc, `${id} encode produziu null`).toBeTruthy();
+      expect(outputs(id, enc!)).toContain(text);
+    });
+  }
+
+  it("morse: codifica e decodifica (maiúsculas)", () => {
+    expect(encode("morse", "HI MUNDO")).toBe(".... .. / -- ..- -. -.. ---");
+    expect(outputs("morse", encode("morse", "SOS")!)).toContain("SOS");
+  });
+
+  it("braille: codifica e decodifica (minúsculas)", () => {
+    const enc = encode("braille", "abc")!;
+    expect(enc).toBe("⠁⠃⠉");
+    expect(outputs("braille", enc)).toContain("abc");
+  });
+
+  it("rot47 e reverse são involuções", () => {
+    expect(encode("rot47", encode("rot47", "Teste 123")!)).toBe("Teste 123");
+    expect(encode("reverse", "abc")).toBe("cba");
+  });
+
+  it("todo codec expõe o inverso encode", () => {
+    expect(codecDecoders.every((d) => typeof d.encode === "function")).toBe(true);
   });
 });

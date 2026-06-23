@@ -88,6 +88,29 @@ export function useDecoder() {
 
   const { likely, unlikely } = useMemo(() => partition(run.results), [run.results]);
 
+  // Codificar (modo "uma cifra só"): só pra cifras que têm o inverso `encode`.
+  const [encodeInput, setEncodeInput] = useState("");
+  const debEncodeInput = useDebouncedValue(encodeInput, 160);
+  const selectedDecoder = useMemo(
+    () => (selectedId ? (decoders.find((d) => d.id === selectedId) ?? null) : null),
+    [selectedId],
+  );
+  const encoded = useMemo(() => {
+    if (!selectedDecoder?.encode || !debEncodeInput.trim()) return null;
+    try {
+      return selectedDecoder.encode(debEncodeInput, {
+        key: debKey,
+        streets,
+        ceps,
+        municipios,
+        airports,
+        pix,
+      });
+    } catch {
+      return null;
+    }
+  }, [selectedDecoder, debEncodeInput, debKey, streets, ceps, municipios, airports, pix]);
+
   return {
     input,
     setInput,
@@ -100,5 +123,9 @@ export function useDecoder() {
     results: run.results,
     hitCount: run.hitCount,
     total: run.results.length,
+    canEncode: !!selectedDecoder?.encode,
+    encodeInput,
+    setEncodeInput,
+    encoded,
   };
 }

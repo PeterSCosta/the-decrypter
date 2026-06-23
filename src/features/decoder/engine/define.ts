@@ -38,6 +38,8 @@ export function mapDecoder(opts: {
   name: string;
   category?: DecoderCategory;
   decode: (input: string, ctx: DecodeContext) => DecodeResult;
+  /** Inverse: codifica texto nessa cifra (usado no modo "uma cifra só"). */
+  encode?: (input: string, ctx: DecodeContext) => string | null;
 }): Decoder {
   const category = opts.category ?? "transform";
   return {
@@ -51,6 +53,7 @@ export function mapDecoder(opts: {
       if (!isUseful(lite.output, input)) return [];
       return [{ decoderId: opts.id, decoderName: opts.name, category, ...lite }];
     },
+    ...(opts.encode ? { encode: opts.encode } : {}),
   };
 }
 

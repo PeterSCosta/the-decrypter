@@ -59,6 +59,8 @@ export interface Decoder {
   category: DecoderCategory;
   /** Return zero or more candidate interpretations of `input`. */
   decode(input: string, ctx: DecodeContext): DecodeCandidate[];
+  /** Optional inverse: encode plaintext into this cipher (single-cipher mode). */
+  encode?(input: string, ctx: DecodeContext): string | null;
 }
 
 export interface ScoredCandidate extends DecodeCandidate {
