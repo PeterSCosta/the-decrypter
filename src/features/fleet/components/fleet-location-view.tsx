@@ -1,6 +1,6 @@
 import { ShareLocationButton } from "@/features/location/components/share-location-button";
 import { fetchFleet } from "@/lib/fleet";
-import { Car, ExternalLink, Phone } from "lucide-react";
+import { Car, ExternalLink, MapPin, Phone } from "lucide-react";
 import { useEffect, useState } from "react";
 import { formatAge, formatDistance, nearestDevice } from "../nearest";
 import type { FleetDevice } from "../types";
@@ -34,7 +34,12 @@ export function FleetLocationView({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex justify-end">
+      {/* Toolbar da seção: rótulo à esquerda ancora o botão (não flutua mais sozinho). */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 text-[0.6875rem] font-medium uppercase tracking-wide text-[var(--text-muted)]">
+          <MapPin className="h-3.5 w-3.5 shrink-0" />
+          No mapa
+        </div>
         <ShareLocationButton lat={point.lat} lng={point.lng} label={label} />
       </div>
 

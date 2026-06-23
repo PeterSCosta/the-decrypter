@@ -45,7 +45,7 @@ export function ShareLocationButton({
     <button
       type="button"
       onClick={share}
-      className="inline-flex items-center gap-1.5 rounded-md bg-[var(--brand)] px-2.5 py-1 text-xs font-medium text-[var(--ink)] transition-opacity hover:opacity-90"
+      className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] px-2 py-1 text-xs font-medium text-[var(--brand-strong)] transition-colors hover:bg-[var(--surface-sunken)]"
     >
       {copied ? <Check className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
       {copied ? "Link copiado" : "Compartilhar"}
