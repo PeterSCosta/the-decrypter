@@ -1,4 +1,8 @@
 import { Card } from "@/components/ui/card";
+import { FleetLocationView } from "@/features/fleet/components/fleet-location-view";
+import { geocode } from "@/lib/geocode";
+import { Loader2, MapPin } from "lucide-react";
+import { useState } from "react";
 import { type StreetRow, nomeCompleto } from "../types";
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -12,6 +16,23 @@ function Field({ label, value }: { label: string; value: string }) {
 
 export function StreetCard({ row }: { row: StreetRow }) {
   const dims = row.ext || row.larg ? `${row.ext ?? "?"}m × ${row.larg ?? "?"}m` : "—";
+  const [point, setPoint] = useState<{ lat: number; lng: number } | null>(null);
+  const [state, setState] = useState<"idle" | "loading" | "error">("idle");
+
+  // A base de ruas não tem coordenada → geocodifica sob demanda (nome + bairro).
+  const showMap = async () => {
+    if (point || state === "loading") return;
+    setState("loading");
+    const q = [nomeCompleto(row), row.bairro, "Blumenau", "SC"].filter(Boolean).join(", ");
+    const pt = await geocode(q);
+    if (pt) {
+      setPoint(pt);
+      setState("idle");
+    } else {
+      setState("error");
+    }
+  };
+
   return (
     <Card className="p-4">
       <div className="mb-3 flex items-start justify-between gap-3">
@@ -31,6 +52,30 @@ export function StreetCard({ row }: { row: StreetRow }) {
         <Field label="Ext × Larg" value={dims} />
         {row.atas ? <Field label="Atas / Decretos" value={row.atas} /> : null}
       </dl>
+
+      <div className="mt-3">
+        {point ? (
+          <FleetLocationView point={point} label={nomeCompleto(row)} />
+        ) : (
+          <button
+            type="button"
+            onClick={showMap}
+            className="inline-flex items-center gap-1.5 text-xs text-[var(--brand-strong)] hover:underline disabled:opacity-60"
+            disabled={state === "loading"}
+          >
+            {state === "loading" ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <MapPin className="h-3.5 w-3.5" />
+            )}
+            {state === "loading"
+              ? "Localizando…"
+              : state === "error"
+                ? "Não localizei — tentar de novo"
+                : "Ver no mapa + frota mais próxima"}
+          </button>
+        )}
+      </div>
     </Card>
   );
 }

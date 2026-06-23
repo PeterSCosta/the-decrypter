@@ -1,16 +1,8 @@
-import { LocationFleetMap } from "@/features/fleet/components/location-fleet-map";
-import {
-  type NearestResult,
-  formatAge,
-  formatDistance,
-  nearestDevice,
-} from "@/features/fleet/nearest";
-import type { FleetDevice } from "@/features/fleet/types";
+import { FleetLocationView } from "@/features/fleet/components/fleet-location-view";
 import { fetchCep } from "@/lib/brasilapi";
-import { fetchFleet } from "@/lib/fleet";
 import { geocode } from "@/lib/geocode";
 import { w3wToCoordinates } from "@/lib/what3words";
-import { Car, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { LocationData } from "../engine/decoders/location";
 
@@ -20,7 +12,6 @@ export function MapCard({ data }: { data: LocationData }) {
   const [detail, setDetail] = useState(data.detail);
   const [status, setStatus] = useState<"ok" | "loading" | "error">(initial ? "ok" : "loading");
   const [error, setError] = useState<string | null>(null);
-  const [fleet, setFleet] = useState<FleetDevice[]>([]);
 
   // Resolve coordenada quando não veio pronta: what3words (API) ou CEP fora da
   // base local (BrasilAPI p/ endereço + Nominatim p/ coordenada).
@@ -70,20 +61,6 @@ export function MapCard({ data }: { data: LocationData }) {
     };
   }, [coords, data.cep, data.w3w]);
 
-  // Quando há coordenada, busca a frota (snapshot) p/ achar o membro mais próximo.
-  useEffect(() => {
-    if (!coords) return;
-    let alive = true;
-    fetchFleet()
-      .then((f) => alive && setFleet(f))
-      .catch(() => alive && setFleet([]));
-    return () => {
-      alive = false;
-    };
-  }, [coords]);
-
-  const near: NearestResult | null = coords ? nearestDevice(coords, fleet) : null;
-
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -118,48 +95,8 @@ export function MapCard({ data }: { data: LocationData }) {
         ) : null}
       </div>
 
-      {/* Membro da frota mais próximo do ponto + dados do Traccar. */}
-      {near ? (
-        <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-sunken)] px-3 py-2">
-          <div className="flex items-center gap-2 text-sm">
-            <Car className="h-4 w-4 shrink-0 text-[var(--color-pulse-600)]" />
-            <span className="text-[var(--text-secondary)]">Frota mais próxima:</span>
-            <span className="font-display text-[var(--text-primary)]">{near.device.name}</span>
-            <span className="ml-auto font-mono text-xs text-[var(--text-muted)]">
-              {formatDistance(near.km)}
-            </span>
-          </div>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 pl-6 text-xs text-[var(--text-secondary)]">
-            <span>
-              {near.device.moving
-                ? `${near.device.speedKmh ?? 0} km/h`
-                : near.device.status === "online"
-                  ? "parado · online"
-                  : near.device.status}
-            </span>
-            {near.device.battery != null ? <span>bateria {near.device.battery}%</span> : null}
-            <span>visto {formatAge(near.device.lastUpdate)}</span>
-            {near.device.lat != null && near.device.lng != null ? (
-              <a
-                className="inline-flex items-center gap-1 text-[var(--brand-strong)] hover:underline"
-                href={`https://www.openstreetmap.org/?mlat=${near.device.lat}&mlon=${near.device.lng}#map=16/${near.device.lat}/${near.device.lng}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                posição <ExternalLink className="h-3 w-3" />
-              </a>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-
       {coords ? (
-        <LocationFleetMap
-          point={coords}
-          pointLabel={data.label}
-          devices={fleet}
-          nearestId={near?.device.id}
-        />
+        <FleetLocationView point={coords} label={data.label} />
       ) : status === "loading" ? (
         <p className="text-xs text-[var(--text-muted)]">Resolvendo coordenada…</p>
       ) : (
