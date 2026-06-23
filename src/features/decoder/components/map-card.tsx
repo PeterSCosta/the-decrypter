@@ -1,8 +1,11 @@
-import { MapEmbed } from "@/features/location/components/map-embed";
+import { LocationFleetMap } from "@/features/fleet/components/location-fleet-map";
+import { type NearestResult, formatDistance, nearestDevice } from "@/features/fleet/nearest";
+import type { FleetDevice } from "@/features/fleet/types";
 import { fetchCep } from "@/lib/brasilapi";
+import { fetchFleet } from "@/lib/fleet";
 import { geocode } from "@/lib/geocode";
 import { w3wToCoordinates } from "@/lib/what3words";
-import { ExternalLink } from "lucide-react";
+import { Car, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { LocationData } from "../engine/decoders/location";
 
@@ -12,6 +15,7 @@ export function MapCard({ data }: { data: LocationData }) {
   const [detail, setDetail] = useState(data.detail);
   const [status, setStatus] = useState<"ok" | "loading" | "error">(initial ? "ok" : "loading");
   const [error, setError] = useState<string | null>(null);
+  const [fleet, setFleet] = useState<FleetDevice[]>([]);
 
   // Resolve coordenada quando não veio pronta: what3words (API) ou CEP fora da
   // base local (BrasilAPI p/ endereço + Nominatim p/ coordenada).
@@ -33,8 +37,6 @@ export function MapCard({ data }: { data: LocationData }) {
           .filter(Boolean)
           .join(", ");
         if (alive) setDetail(addr || `${data.cep}`);
-        // O backend já devolve lat/lng quando o CEP está na base local; só cai
-        // pro geocode (Nominatim) quando não vier coordenada.
         if (cep.lat != null && cep.lng != null) {
           if (alive) {
             setCoords({ lat: cep.lat, lng: cep.lng });
@@ -62,6 +64,20 @@ export function MapCard({ data }: { data: LocationData }) {
       alive = false;
     };
   }, [coords, data.cep, data.w3w]);
+
+  // Quando há coordenada, busca a frota (snapshot) p/ achar o membro mais próximo.
+  useEffect(() => {
+    if (!coords) return;
+    let alive = true;
+    fetchFleet()
+      .then((f) => alive && setFleet(f))
+      .catch(() => alive && setFleet([]));
+    return () => {
+      alive = false;
+    };
+  }, [coords]);
+
+  const near: NearestResult | null = coords ? nearestDevice(coords, fleet) : null;
 
   return (
     <div className="flex flex-col gap-2">
@@ -96,8 +112,26 @@ export function MapCard({ data }: { data: LocationData }) {
           </div>
         ) : null}
       </div>
+
+      {/* Membro da frota mais próximo do ponto. */}
+      {near ? (
+        <div className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-sunken)] px-3 py-2 text-sm">
+          <Car className="h-4 w-4 shrink-0 text-[var(--color-pulse-600)]" />
+          <span className="text-[var(--text-secondary)]">Frota mais próxima:</span>
+          <span className="font-display text-[var(--text-primary)]">{near.device.name}</span>
+          <span className="ml-auto font-mono text-xs text-[var(--text-muted)]">
+            {formatDistance(near.km)}
+          </span>
+        </div>
+      ) : null}
+
       {coords ? (
-        <MapEmbed lat={coords.lat} lng={coords.lng} />
+        <LocationFleetMap
+          point={coords}
+          pointLabel={data.label}
+          devices={fleet}
+          nearestId={near?.device.id}
+        />
       ) : status === "loading" ? (
         <p className="text-xs text-[var(--text-muted)]">Resolvendo coordenada…</p>
       ) : (
