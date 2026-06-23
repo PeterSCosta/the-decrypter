@@ -1,5 +1,5 @@
 import "leaflet/dist/leaflet.css";
-import { BatteryFull, Loader2, MapPin, Navigation } from "lucide-react";
+import { BatteryFull, Loader2, MapPin, Navigation, Phone } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
 import { formatAge } from "../nearest";
@@ -121,6 +121,15 @@ export function FleetPanel() {
                   </span>
                 ) : null}
                 <span>visto {formatAge(d.lastUpdate)}</span>
+                {d.phone ? (
+                  <a
+                    className="inline-flex items-center gap-1 text-[var(--brand-strong)] hover:underline"
+                    href={`tel:${d.phone}`}
+                  >
+                    <Phone className="h-3 w-3" />
+                    {d.phone}
+                  </a>
+                ) : null}
               </div>
             </div>
             {d.lat != null && d.lng != null ? (

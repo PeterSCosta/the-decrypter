@@ -1,5 +1,6 @@
+import { ShareLocationButton } from "@/features/location/components/share-location-button";
 import { fetchFleet } from "@/lib/fleet";
-import { Car, ExternalLink } from "lucide-react";
+import { Car, ExternalLink, Phone } from "lucide-react";
 import { useEffect, useState } from "react";
 import { formatAge, formatDistance, nearestDevice } from "../nearest";
 import type { FleetDevice } from "../types";
@@ -33,6 +34,10 @@ export function FleetLocationView({
 
   return (
     <div className="flex flex-col gap-2">
+      <div className="flex justify-end">
+        <ShareLocationButton lat={point.lat} lng={point.lng} label={label} />
+      </div>
+
       {near ? (
         <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-sunken)] px-3 py-2">
           <div className="flex items-center gap-2 text-sm">
@@ -53,6 +58,15 @@ export function FleetLocationView({
             </span>
             {near.device.battery != null ? <span>bateria {near.device.battery}%</span> : null}
             <span>visto {formatAge(near.device.lastUpdate)}</span>
+            {near.device.phone ? (
+              <a
+                className="inline-flex items-center gap-1 text-[var(--brand-strong)] hover:underline"
+                href={`tel:${near.device.phone}`}
+              >
+                <Phone className="h-3 w-3" />
+                {near.device.phone}
+              </a>
+            ) : null}
             {near.device.lat != null && near.device.lng != null ? (
               <a
                 className="inline-flex items-center gap-1 text-[var(--brand-strong)] hover:underline"

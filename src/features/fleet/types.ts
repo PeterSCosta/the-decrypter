@@ -10,4 +10,5 @@ export interface FleetDevice {
   course: number | null;
   battery: number | null;
   moving: boolean;
+  phone: string | null;
 }

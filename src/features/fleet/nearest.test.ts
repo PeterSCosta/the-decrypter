@@ -13,6 +13,7 @@ const dev = (id: number, name: string, lat: number | null, lng: number | null): 
   course: null,
   battery: null,
   moving: false,
+  phone: null,
 });
 
 describe("haversineKm", () => {
