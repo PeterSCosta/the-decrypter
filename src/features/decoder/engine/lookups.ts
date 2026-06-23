@@ -201,6 +201,41 @@ const cepWildcard: Decoder = {
   },
 };
 
+// ---- CEP de 6 dígitos sem o prefixo de região SC → tenta 88/89 ------------
+// Em SC os CEPs são 88xxx-xxx ou 89xxx-xxx. Se o usuário digitar só os 6 dígitos
+// finais (ex.: "305500"), tenta os dois prefixos (88305500 / 89305500) na base.
+const SC_PREFIXES = ["88", "89"];
+const cepScPrefix: Decoder = {
+  id: "cep-sc-prefix",
+  name: "CEP sem prefixo SC (88/89)",
+  category: "lookup",
+  decode(input, ctx) {
+    if (!ctx.ceps) return [];
+    const digits = input.replace(/\D/g, "");
+    if (digits.length !== 6) return [];
+    const candidates = new Set(SC_PREFIXES.map((p) => p + digits));
+    const hits: CepHit[] = [];
+    for (const row of ctx.ceps.rows) {
+      if (candidates.has(row[0])) hits.push(toHit(row, ctx.ceps.municipios));
+    }
+    if (hits.length === 0) return [];
+    return [
+      {
+        decoderId: "cep-sc-prefix",
+        decoderName: "CEP sem prefixo SC (88/89)",
+        category: "lookup",
+        label: `${digits} → ${hits.map((h) => formatCep(h.cep)).join(" / ")}`,
+        output: hits
+          .map((h) => `${formatCep(h.cep)} — ${h.logradouro || h.localidade}, ${h.municipio}`)
+          .join("; "),
+        forcedScore: 0.8,
+        render: "cep",
+        data: hits,
+      },
+    ];
+  },
+};
+
 // ---- Exact CEP → endereço -------------------------------------------------
 const cepLookup: Decoder = {
   id: "cep-exact",
@@ -236,5 +271,6 @@ export const lookupDecoders: Decoder[] = [
   streetDate,
   streetName,
   cepWildcard,
+  cepScPrefix,
   cepLookup,
 ];
