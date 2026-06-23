@@ -37,3 +37,13 @@ export function formatDistance(km: number): string {
   if (km < 1) return `${Math.round(km * 1000)} m`;
   return km < 10 ? `${km.toFixed(1).replace(".", ",")} km` : `${Math.round(km)} km`;
 }
+
+/** "há 12s" / "há 6 min" / "há 2 h" / "há 3 d". */
+export function formatAge(iso: string | null): string {
+  if (!iso) return "—";
+  const s = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+  if (s < 60) return `há ${s}s`;
+  if (s < 3600) return `há ${Math.round(s / 60)} min`;
+  if (s < 86400) return `há ${Math.round(s / 3600)} h`;
+  return `há ${Math.round(s / 86400)} d`;
+}

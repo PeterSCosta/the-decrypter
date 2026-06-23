@@ -2,6 +2,7 @@ import "leaflet/dist/leaflet.css";
 import { BatteryFull, Loader2, MapPin, Navigation } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
+import { formatAge } from "../nearest";
 import type { FleetDevice } from "../types";
 import { useFleet } from "../use-fleet";
 
@@ -12,15 +13,6 @@ function color(d: FleetDevice): string {
   if (d.moving) return "#FF5436";
   if (d.status === "online") return "#7BA60B";
   return "#9ca3af";
-}
-
-function ago(iso: string | null): string {
-  if (!iso) return "—";
-  const s = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
-  if (s < 60) return `há ${s}s`;
-  if (s < 3600) return `há ${Math.round(s / 60)} min`;
-  if (s < 86400) return `há ${Math.round(s / 3600)} h`;
-  return `há ${Math.round(s / 86400)} d`;
 }
 
 /** Enquadra todos os pontos uma vez (não re-enquadra a cada atualização). */
@@ -95,7 +87,7 @@ export function FleetPanel() {
                   <div className="font-semibold">{d.name}</div>
                   <div>{d.moving ? `${d.speedKmh ?? 0} km/h` : "parado"}</div>
                   {d.battery != null ? <div>bateria {d.battery}%</div> : null}
-                  <div>visto {ago(d.lastUpdate)}</div>
+                  <div>visto {formatAge(d.lastUpdate)}</div>
                 </div>
               </Popup>
             </CircleMarker>
@@ -128,7 +120,7 @@ export function FleetPanel() {
                     {d.battery}%
                   </span>
                 ) : null}
-                <span>visto {ago(d.lastUpdate)}</span>
+                <span>visto {formatAge(d.lastUpdate)}</span>
               </div>
             </div>
             {d.lat != null && d.lng != null ? (
