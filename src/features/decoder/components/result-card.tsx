@@ -14,6 +14,7 @@ import type { IsbnHint } from "../engine/decoders/isbn";
 import type { LocationData } from "../engine/decoders/location";
 import type { NcmHint } from "../engine/decoders/ncm";
 import type { ElementInfo } from "../engine/decoders/periodic-table";
+import type { RegistroBrHint } from "../engine/decoders/registrobr";
 import type { DecoderCategory, ScoredCandidate } from "../engine/types";
 import { BarcodeCard } from "./barcode-card";
 import { CaesarTable } from "./caesar-table";
@@ -23,6 +24,7 @@ import { ElementsCard } from "./elements-card";
 import { IsbnCard } from "./isbn-card";
 import { MapCard } from "./map-card";
 import { NcmCard } from "./ncm-card";
+import { RegistroBrCard } from "./registrobr-card";
 
 const TONE: Record<DecoderCategory, BadgeProps["tone"]> = {
   encoding: "info",
@@ -86,6 +88,8 @@ export function ResultCard({ c, rank }: { c: ScoredCandidate; rank: number }) {
           <CodeListCard items={c.data as CodeHit[]} />
         ) : c.render === "barcode" ? (
           <BarcodeCard hint={c.data as BarcodeHint} />
+        ) : c.render === "registrobr" ? (
+          <RegistroBrCard hint={c.data as RegistroBrHint} />
         ) : (
           <div className="flex items-start gap-2">
             <pre className="min-w-0 flex-1 whitespace-pre-wrap break-words font-mono text-sm text-[var(--text-primary)]">

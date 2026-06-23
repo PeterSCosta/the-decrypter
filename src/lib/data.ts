@@ -1,6 +1,7 @@
 import type { AirportsData } from "@/features/airport/types";
 import type { CepsData } from "@/features/cep/types";
 import type { MunicipiosData } from "@/features/ibge/types";
+import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
 
 /**
@@ -83,6 +84,38 @@ export function loadAirports(): Promise<AirportsData> {
 
 export function getAirports(): AirportsData | null {
   return airportsCache;
+}
+
+// Participantes PIX (BrasilAPI, ~900 instituições). Carregado sob demanda e
+// cacheado; indexado por ISPB no decoder.
+interface RawPixParticipant {
+  ispb: string;
+  nome: string;
+  nome_reduzido: string;
+  tipo_participacao: string;
+}
+let pixPromise: Promise<PixData> | null = null;
+let pixCache: PixData | null = null;
+
+export function loadPix(): Promise<PixData> {
+  if (!pixPromise) {
+    pixPromise = fetch("https://brasilapi.com.br/api/pix/v1/participants")
+      .then((r) => r.json() as Promise<RawPixParticipant[]>)
+      .then((rows) => {
+        pixCache = rows.map((r) => ({
+          ispb: r.ispb,
+          nome: r.nome,
+          nomeReduzido: r.nome_reduzido,
+          tipo: r.tipo_participacao,
+        }));
+        return pixCache;
+      });
+  }
+  return pixPromise;
+}
+
+export function getPix(): PixData | null {
+  return pixCache;
 }
 
 export type WordLang = "pt" | "en";

@@ -1,6 +1,7 @@
 import type { AirportsData } from "@/features/airport/types";
 import type { CepsData } from "@/features/cep/types";
 import type { MunicipiosData } from "@/features/ibge/types";
+import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
 
 export type DecoderCategory = "encoding" | "classical" | "transform" | "lookup";
@@ -21,6 +22,7 @@ export interface DecodeContext {
   ceps: CepsData | null;
   municipios?: MunicipiosData | null;
   airports?: AirportsData | null;
+  pix?: PixData | null;
 }
 
 export interface DecodeCandidate {
@@ -45,7 +47,8 @@ export interface DecodeCandidate {
     | "ncm"
     | "elements"
     | "code-list"
-    | "barcode";
+    | "barcode"
+    | "registrobr";
   /** Structured payload for custom renderers. */
   data?: unknown;
 }

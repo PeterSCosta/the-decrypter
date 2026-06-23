@@ -256,6 +256,16 @@ export const HELP_SECTIONS: HelpSection[] = [
         desc: "Código de área → UF, região e cidades.",
         example: { in: "47 48", out: "SC norte · SC sul" },
       },
+      {
+        name: "Domínio .br (Registro.br)",
+        desc: "Domínio terminando em .br → status (registrado/disponível) e expiração, via BrasilAPI.",
+        example: { in: "uol.com.br", out: "Registrado · expira em…" },
+      },
+      {
+        name: "Participante PIX (ISPB)",
+        desc: "ISPB de 8 dígitos → instituição participante do PIX (lista do BrasilAPI).",
+        example: { in: "60746948", out: "BANCO BRADESCO S.A." },
+      },
     ],
   },
   {
@@ -297,7 +307,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     entries: [
       {
         name: "Decodificador",
-        desc: "A busca única: cola a entrada e vê todas as interpretações ranqueadas.",
+        desc: "A busca única: cola a entrada e vê todas as interpretações ranqueadas. Inclui ruas e CEP de Blumenau/SC (com curinga, ex.: 88xxx500) e uma barra lateral pra testar só uma cifra.",
       },
       {
         name: "Texto",
@@ -315,13 +325,46 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "amor", out: "roma · ramo · mora" },
       },
       {
-        name: "Guia de Ruas",
-        desc: "Busca no rol de ruas de Blumenau por código, lei, data ou nome.",
-      },
-      { name: "CEPs (SC)", desc: "Busca CEPs de Santa Catarina, inclusive por curinga." },
-      {
         name: "Cola",
         desc: "Referência do gabarito: cores, quantidade de dígitos, A1Z26, formatos de coordenada e checklist de técnicas.",
+      },
+    ],
+  },
+  {
+    id: "apis",
+    title: "APIs utilizadas",
+    intro:
+      "Consultas externas que o app faz (todas públicas; a maioria sem chave). Mantida em sincronia com o que é realmente chamado.",
+    entries: [
+      {
+        name: "BrasilAPI",
+        desc: "CNPJ, CEP, ISBN, NCM, participantes do PIX (ISPB) e domínios .br (Registro.br).",
+        example: { in: "brasilapi.com.br", out: "grátis · sem chave" },
+      },
+      {
+        name: "Open Food Facts",
+        desc: "Nome do produto pelo código de barras (EAN/UPC).",
+        example: { in: "world.openfoodfacts.org", out: "grátis · alimentos" },
+      },
+      {
+        name: "IBGE — Localidades",
+        desc: "Municípios do Brasil (código IBGE → cidade/UF).",
+        example: { in: "servicodados.ibge.gov.br", out: "grátis" },
+      },
+      {
+        name: "what3words",
+        desc: "Endereço de 3 palavras → coordenada.",
+        example: { in: "api.what3words.com", out: "precisa de chave" },
+      },
+      {
+        name: "OpenStreetMap / Nominatim",
+        desc: "Mapas (tiles) e geocodificação de endereços/CEP.",
+        example: { in: "openstreetmap.org", out: "grátis" },
+      },
+      {
+        name: "OpenFlights (embutido)",
+        desc: "Base mundial de aeroportos IATA/ICAO empacotada no app.",
+        example: { in: "openflights.org", out: "offline" },
       },
     ],
   },

@@ -58,3 +58,17 @@ export interface NcmInfo {
 }
 export const fetchNcm = (code: string) =>
   getJson<NcmInfo>(`/ncm/v1/${code.replace(/\D/g, "")}`, "NCM não encontrado.");
+
+export interface RegistroBrInfo {
+  fqdn: string;
+  status: string;
+  "expires-at"?: string;
+  "publication-status"?: string;
+  hosts?: string[];
+}
+/** Consulta de domínio .br (status, expiração) — BrasilAPI Registro.br. */
+export const fetchRegistroBr = (domain: string) =>
+  getJson<RegistroBrInfo>(
+    `/registrobr/v1/${encodeURIComponent(domain.trim().toLowerCase())}`,
+    "Domínio não encontrado.",
+  );

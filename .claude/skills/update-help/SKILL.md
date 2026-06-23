@@ -33,6 +33,11 @@ o arquivo se um nome parecer dado e não decoder.
 
 ## Passo 2 — Reconciliar `help-content.ts`
 
+Também há uma seção **"APIs utilizadas"** (`id: "apis"`) em `HELP_SECTIONS`: liste
+toda consulta externa que o app realmente faz. Fontes: `src/lib/brasilapi.ts`,
+`src/lib/openfoodfacts.ts`, qualquer `fetch("https...")` em `src/lib/data.ts` e nos
+cards (`*-card.tsx`). Ao adicionar/remover uma API, atualize essa seção.
+
 Para cada decoder/ferramenta encontrado no Passo 1:
 
 - **Faltando na ajuda** → adicione um `HelpEntry { name, desc, example? }` na
