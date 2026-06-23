@@ -9,9 +9,9 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
-# Chave do what3words é embutida no bundle em build time (var VITE_*).
-ARG VITE_W3W_API_KEY
-ENV VITE_W3W_API_KEY=${VITE_W3W_API_KEY}
+# URL do backend embutida no bundle em build time (var VITE_*). Default: produção.
+ARG VITE_API_BASE_URL=https://apiarromba.thelogiclab.com.br
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN pnpm build
 
 # ---- runtime ----

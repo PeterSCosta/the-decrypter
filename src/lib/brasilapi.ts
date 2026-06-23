@@ -1,8 +1,12 @@
-/** Clientes das APIs públicas da BrasilAPI (grátis, sem chave, CORS liberado). */
-const BASE = "https://brasilapi.com.br/api";
+/**
+ * Consultas via backend the-decrypter-api (`/api/...`) — antes batiam direto no
+ * BrasilAPI. O backend normaliza as respostas (camelCase) e cacheia. As interfaces
+ * abaixo refletem os DTOs do backend.
+ */
+import { api } from "./api";
 
 async function getJson<T>(path: string, notFound: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`);
+  const res = await fetch(api(path));
   if (!res.ok) {
     throw new Error(res.status === 404 ? notFound : `Falha na consulta (HTTP ${res.status}).`);
   }
@@ -11,64 +15,59 @@ async function getJson<T>(path: string, notFound: string): Promise<T> {
 
 export interface CnpjInfo {
   cnpj: string;
-  razao_social: string;
-  nome_fantasia: string | null;
-  descricao_situacao_cadastral: string;
-  logradouro: string;
-  numero: string;
-  bairro: string;
-  municipio: string;
-  uf: string;
-  cep: string;
-  ddd_telefone_1: string;
-  cnae_fiscal_descricao: string;
+  razaoSocial: string | null;
+  nomeFantasia: string | null;
+  situacao: string | null;
+  logradouro: string | null;
+  numero: string | null;
+  bairro: string | null;
+  municipio: string | null;
+  uf: string | null;
+  cep: string | null;
+  atividadePrincipal: string | null;
 }
 export const fetchCnpj = (cnpj: string) =>
-  getJson<CnpjInfo>(
-    `/cnpj/v1/${cnpj.replace(/\D/g, "")}`,
-    "CNPJ não encontrado na base da Receita.",
-  );
+  getJson<CnpjInfo>(`/cnpj/${cnpj.replace(/\D/g, "")}`, "CNPJ não encontrado na base da Receita.");
 
 export interface CepInfo {
   cep: string;
-  state: string;
-  city: string;
-  neighborhood: string;
-  street: string;
+  logradouro: string | null;
+  bairro: string | null;
+  localidade: string | null;
+  uf: string | null;
+  lat: number | null;
+  lng: number | null;
+  source: string;
 }
 export const fetchCep = (cep: string) =>
-  getJson<CepInfo>(`/cep/v2/${cep.replace(/\D/g, "")}`, "CEP não encontrado.");
+  getJson<CepInfo>(`/cep/${cep.replace(/\D/g, "")}`, "CEP não encontrado.");
 
 export interface IsbnInfo {
-  title: string;
-  authors: string[];
-  publisher: string;
-  year: number;
   isbn: string;
-  synopsis?: string;
+  title: string | null;
+  authors: string[] | null;
+  publisher: string | null;
+  year: number | null;
+  synopsis?: string | null;
 }
 export const fetchIsbn = (isbn: string) =>
-  getJson<IsbnInfo>(`/isbn/v1/${isbn.replace(/[^0-9Xx]/g, "")}`, "ISBN não encontrado.");
+  getJson<IsbnInfo>(`/isbn/${isbn.replace(/[^0-9Xx]/g, "")}`, "ISBN não encontrado.");
 
 export interface NcmInfo {
   codigo: string;
-  descricao: string;
-  data_inicio: string;
-  data_fim: string;
+  descricao: string | null;
 }
 export const fetchNcm = (code: string) =>
-  getJson<NcmInfo>(`/ncm/v1/${code.replace(/\D/g, "")}`, "NCM não encontrado.");
+  getJson<NcmInfo>(`/ncm/${code.replace(/\D/g, "")}`, "NCM não encontrado.");
 
 export interface RegistroBrInfo {
   fqdn: string;
   status: string;
-  "expires-at"?: string;
-  "publication-status"?: string;
-  hosts?: string[];
+  expiresAt?: string | null;
 }
-/** Consulta de domínio .br (status, expiração) — BrasilAPI Registro.br. */
+/** Consulta de domínio .br (status, expiração). */
 export const fetchRegistroBr = (domain: string) =>
   getJson<RegistroBrInfo>(
-    `/registrobr/v1/${encodeURIComponent(domain.trim().toLowerCase())}`,
+    `/registrobr/${encodeURIComponent(domain.trim().toLowerCase())}`,
     "Domínio não encontrado.",
   );

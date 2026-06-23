@@ -1,7 +1,8 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_W3W_API_KEY?: string;
+  /** Base do backend the-decrypter-api (ex.: https://apiarromba.thelogiclab.com.br). */
+  readonly VITE_API_BASE_URL?: string;
 }
 interface ImportMeta {
   readonly env: ImportMetaEnv;

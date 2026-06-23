@@ -29,10 +29,22 @@ export function MapCard({ data }: { data: LocationData }) {
           return;
         }
         const cep = await fetchCep(data.cep as string);
-        const addr = [cep.street, cep.neighborhood, cep.city, cep.state].filter(Boolean).join(", ");
-        if (alive) setDetail(`${addr} (BrasilAPI)`);
+        const addr = [cep.logradouro, cep.bairro, cep.localidade, cep.uf]
+          .filter(Boolean)
+          .join(", ");
+        if (alive) setDetail(addr || `${data.cep}`);
+        // O backend já devolve lat/lng quando o CEP está na base local; só cai
+        // pro geocode (Nominatim) quando não vier coordenada.
+        if (cep.lat != null && cep.lng != null) {
+          if (alive) {
+            setCoords({ lat: cep.lat, lng: cep.lng });
+            setStatus("ok");
+          }
+          return;
+        }
         const pt = await geocode(
-          [cep.street, cep.city, cep.state].filter(Boolean).join(", ") || `${data.cep}, Brasil`,
+          [cep.logradouro, cep.localidade, cep.uf].filter(Boolean).join(", ") ||
+            `${data.cep}, Brasil`,
         );
         if (!alive) return;
         if (pt) {

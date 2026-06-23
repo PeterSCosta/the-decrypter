@@ -4,7 +4,7 @@ import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { DocResult } from "../engine/decoders/documents";
 
-function Info({ label, value }: { label: string; value: string }) {
+function Info({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null;
   return (
     <div className="min-w-0">
@@ -78,23 +78,25 @@ export function DocumentCard({ doc }: { doc: DocResult }) {
       {data ? (
         <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-sunken)] p-3">
           <div className="mb-2 font-display text-sm text-[var(--text-primary)]">
-            {data.razao_social}
-            {data.nome_fantasia ? (
+            {data.razaoSocial}
+            {data.nomeFantasia ? (
               <span className="ml-1.5 font-sans font-normal text-[var(--text-secondary)]">
-                ({data.nome_fantasia})
+                ({data.nomeFantasia})
               </span>
             ) : null}
           </div>
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
-            <Info label="Situação" value={data.descricao_situacao_cadastral} />
-            <Info label="Atividade" value={data.cnae_fiscal_descricao} />
+            <Info label="Situação" value={data.situacao} />
+            <Info label="Atividade" value={data.atividadePrincipal} />
             <Info
               label="Endereço"
               value={[data.logradouro, data.numero, data.bairro].filter(Boolean).join(", ")}
             />
-            <Info label="Município/UF" value={`${data.municipio} — ${data.uf}`} />
+            <Info
+              label="Município/UF"
+              value={[data.municipio, data.uf].filter(Boolean).join(" — ")}
+            />
             <Info label="CEP" value={data.cep} />
-            <Info label="Telefone" value={data.ddd_telefone_1} />
           </dl>
         </div>
       ) : null}

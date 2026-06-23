@@ -57,7 +57,7 @@ export function NcmCard({ hint }: { hint: NcmHint }) {
     <div className="flex items-start gap-2">
       <Tag className="mt-0.5 h-4 w-4 shrink-0 text-[var(--text-muted)]" />
       <div className="min-w-0">
-        <div className="text-sm text-[var(--text-primary)]">{clean(data.descricao)}</div>
+        <div className="text-sm text-[var(--text-primary)]">{clean(data.descricao ?? "")}</div>
         <div className="mt-0.5 font-mono text-xs text-[var(--text-muted)]">NCM {data.codigo}</div>
       </div>
     </div>
