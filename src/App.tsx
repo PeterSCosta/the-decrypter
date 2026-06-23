@@ -1,16 +1,17 @@
 import { Topbar } from "@/components/layout/topbar";
 import { AnagramPanel } from "@/features/anagram/components/anagram-panel";
 import { DecoderWorkbench } from "@/features/decoder/components/decoder-workbench";
+import { FleetPanel } from "@/features/fleet/components/fleet-panel";
 import { HelpPage } from "@/features/help/components/help-page";
 import { RoadmapPage } from "@/features/help/components/roadmap-page";
 import { PositionsPanel } from "@/features/positions/components/positions-panel";
 import { ReferencePanel } from "@/features/reference/components/reference-panel";
 import { TextExtractPanel } from "@/features/text-extract/components/text-extract-panel";
 import { cn } from "@/lib/cn";
-import { BookOpen, Hash, Shuffle, Type, Wand2 } from "lucide-react";
+import { BookOpen, Hash, MapPinned, Shuffle, Type, Wand2 } from "lucide-react";
 import { type ComponentType, useState } from "react";
 
-type TabId = "decoder" | "text" | "positions" | "anagram" | "reference";
+type TabId = "decoder" | "text" | "positions" | "anagram" | "reference" | "fleet";
 
 const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { id: "decoder", label: "Decodificador", icon: Wand2 },
@@ -18,6 +19,7 @@ const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string
   { id: "positions", label: "Posições", icon: Hash },
   { id: "anagram", label: "Anagramas", icon: Shuffle },
   { id: "reference", label: "Cola", icon: BookOpen },
+  { id: "fleet", label: "Frota", icon: MapPinned },
 ];
 
 type View = "app" | "help" | "roadmap";
@@ -69,6 +71,7 @@ export function App() {
           {tab === "positions" && <PositionsPanel />}
           {tab === "anagram" && <AnagramPanel />}
           {tab === "reference" && <ReferencePanel />}
+          {tab === "fleet" && <FleetPanel />}
         </main>
       )}
 
