@@ -47,9 +47,35 @@ Para cada decoder/ferramenta encontrado no Passo 1:
 - **Na ajuda mas não existe mais** → remova a entrada.
 - **Renomeado** → atualize o `name` (e o exemplo se mudou o comportamento).
 
-Mantenha a `desc` curta e os exemplos verídicos (rode mentalmente ou teste no
-`vite preview` quando tiver dúvida). Agrupe itens parecidos numa entrada só
-quando fizer sentido (ex.: "Base45 / Base58 / Base85").
+Mantenha a `desc` curta e **todo decoder com um `example` verídico** — em especial
+os de **localização** (achar lugar a partir de um código). Agrupe itens parecidos
+numa entrada só quando fizer sentido (ex.: "Base45 / Base58 / Base85").
+
+### Atalhos de localização (prioridade) — sempre com exemplo verificado
+
+A seção `localizacao` é a mais sensível: os **atalhos de cauda local** (completam um
+código PARCIAL assumindo Blumenau/Itajaí — o "Nb" do GeoHex, Plus Code curto
+585G/585H, cauda de Geohash 6gjn/6gjq, e os que vierem: MGRS/UTM/Maidenhead/S2)
+precisam de uma entrada com **exemplo `{ in, out }` real e a cidade no resultado**.
+Os prefixos por cidade ficam em `src/features/location/anchors.ts`.
+
+Como gerar exemplos verídicos (o `geohex` é CJS e não roda via `tsx` direto — use
+um teste temporário do vitest, que tem o interop do Vite):
+
+```ts
+// src/features/location/_tmp.test.ts  (apague depois)
+import { getCellByLocation } from "geohex";
+import { it } from "vitest";
+import { BLUMENAU, ITAJAI } from "./anchors";
+import { decodeGeohashLocal, decodePlusCodeLocal, detectLocation } from "./formats";
+it("dump", () => {
+  for (const a of [BLUMENAU, ITAJAI])
+    console.log(a.name, getCellByLocation(a.lat, a.lng, 11).code,
+      detectLocation(getCellByLocation(a.lat, a.lng, 11).code.slice(2))?.format);
+  console.log(decodePlusCodeLocal("38RQ+V7"), decodeGeohashLocal("g7rpj"));
+});
+```
+`pnpm test -- _tmp` mostra os valores; copie pro `example` e apague o arquivo.
 
 ## Passo 3 — Verificar
 

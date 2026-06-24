@@ -198,7 +198,8 @@ export const HELP_SECTIONS: HelpSection[] = [
   {
     id: "localizacao",
     title: "Localização e mapas",
-    intro: "Reconhece coordenadas em vários formatos e plota no mapa.",
+    intro:
+      "Reconhece coordenadas em vários formatos e plota no mapa. Muitos sistemas têm prefixo fixo por cidade — então um código PARCIAL (só a cauda) já é localizado, assumindo Blumenau ou Itajaí (como o atalho “Nb” do GeoHex). Quando é localização, o card também mostra o membro da frota mais próximo.",
     entries: [
       {
         name: "Coordenadas (DD, DMS, DDM)",
@@ -206,19 +207,24 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "-26.9906, -48.6356", out: "ponto no mapa" },
       },
       {
-        name: "UTM · Geohash · Plus Code · Maidenhead · Quadkey · H3",
-        desc: "Vários formatos de grade/índice geográfico.",
+        name: "Grades globais: UTM · Geohash · Plus Code · Maidenhead · Quadkey · H3",
+        desc: "Código completo de qualquer um desses formatos → ponto no mapa.",
         example: { in: "89a835d5acbffff", out: "H3 → mapa" },
       },
       {
-        name: "GeoHex (geohex.net)",
-        desc: "Código GeoHex → mapa. Blumenau e Itajaí começam com “Nb”, então um número puro também é tentado como “Nb” + número (Vale do Itajaí).",
-        example: { in: "Nb11458750330", out: "Blumenau no mapa" },
+        name: "GeoHex — código ou só a cauda “Nb”",
+        desc: "Código GeoHex completo, OU só os números: Blumenau e Itajaí começam com “Nb”, então a cauda numérica é completada como “Nb”+número (Vale do Itajaí).",
+        example: { in: "11478825612", out: "Itajaí no mapa (Nb11478825612)" },
       },
       {
-        name: "Atalho local (Plus Code / Geohash)",
-        desc: "Código parcial sem o prefixo da cidade: completa assumindo Blumenau ou Itajaí (Plus Code 585G/585H, Geohash 6gjn/6gjq).",
-        example: { in: "3WJM+6H", out: "Blumenau no mapa" },
+        name: "Atalho local: Plus Code curto",
+        desc: "Plus Code sem o “area code” (4 chars): completa com o de Blumenau (585G) ou Itajaí (585H) e escolhe o que cai na cidade.",
+        example: { in: "38RQ+V7", out: "Itajaí (585H38RQ+V7)" },
+      },
+      {
+        name: "Atalho local: cauda de Geohash",
+        desc: "Cauda de Geohash (com letra): antepõe o prefixo da cidade — Blumenau 6gjn / Itajaí 6gjq.",
+        example: { in: "g7rpj", out: "Blumenau (6gjng7rpj)" },
       },
       {
         name: "what3words",
