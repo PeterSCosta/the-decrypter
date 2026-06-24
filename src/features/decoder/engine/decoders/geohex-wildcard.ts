@@ -86,7 +86,7 @@ export const decoders = defineDecoder({
 
     let hits = resolveGeoHexWildcard(withPrefix, BLUMENAU_BBOX);
     if (hits === null) return []; // curingas demais
-    let scope = "Blumenau";
+    let scope = "Vale do Itajaí";
     if (hits.length === 0 && !onlyBlumenau) {
       hits = resolveGeoHexWildcard(withPrefix, BRAZIL_BBOX) ?? [];
       scope = "Brasil";

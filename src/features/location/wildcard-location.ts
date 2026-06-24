@@ -5,25 +5,17 @@
  * quando falta um pedaço do código. CEP usa o índice do dataset (em cep/search);
  * GeoHex é algorítmico e enumerado aqui.
  */
-import { type GeoPoint, parseGeoHex } from "./formats";
+import { type BBox, BRAZIL_BBOX, VALE_BBOX, inBBox } from "./anchors";
+import { parseGeoHex } from "./formats";
 
-export interface BBox {
-  latMin: number;
-  latMax: number;
-  lonMin: number;
-  lonMax: number;
-}
+// Reexporta a fonte única (`anchors.ts`) p/ não quebrar imports antigos.
+export { type BBox, BRAZIL_BBOX, inBBox };
 
-export const BRAZIL_BBOX: BBox = { latMin: -33.77, latMax: 5.27, lonMin: -73.99, lonMax: -28.84 };
-export const BLUMENAU_BBOX: BBox = {
-  latMin: -27.25,
-  latMax: -26.7,
-  lonMin: -49.35,
-  lonMax: -48.75,
-};
-
-export const inBBox = (p: GeoPoint, b: BBox): boolean =>
-  p.lat >= b.latMin && p.lat <= b.latMax && p.lng >= b.lonMin && p.lng <= b.lonMax;
+/**
+ * Caixa do atalho "Nb" de GeoHex — aponta p/ a caixa do Vale do Itajaí, que
+ * cobre Blumenau E Itajaí (ambas compartilham o prefixo "Nb").
+ */
+export const BLUMENAU_BBOX: BBox = VALE_BBOX;
 
 const WILDCARD = /[xX*_?]/;
 /** Limite de segurança: 4 curingas decimais = 10.000 candidatos. */

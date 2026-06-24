@@ -5,6 +5,7 @@
  */
 import { getCellByCode, getCellByLocation } from "geohex";
 import { cellToLatLng, isValidCell } from "h3-js";
+import { ANCHORS, VALE_BBOX, inBBox, scopeLabel } from "./anchors";
 
 export interface GeoPoint {
   lat: number;
@@ -230,8 +231,6 @@ export function parseH3(raw: string): GeoPoint | null {
 }
 
 // ---- GeoHex (geohex.net, @sa2da) — "Nb11458750330" -----------------------
-// Caixa de Blumenau e vizinhança (todos os códigos de nível 11 ali começam com "Nb").
-const BLU_BBOX = { latMin: -27.25, latMax: -26.7, lonMin: -49.35, lonMax: -48.75 };
 
 /** Decodifica um código GeoHex (2 letras + dígitos) validando por ida-e-volta. */
 function decodeGeohexCode(code: string): GeoPoint | null {
@@ -254,21 +253,60 @@ export function parseGeoHex(raw: string): GeoPoint | null {
 }
 
 /**
- * Atalho de Blumenau: os códigos GeoHex da cidade começam com "Nb"; então um
- * número puro pode ser só a "cauda" — tenta "Nb" + número e só aceita se cair
- * dentro da caixa de Blumenau.
+ * Atalho do Vale do Itajaí: os códigos GeoHex de Blumenau E Itajaí começam com
+ * "Nb" (prefixo regional comum). Um número puro pode ser só a "cauda" — tenta
+ * "Nb" + número e só aceita se cair dentro da caixa do Vale (qualquer das duas
+ * cidades). Mantém o nome `parseGeoHexBlumenau` por compatibilidade.
  */
 export function parseGeoHexBlumenau(raw: string): GeoPoint | null {
   const s = raw.trim();
   if (!/^\d{4,}$/.test(s)) return null;
   const pt = decodeGeohexCode(`Nb${s}`);
   if (!pt) return null;
-  const inside =
-    pt.lat >= BLU_BBOX.latMin &&
-    pt.lat <= BLU_BBOX.latMax &&
-    pt.lng >= BLU_BBOX.lonMin &&
-    pt.lng <= BLU_BBOX.lonMax;
-  return inside ? pt : null;
+  return inBBox(pt, VALE_BBOX) ? pt : null;
+}
+
+// ---- Atalhos de cauda local (Plus Code curto, Geohash) -------------------
+export interface LocalGeoHit extends GeoPoint {
+  /** Cidade-âncora assumida ("Blumenau" / "Itajaí"). */
+  anchor: string;
+  /** Código completo reconstruído com o prefixo local. */
+  full: string;
+}
+
+/**
+ * Plus Code CURTO (sem o "area code" de 4 chars, ex.: "3WJM+6H"): reconstrói
+ * antepondo o prefixo de Blumenau ("585G") ou Itajaí ("585H") e aceita o que
+ * cair dentro da cidade. É a recuperação por âncora que o OLC.recoverNearest faz.
+ */
+export function decodePlusCodeLocal(raw: string): LocalGeoHit | null {
+  const s = raw.trim().toUpperCase();
+  const m = s.match(/^([23456789CFGHJMPQRVWX]{4})\+([23456789CFGHJMPQRVWX]{2,3})$/);
+  if (!m) return null; // só o caso comum: 4 chars antes do "+" (area code removido)
+  for (const a of ANCHORS) {
+    const full = a.plusPrefix + s;
+    const pt = decodePlusCode(full);
+    if (pt && inBBox(pt, a.bbox)) return { ...pt, anchor: a.name, full };
+  }
+  return null;
+}
+
+/**
+ * Cauda de Geohash (ex.: "g7rpj"): antepõe o prefixo da cidade ("6gjn" Blumenau
+ * / "6gjq" Itajaí) e aceita o que cair dentro dela. Auto-validante: só passa a
+ * cauda que de fato cai na caixa da cidade.
+ */
+export function decodeGeohashLocal(raw: string): LocalGeoHit | null {
+  const s = raw.trim().toLowerCase();
+  // exige ≥1 letra (lookahead) p/ não colidir com entradas puramente numéricas
+  // (CEP, NCM, códigos de rua, etc.), que são as colisões mais comuns.
+  if (!/^(?=.*[bcdefghjkmnpqrstuvwxyz])[0-9bcdefghjkmnpqrstuvwxyz]{4,8}$/.test(s)) return null;
+  for (const a of ANCHORS) {
+    const full = a.geohashCity + s;
+    const pt = decodeGeohash(full);
+    if (pt && inBBox(pt, a.bbox)) return { ...pt, anchor: a.name, full };
+  }
+  return null;
 }
 
 /**
@@ -297,9 +335,13 @@ export function detectLocation(raw: string): DetectedLocation | null {
     ["H3", parseH3(input)],
     ["GeoHex", parseGeoHex(input)],
     ["Geohash", decodeGeohash(input)],
-    // Atalho de Blumenau: número puro como cauda de um código "Nb…".
-    ["GeoHex (Blumenau)", parseGeoHexBlumenau(input)],
   ];
   for (const [format, pt] of attempts) if (pt) return { ...pt, format };
+
+  // Atalho do Vale: número puro como cauda de um código "Nb…" (Blumenau/Itajaí).
+  const geohexLocal = parseGeoHexBlumenau(input);
+  if (geohexLocal) {
+    return { ...geohexLocal, format: `GeoHex (${scopeLabel(geohexLocal) ?? "Vale do Itajaí"})` };
+  }
   return null;
 }
