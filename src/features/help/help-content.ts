@@ -27,7 +27,8 @@ export const HELP_SECTIONS: HelpSection[] = [
   {
     id: "codificacoes",
     title: "Codificações",
-    intro: "Representações reversíveis de texto/bytes — detectadas e revertidas automaticamente.",
+    intro:
+      "Representações reversíveis de texto/bytes — detectadas e revertidas automaticamente. Ao escolher uma na barra lateral, um segundo campo também CODIFICA o texto naquela cifra.",
     entries: [
       { name: "Base64", desc: "Texto em Base64.", example: { in: "SGVsbG8=", out: "Hello" } },
       {
@@ -101,9 +102,19 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "Rijvs (chave KEY)", out: "Hello" },
       },
       {
-        name: "Playfair / Quadrado de Políbio / Tap code",
-        desc: "Cifras de tabuleiro 5×5.",
-        example: { in: "·· ··· (tap)", out: "letra" },
+        name: "Playfair / Quadrado de Políbio / Bifid / Tap code",
+        desc: "Cifras de tabuleiro 5×5 (Bifid e Playfair usam o campo de chave).",
+        example: { in: "FNNVD", out: "HELLO (Bifid)" },
+      },
+      {
+        name: "Trithemius",
+        desc: "César progressivo, sem chave: cada letra desloca pela própria posição.",
+        example: { in: "HFNOS", out: "HELLO" },
+      },
+      {
+        name: "Porta (Della Porta)",
+        desc: "Polialfabética recíproca (cifra = decifra); usa o campo de chave.",
+        example: { in: "texto (chave KEY)", out: "texto claro" },
       },
       {
         name: "Cerca (rail fence) / Transposição colunar",
@@ -177,6 +188,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         desc: "Diz qual algoritmo o hash provavelmente é, pelo tamanho/formato.",
         example: { in: "5d41402abc4b2a76b9719d911017c592", out: "MD5 (32 hex)" },
       },
+      {
+        name: "XOR (com chave)",
+        desc: "XOR de chave repetida (entrada em hex ou texto); usa o campo de chave. Clássico de CTF.",
+        example: { in: "hex + chave", out: "texto claro" },
+      },
     ],
   },
   {
@@ -196,8 +212,13 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "GeoHex (geohex.net)",
-        desc: "Código GeoHex → mapa. Em Blumenau os códigos começam com “Nb”, então um número puro também é tentado como “Nb” + número.",
+        desc: "Código GeoHex → mapa. Blumenau e Itajaí começam com “Nb”, então um número puro também é tentado como “Nb” + número (Vale do Itajaí).",
         example: { in: "Nb11458750330", out: "Blumenau no mapa" },
+      },
+      {
+        name: "Atalho local (Plus Code / Geohash)",
+        desc: "Código parcial sem o prefixo da cidade: completa assumindo Blumenau ou Itajaí (Plus Code 585G/585H, Geohash 6gjn/6gjq).",
+        example: { in: "3WJM+6H", out: "Blumenau no mapa" },
       },
       {
         name: "what3words",
