@@ -1,5 +1,5 @@
 import { searchCeps } from "@/features/cep/search";
-import { type CepHit, formatCep, toHit } from "@/features/cep/types";
+import { type CepHit, cepByCode, formatCep, toHit } from "@/features/cep/types";
 import { type StreetRow, type StreetsData, nomeCompleto } from "@/features/street-guide/types";
 import type { Decoder } from "./types";
 import { stripDiacritics } from "./util";
@@ -213,10 +213,10 @@ const cepScPrefix: Decoder = {
     if (!ctx.ceps) return [];
     const digits = input.replace(/\D/g, "");
     if (digits.length !== 6) return [];
-    const candidates = new Set(SC_PREFIXES.map((p) => p + digits));
+    const idx = cepByCode(ctx.ceps);
     const hits: CepHit[] = [];
-    for (const row of ctx.ceps.rows) {
-      if (candidates.has(row[0])) hits.push(toHit(row, ctx.ceps.municipios));
+    for (const p of SC_PREFIXES) {
+      for (const row of idx.get(p + digits) ?? []) hits.push(toHit(row, ctx.ceps.municipios));
     }
     if (hits.length === 0) return [];
     return [
@@ -245,11 +245,9 @@ const cepLookup: Decoder = {
     if (!ctx.ceps) return [];
     const digits = input.replace(/\D/g, "");
     if (digits.length !== 8) return [];
-    const hits: CepHit[] = [];
-    for (const row of ctx.ceps.rows) {
-      if (row[0] === digits) hits.push(toHit(row, ctx.ceps.municipios));
-    }
-    if (hits.length === 0) return [];
+    const rows = cepByCode(ctx.ceps).get(digits) ?? [];
+    if (rows.length === 0) return [];
+    const hits: CepHit[] = rows.map((row) => toHit(row, ctx.ceps!.municipios));
     return [
       {
         decoderId: "cep-exact",

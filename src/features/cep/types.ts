@@ -40,3 +40,20 @@ export function toHit(row: CepRow, municipios: string[]): CepHit {
 export function formatCep(cep: string): string {
   return cep.length === 8 ? `${cep.slice(0, 5)}-${cep.slice(5)}` : cep;
 }
+
+// Índice CEP(8 dígitos) → linhas, lazy e cacheado por dataset. Substitui o scan
+// O(n) que cep-exact/cep-sc-prefix/location faziam em `rows` a cada tecla.
+const codeIndexCache = new WeakMap<CepsData, Map<string, CepRow[]>>();
+export function cepByCode(data: CepsData): Map<string, CepRow[]> {
+  let m = codeIndexCache.get(data);
+  if (!m) {
+    m = new Map<string, CepRow[]>();
+    for (const r of data.rows) {
+      const list = m.get(r[0]);
+      if (list) list.push(r);
+      else m.set(r[0], [r]);
+    }
+    codeIndexCache.set(data, m);
+  }
+  return m;
+}

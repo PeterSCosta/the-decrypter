@@ -1,4 +1,4 @@
-import { formatCep } from "@/features/cep/types";
+import { cepByCode, formatCep } from "@/features/cep/types";
 import { detectLocation, detectWhat3Words } from "@/features/location/formats";
 import { defineDecoder } from "../define";
 import type { DecodeCandidate } from "../types";
@@ -68,7 +68,7 @@ export const decoders = defineDecoder({
 
     const digits = input.replace(/\D/g, "");
     if (digits.length === 8 && ctx.ceps) {
-      const row = ctx.ceps.rows.find((r) => r[0] === digits);
+      const row = cepByCode(ctx.ceps).get(digits)?.[0];
       if (row && row[4] != null && row[5] != null) {
         out.push(
           mapCandidate(

@@ -1,14 +1,6 @@
 import { mapDecoder } from "./define";
 import type { Decoder } from "./types";
-
-/** Decode bytes as strict UTF-8; returns null if the bytes aren't valid text. */
-function bytesToText(bytes: Uint8Array): string | null {
-  try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-  } catch {
-    return null;
-  }
-}
+import { bytesToText } from "./util";
 
 const stripWs = (s: string) => s.replace(/\s+/g, "");
 
