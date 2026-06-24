@@ -6,6 +6,7 @@
 import { getCellByCode, getCellByLocation } from "geohex";
 import { cellToLatLng, isValidCell } from "h3-js";
 import { ANCHORS, VALE_BBOX, inBBox, scopeLabel } from "./anchors";
+import { decodePlusCodeLib, recoverPlusCodeLib } from "./plus-code";
 
 export interface GeoPoint {
   lat: number;
@@ -116,7 +117,9 @@ export function decodeMaidenhead(raw: string): GeoPoint | null {
 
 // ---- Plus Code (Open Location Code) — precisão de pares (~14 m) -----------
 const OLC = "23456789CFGHJMPQRVWX";
-export function decodePlusCode(raw: string): GeoPoint | null {
+
+/** Decoder offline (sem dependência), precisão de pares (~14 m). */
+export function decodePlusCodeOffline(raw: string): GeoPoint | null {
   const s = raw.trim().toUpperCase();
   // Exige o separador "+" (sempre presente num Plus Code) p/ não confundir com
   // ISBN/outros números que só usem dígitos do alfabeto OLC (2–9).
@@ -135,6 +138,14 @@ export function decodePlusCode(raw: string): GeoPoint | null {
     }
   }
   return valid(lat + latUnit / 2, lng + lngUnit / 2);
+}
+
+/**
+ * Plus Code → coordenada. Offline primeiro (sem dependência); se ele recusar
+ * (refinamento de grade, código mais longo), cai na lib oficial `open-location-code`.
+ */
+export function decodePlusCode(raw: string): GeoPoint | null {
+  return decodePlusCodeOffline(raw) ?? decodePlusCodeLib(raw);
 }
 
 // ---- UTM (inverso, WGS84): "22J 734643E 7012408N" ------------------------
@@ -281,12 +292,18 @@ export interface LocalGeoHit extends GeoPoint {
  */
 export function decodePlusCodeLocal(raw: string): LocalGeoHit | null {
   const s = raw.trim().toUpperCase();
-  const m = s.match(/^([23456789CFGHJMPQRVWX]{4})\+([23456789CFGHJMPQRVWX]{2,3})$/);
-  if (!m) return null; // só o caso comum: 4 chars antes do "+" (area code removido)
+  // 1) Caso comum (4 chars antes do "+"): atalho por âncora, offline.
+  if (/^[23456789CFGHJMPQRVWX]{4}\+[23456789CFGHJMPQRVWX]{2,3}$/.test(s)) {
+    for (const a of ANCHORS) {
+      const full = a.plusPrefix + s;
+      const pt = decodePlusCode(full);
+      if (pt && inBBox(pt, a.bbox)) return { ...pt, anchor: a.name, full };
+    }
+  }
+  // 2) Fallback: recoverNearest oficial perto de cada cidade (cobre outros curtos).
   for (const a of ANCHORS) {
-    const full = a.plusPrefix + s;
-    const pt = decodePlusCode(full);
-    if (pt && inBBox(pt, a.bbox)) return { ...pt, anchor: a.name, full };
+    const r = recoverPlusCodeLib(s, a.lat, a.lng);
+    if (r && inBBox(r, a.bbox)) return { lat: r.lat, lng: r.lng, anchor: a.name, full: r.full };
   }
   return null;
 }

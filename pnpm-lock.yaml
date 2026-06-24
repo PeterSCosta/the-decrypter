@@ -23,6 +23,9 @@ importers:
       lucide-react:
         specifier: ^0.468.0
         version: 0.468.0(react@19.2.7)
+      open-location-code:
+        specifier: ^1.0.3
+        version: 1.0.3
       react:
         specifier: ^19.0.0
         version: 19.2.7
@@ -1349,6 +1352,9 @@ packages:
   nwsapi@2.2.24:
     resolution: {integrity: sha512-7YRhZ3jS45LwmSCT4b2sVFHt/WuovaktDU07QrtOBY2PXskss5a9jfmR9jptyumwXST+rFjrmppMY1KT/yn35A==}
 
+  open-location-code@1.0.3:
+    resolution: {integrity: sha512-DBm14BSn40Ee241n80zIFXIT6+y8Tb0I+jTdosLJ8Sidvr2qONvymwqymVbHV2nS+1gkDZ5eTNpnOIVV0Kn2fw==}
+
   parse5@7.3.0:
     resolution: {integrity: sha512-IInvU7fabl34qmi9gY8XOVxhYyMyuH2xUNpb2q8/Y+7552KlejkRvqvD19nMoUW/uQGGbqNpA6Tufu5FL5BZgw==}
 
@@ -2673,6 +2679,8 @@ snapshots:
   node-releases@2.0.48: {}
 
   nwsapi@2.2.24: {}
+
+  open-location-code@1.0.3: {}
 
   parse5@7.3.0:
     dependencies:
