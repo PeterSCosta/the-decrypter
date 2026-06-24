@@ -14,9 +14,10 @@
     "format": "biome check --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:data": "pnpm build:streets && pnpm build:ceps && pnpm build:municipios && pnpm build:words && pnpm build:airports",
+    "build:data": "pnpm build:streets && pnpm build:ceps && pnpm build:streets-geo && pnpm build:municipios && pnpm build:words && pnpm build:airports",
     "build:streets": "tsx scripts/build-streets.ts",
     "build:ceps": "tsx scripts/build-ceps.ts",
+    "build:streets-geo": "tsx scripts/geocode-streets.ts",
     "build:municipios": "tsx scripts/build-municipios.ts",
     "build:words": "tsx scripts/build-words.ts",
     "build:airports": "tsx scripts/build-airports.ts"

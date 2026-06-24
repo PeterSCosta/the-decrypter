@@ -10,6 +10,9 @@ export interface StreetRow {
   ext: number | null; // metros
   larg: number | null; // metros
   atas: string;
+  /** Centroide do logradouro (join local com a base de CEPs de Blumenau). */
+  lat?: number;
+  lng?: number;
 }
 
 export interface StreetsData {

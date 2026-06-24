@@ -16,10 +16,12 @@ function Field({ label, value }: { label: string; value: string }) {
 
 export function StreetCard({ row }: { row: StreetRow }) {
   const dims = row.ext || row.larg ? `${row.ext ?? "?"}m × ${row.larg ?? "?"}m` : "—";
-  const [point, setPoint] = useState<{ lat: number; lng: number } | null>(null);
+  // Coordenada já vem do join local com a base de CEPs (centroide do logradouro);
+  // só geocodifica via Nominatim sob demanda quando a rua não casou no join.
+  const baked = row.lat != null && row.lng != null ? { lat: row.lat, lng: row.lng } : null;
+  const [point, setPoint] = useState<{ lat: number; lng: number } | null>(baked);
   const [state, setState] = useState<"idle" | "loading" | "error">("idle");
 
-  // A base de ruas não tem coordenada → geocodifica sob demanda (nome + bairro).
   const showMap = async () => {
     if (point || state === "loading") return;
     setState("loading");
