@@ -1,5 +1,5 @@
 import { scorePlaintext } from "./score";
-import type { DecodeCandidate, DecodeContext, Decoder, DecoderCategory } from "./types";
+import type { DecodeCandidate, DecodeContext, Decoder, DecoderCategory, InputSpec } from "./types";
 import { isUseful } from "./util";
 
 /**
@@ -17,6 +17,8 @@ export type DecodeResult =
       notes?: string;
       /** Bypass plaintext scoring with a fixed plausibility (for data lookups). */
       forcedScore?: number;
+      /** Valor limpo para encadear; sem ele só saída textual encadeia. */
+      chainValue?: string;
       render?: DecodeCandidate["render"];
       data?: unknown;
     }
@@ -37,6 +39,8 @@ export function mapDecoder(opts: {
   id: string;
   name: string;
   category?: DecoderCategory;
+  /** Campos extras da bancada que esta cifra consome (ver `Decoder.inputs`). */
+  inputs?: { key?: InputSpec; aux?: InputSpec };
   decode: (input: string, ctx: DecodeContext) => DecodeResult;
   /** Inverse: codifica texto nessa cifra (usado no modo "uma cifra só"). */
   encode?: (input: string, ctx: DecodeContext) => string | null;
@@ -46,6 +50,7 @@ export function mapDecoder(opts: {
     id: opts.id,
     name: opts.name,
     category,
+    ...(opts.inputs ? { inputs: opts.inputs } : {}),
     decode(input, ctx) {
       const r = opts.decode(input, ctx);
       if (r == null) return [];
@@ -66,6 +71,8 @@ export function bruteDecoder(opts: {
   name: string;
   category?: DecoderCategory;
   keep?: number;
+  /** Campos extras da bancada que esta cifra consome (ver `Decoder.inputs`). */
+  inputs?: { key?: InputSpec; aux?: InputSpec };
   variants: (input: string, ctx: DecodeContext) => { label: string; output: string }[];
 }): Decoder {
   const category = opts.category ?? "classical";
@@ -74,6 +81,7 @@ export function bruteDecoder(opts: {
     id: opts.id,
     name: opts.name,
     category,
+    ...(opts.inputs ? { inputs: opts.inputs } : {}),
     decode(input, ctx) {
       return opts
         .variants(input, ctx)

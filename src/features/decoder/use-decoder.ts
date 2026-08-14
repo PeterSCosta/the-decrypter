@@ -17,15 +17,29 @@ import {
   loadStreets,
 } from "@/lib/data";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { decoders } from "./engine/registry";
 import { partition, runDecoders } from "./engine/run";
+import { setWordSet } from "./engine/score";
+import { sniff } from "./engine/sniff";
+import { titleHints } from "./engine/title-hints";
+import { loadWordSet } from "./engine/words";
+import { type TrailStep, popStep, pushStep, truncateTo } from "./trail";
 
 export function useDecoder() {
   const [input, setInput] = useState("");
   const [key, setKey] = useState("");
+  /** Segundo campo genérico (fonte a indexar, texto original, deslocamentos). */
+  const [aux, setAux] = useState("");
+  /**
+   * Título da prova. Nunca entra em `decode()` e NÃO altera o score — só
+   * levanta chips. Um título mal interpretado corromperia o ranking que o
+   * realce de palavra real acabou de tornar confiável, e de forma invisível.
+   */
+  const [title, setTitle] = useState("");
   /** Quando setado, roda só esse decoder (modo "testar uma cifra"). */
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [trail, setTrail] = useState<TrailStep[]>([]);
   const [streets, setStreets] = useState<StreetsData | null>(getStreets);
   const [ceps, setCeps] = useState<CepsData | null>(getCeps);
   const [municipios, setMunicipios] = useState<MunicipiosData | null>(getMunicipios);
@@ -34,6 +48,31 @@ export function useDecoder() {
 
   const debInput = useDebouncedValue(input, 160);
   const debKey = useDebouncedValue(key, 160);
+  const debAux = useDebouncedValue(aux, 160);
+  const debTitle = useDebouncedValue(title, 250);
+
+  // Wordlist do realce de palavra real: carrega ociosa e alimenta o singleton
+  // do score. Até chegar, `setWordSet` nunca é chamado e o ranking é o de antes.
+  const [wordsReady, setWordsReady] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    const start = () => {
+      loadWordSet()
+        .then((set) => {
+          if (!alive) return;
+          setWordSet(set);
+          setWordsReady(true);
+        })
+        .catch(() => {});
+    };
+    const ric = (globalThis as { requestIdleCallback?: (cb: () => void) => number })
+      .requestIdleCallback;
+    const id = ric ? ric(start) : setTimeout(start, 1200);
+    return () => {
+      alive = false;
+      if (!ric) clearTimeout(id as ReturnType<typeof setTimeout>);
+    };
+  }, []);
 
   // Street + município data are small — load eagerly so número→lookup is instant.
   useEffect(() => {
@@ -80,11 +119,31 @@ export function useDecoder() {
     }
   }, [digits, pix]);
 
+  // Um único contexto para as duas travessias (decodificar e codificar). Montá-lo
+  // duas vezes era como um campo novo sumia silenciosamente no modo codificar.
+  const ctx = useMemo(
+    () => ({
+      key: debKey,
+      aux: debAux,
+      only: selectedId ?? undefined,
+      streets,
+      ceps,
+      municipios,
+      airports,
+      pix,
+    }),
+    [debKey, debAux, selectedId, streets, ceps, municipios, airports, pix],
+  );
+
   const run = useMemo(() => {
     if (!debInput.trim()) return { results: [], hitCount: 0 };
-    const list = selectedId ? decoders.filter((d) => d.id === selectedId) : undefined;
-    return runDecoders(debInput, { key: debKey, streets, ceps, municipios, airports, pix }, list);
-  }, [debInput, debKey, streets, ceps, municipios, airports, pix, selectedId]);
+    // Decoder que exige o 2º campo fica fora da corrida enquanto ele está vazio.
+    // O filtro mora aqui, nunca em `runDecoders` — senão os testes do motor
+    // mudariam de comportamento.
+    const usable = (d: (typeof decoders)[number]) => !d.inputs?.aux?.required || !!ctx.aux?.trim();
+    const list = selectedId ? decoders.filter((d) => d.id === selectedId) : decoders.filter(usable);
+    return runDecoders(debInput, ctx, list);
+  }, [debInput, ctx, selectedId]);
 
   const { likely, unlikely } = useMemo(() => partition(run.results), [run.results]);
 
@@ -98,24 +157,59 @@ export function useDecoder() {
   const encoded = useMemo(() => {
     if (!selectedDecoder?.encode || !debEncodeInput.trim()) return null;
     try {
-      return selectedDecoder.encode(debEncodeInput, {
-        key: debKey,
-        streets,
-        ceps,
-        municipios,
-        airports,
-        pix,
-      });
+      return selectedDecoder.encode(debEncodeInput, ctx);
     } catch {
       return null;
     }
-  }, [selectedDecoder, debEncodeInput, debKey, streets, ceps, municipios, airports, pix]);
+  }, [selectedDecoder, debEncodeInput, ctx]);
+
+  /** Encadeia: o valor vira a entrada e o passo anterior entra na trilha. */
+  const chainTo = useCallback(
+    (value: string, via: string) => {
+      setTrail((t) => pushStep(t, input, via));
+      setInput(value);
+      setSelectedId(null);
+      setAux("");
+    },
+    [input],
+  );
+
+  const undoChain = useCallback(() => {
+    setTrail((t) => {
+      const { trail: next, input: prev } = popStep(t);
+      if (prev != null) setInput(prev);
+      return next;
+    });
+  }, []);
+
+  const goToStep = useCallback((index: number) => {
+    setTrail((t) => {
+      const { trail: next, input: prev } = truncateTo(t, index);
+      if (prev != null) setInput(prev);
+      return next;
+    });
+  }, []);
+
+  const clearTrail = useCallback(() => setTrail([]), []);
+
+  const hints = useMemo(() => {
+    const fromInput = debInput.trim() ? sniff(debInput, ctx) : [];
+    const fromTitle = debTitle.trim() ? titleHints(debTitle) : [];
+    // O título pode repetir o que a entrada já disse por caminho independente
+    // ("Ask Me" e "84 79 80 79" apontam ambos para ASCII) — uma dica só.
+    const seen = new Set(fromInput.map((h) => h.id));
+    return [...fromInput, ...fromTitle.filter((h) => !seen.has(h.id))];
+  }, [debInput, debTitle, ctx]);
 
   return {
     input,
     setInput,
     key,
     setKey,
+    aux,
+    setAux,
+    title,
+    setTitle,
     selectedId,
     setSelectedId,
     likely,
@@ -127,5 +221,13 @@ export function useDecoder() {
     encodeInput,
     setEncodeInput,
     encoded,
+    selectedDecoder,
+    trail,
+    chainTo,
+    undoChain,
+    goToStep,
+    clearTrail,
+    hints,
+    wordsReady,
   };
 }

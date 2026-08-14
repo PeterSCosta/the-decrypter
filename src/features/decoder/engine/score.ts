@@ -268,6 +268,86 @@ function bigramScore(folded: string): number {
   return total === 0 ? 0 : common / total;
 }
 
+/**
+ * Wordlist do realce de palavra real. É um **singleton de módulo**, não um
+ * campo de `DecodeContext`, por um motivo estrutural: `bruteDecoder` chama
+ * `scorePlaintext` sem ctx (`define.ts`) para eleger suas melhores variantes —
+ * é justamente ali (César, afim, railfence) que o realce mais importa.
+ *
+ * Enquanto for `null`, o score é **bit-a-bit o de antes**: a bancada degrada
+ * para o comportamento histórico enquanto as listas carregam.
+ */
+let WORDS: Set<string> | null = null;
+
+export function setWordSet(set: Set<string> | null): void {
+  WORDS = set;
+}
+
+/** Piso de token para contar como palavra (ver `words.ts`). */
+const MIN_HIT_LEN = 4;
+/** Piso para segmentar um token colado: pedaço menor que isto é ruído. */
+const MIN_PIECE_LEN = 4;
+/** Acima disto, um token sem espaço vira candidato a texto colado. */
+const GLUED_MIN = 8;
+/** Teto de trabalho da segmentação — protege o custo por tecla. */
+const GLUED_MAX = 64;
+
+/**
+ * Quebra um token colado nas palavras reais que ele contém e devolve quantas
+ * letras ficaram cobertas.
+ *
+ * Por que isto existe: a resposta que a bancada procura chega **sem espaços**
+ * ("PARACUMPRIRESSAPROVA…"). Sem segmentar, ela é um token só, fora do
+ * dicionário, cobertura zero — e perdia o topo para um acróstico de 4 letras que
+ * por acaso é palavra. Programação dinâmica: `dp[i]` = maior nº de letras
+ * cobertas nos primeiros `i` caracteres.
+ */
+function gluedCoverage(token: string, words: Set<string>): number {
+  const n = token.length;
+  if (n < GLUED_MIN || n > GLUED_MAX) return 0;
+  const dp = new Int32Array(n + 1);
+  for (let i = 1; i <= n; i++) {
+    dp[i] = dp[i - 1]; // pular este caractere (letra não coberta)
+    const from = Math.max(0, i - 18); // maior palavra plausível em pt-BR
+    for (let j = from; j <= i - MIN_PIECE_LEN; j++) {
+      if (words.has(token.slice(j, i))) {
+        const cand = dp[j] + (i - j);
+        if (cand > dp[i]) dp[i] = cand;
+      }
+    }
+  }
+  return dp[n];
+}
+
+/** Letras cobertas por palavra real, e o total de letras. */
+function coverage(text: string): { covered: number; total: number; hits: string[] } {
+  const hits: string[] = [];
+  let covered = 0;
+  let total = 0;
+  if (!WORDS) return { covered, total, hits };
+  for (const token of stripDiacritics(text)
+    .toLowerCase()
+    .split(/[^a-z]+/)) {
+    if (!token) continue;
+    total += token.length;
+    if (token.length >= MIN_HIT_LEN && WORDS.has(token)) {
+      covered += token.length;
+      hits.push(token);
+    } else {
+      covered += gluedCoverage(token, WORDS);
+    }
+  }
+  return { covered, total, hits };
+}
+
+/**
+ * Palavras reais encontradas na saída, na ordem. Vazio quando a lista ainda não
+ * carregou — a UI usa isto para o selo "palavra real: LAPIS".
+ */
+export function realWords(text: string): string[] {
+  return coverage(text).hits;
+}
+
 export function scorePlaintext(text: string): number {
   const gate = printableGate(text);
   if (gate <= 0) return 0;
@@ -293,5 +373,21 @@ export function scorePlaintext(text: string): number {
   // Bigrams carry the most signal; frequency and stopwords refine it.
   const base = 0.5 * bigrams + 0.3 * freq + 0.2 * words;
   const score = gate * lenConf * tidiness(text) * base - consonantPenalty(folded);
-  return Math.max(0, Math.min(1, score));
+  const clamped = Math.max(0, Math.min(1, score));
+
+  // Realce de palavra real: **puxa para 1** em vez de somar, para nunca estourar
+  // o teto nem inverter a ordem entre duas saídas igualmente reconhecíveis.
+  //
+  // A cobertura sozinha NÃO basta, e isto custou uma regressão medida: como ela
+  // é razão, um lixo de 4 letras que por acaso está na lista cobre 100% e ganha
+  // o realce máximo — a lista tem 7.402 palavras de 4 letras, ou seja 1 em ~57
+  // strings aleatórias "é palavra". Por isso o realce é amortecido pela
+  // EVIDÊNCIA ABSOLUTA: 4 letras casadas valem meio realce, 8 ou mais valem
+  // inteiro. Uma resposta colada de 28 caracteres que se decompõe em palavras
+  // reais ganha o realce cheio; "vaea" ganha um empurrão modesto.
+  const cov = coverage(text);
+  if (cov.covered === 0 || cov.total === 0) return clamped;
+  const evidence = Math.min(1, cov.covered / 8);
+  const lift = 0.6 * (cov.covered / cov.total) * evidence;
+  return clamped + lift * (1 - clamped);
 }
