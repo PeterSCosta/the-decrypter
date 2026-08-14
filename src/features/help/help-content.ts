@@ -18,9 +18,10 @@ export interface HelpSection {
 }
 
 export const HELP_INTRO = [
-  "O The Decrypter é uma oficina de cifras: você cola UMA entrada (texto, números, um código) e ele tenta TODAS as interpretações ao mesmo tempo — dezenas de cifras, codificações, tabelas e bases de dados — e mostra os resultados ranqueados por “o que faz sentido”.",
-  "Os mais prováveis aparecem em cima; o resto fica em “pouco provável”, recolhido. Cada resultado tem um selo (codificação, cifra, transformação, base de dados) e um botão de copiar. Quando há chave (Vigenère etc.), use o campo de chave.",
-  "Tudo roda no navegador. Algumas consultas usam APIs públicas e gratuitas (CNPJ, CEP, ISBN, NCM, produto pelo código de barras) e mapas (OpenStreetMap).",
+  "O The Decrypter é uma oficina de cifras: você cola UMA entrada (texto, números, um código) e ele tenta TODAS as interpretações ao mesmo tempo — 96 cifras, codificações, tabelas e bases de dados — e mostra os resultados ranqueados por “o que faz sentido”.",
+  "Os mais prováveis aparecem em cima; o resto fica em “pouco provável”, recolhido. Cada resultado tem um selo (codificação, cifra, transformação, base de dados), um botão de copiar e, quando a saída bate no dicionário pt/en, o selo “palavra real”. Quando há chave (Vigenère, índices, deslocamentos), use o campo de chave; o 2º campo guarda a fonte a indexar ou a lista.",
+  "Acima da entrada ficam os chips do sniffer (“isto tem cara de…”) e a barra de Cadeia, que empurra um resultado de volta para a entrada e registra a trilha. O campo de título lê o nome da prova como pista — ele só levanta chips, nunca mexe no ranking.",
+  "Tudo roda no navegador. As consultas externas (CNPJ, CEP, ISBN, NCM, PIX, produto pelo código de barras, what3words, geocodificação) passam pelo backend do projeto, e os mapas vêm do OpenStreetMap.",
 ];
 
 export const HELP_SECTIONS: HelpSection[] = [
@@ -72,6 +73,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         name: "Caracteres invisíveis (zero-width)",
         desc: "Mensagem escondida em caracteres de largura zero (esteganografia).",
         example: { in: "texto com zero-width", out: "mensagem oculta" },
+      },
+      {
+        name: "Espaços escondidos (whitespace)",
+        desc: "Espaço duplo, tabulação e espaço no fim da linha viram um perfil linha a linha (e bits, quando fecham) — cole preservando as quebras, porque copiar de PDF/Word apaga o sinal.",
+        example: { in: "4 linhas com espaços duplos", out: "perfil por linha → 2102" },
       },
     ],
   },
@@ -142,9 +148,32 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "8 5 12 12 15", out: "hello" },
       },
       {
-        name: "ROT5 / ROT18",
-        desc: "Rotaciona dígitos (ROT5) ou letras+dígitos (ROT18).",
+        name: "ROT5 / ROT18 / ROT47",
+        desc: "Rotaciona dígitos (ROT5), letras+dígitos (ROT18) ou toda a faixa imprimível do ASCII (ROT47).",
         example: { in: "12345", out: "67890" },
+      },
+      {
+        name: "ROT8000 (Unicode)",
+        desc: "O ROT13 do Unicode: gira metade do plano básico (63.404 posições), então texto latino vira ideograma e vice-versa — aplicar de novo devolve o original.",
+        example: { in: "籋籵籾籶籮籷籪籾", out: "Blumenau" },
+      },
+      {
+        name: "Cifra vocálica (deslocamento com sinal)",
+        desc: "Lista de deslocamentos COM sinal (o sinal é o portão): aplicada a A E I O U dá a palavra das imagens das vogais; aplicada posição a posição, cada letra anda o seu próprio valor.",
+        example: { in: "+11 -4 +7 -6 -2", out: "LAPIS (A+11=L · E-4=A · I+7=P · O-6=I · U-2=S)" },
+      },
+      {
+        name: "Roda alfabética (disco cifrante)",
+        desc: "A1Z26 parametrizado: varre as 26 origens na linha vermelha, os dois sentidos e a 1ª casa valendo 0 ou 1, e desenha o disco lido.",
+        example: {
+          in: "16 8 22 / 23 4 24 / 4 24 7 / 26 15 22",
+          out: "umabicicleta (origem F · horário · 1ª casa = 1)",
+        },
+      },
+      {
+        name: "Valor das letras (gematria, primos, redução)",
+        desc: "Letra ↔ número por tabela: gematria clássica (A=1, J=10, S=100), primos (A=2, B=3, C=5…) e redução 1–9; também volta de números para letras.",
+        example: { in: "scotland", out: "primos: 67 5 47 71 37 2 43 7" },
       },
     ],
   },
@@ -155,7 +184,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     entries: [
       {
         name: "Conversor de base",
-        desc: "Converte um número entre decimal, hex, octal e binário.",
+        desc: "Converte um número entre decimal, hex, octal e binário (e o caminho de volta: um binário solto também sai como número).",
         example: { in: "255", out: "hex FF · bin 11111111" },
       },
       {
@@ -164,9 +193,19 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "MMXXVI", out: "2026" },
       },
       {
+        name: "Número por extenso (pt-BR)",
+        desc: "Número escrito por extenso → dígitos, com ordinais e gênero; o caminho inverso (dígitos → extenso) só roda quando você escolhe esta cifra na barra lateral.",
+        example: { in: "quatrocentos e vinte e três", out: "423" },
+      },
+      {
+        name: "Texto invertido",
+        desc: "Lê a entrada de trás para frente.",
+        example: { in: "olleh", out: "hello" },
+      },
+      {
         name: "Tabela periódica",
-        desc: "Símbolo↔número atômico↔peso; digite símbolos para ver os elementos.",
-        example: { in: "H O Cu", out: "Hidrogênio · Oxigênio · Cobre" },
+        desc: "Quatro leituras: símbolo→número atômico, número→símbolo, peso atômico e fórmula molecular (os subscritos em ordem, com o ausente valendo 1) — esta última também pelo nome do composto em pt-BR.",
+        example: { in: "H3PO4 H2O HNO3", out: "31421113 (subscritos da fórmula)" },
       },
       {
         name: "Notas musicais",
@@ -184,6 +223,65 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "Sempre / Observe / Lugares", out: "SOL" },
       },
       {
+        name: "Acróstico posicional",
+        desc: "A k-ésima letra (do início ou do fim) de cada linha/palavra, as linhas alternadas e a junção nome↔sobrenome.",
+        example: {
+          in: "6 títulos, um por linha",
+          out: "5ª letra do fim de cada linha → TEatro",
+        },
+      },
+      {
+        name: "Letra por posição",
+        desc: "Uma fonte por linha e os índices na chave (aceita romanos, negativo para contar do fim e pares fonte→letra): cada fonte entrega uma letra.",
+        example: { in: "6 imperadores + chave “I V II IV IV III”", out: "Louros" },
+      },
+      {
+        name: "Contagem como chave",
+        desc: "A resposta não está no que o texto diz, e sim em quantas coisas ele tem: palavras por parágrafo/linha, itens por bloco, ocorrências de um caractere (2º campo) — com a leitura A1Z26 ao lado.",
+        example: { in: "8 parágrafos", out: "22 5 14 3 5 4 15 18 → vencedor" },
+      },
+      {
+        name: "Reagrupar dígitos",
+        desc: "Junta TODOS os dígitos da entrada (ignorando vírgulas e prosa) e reparte em blocos fixos: ASCII de 7/8 bits, ASCII decimal de 2/3 e A1Z26 aos pares.",
+        example: { in: "22 05 14 03 05 04 15 18", out: "VENCEDOR (A1Z26, blocos de 2)" },
+      },
+      {
+        name: "Leitura de grade",
+        desc: "Cinco caminhos sobre a mesma grade (markdown, espaçada ou contígua): quatro braços a partir dos cantos, espiral horária e anti-horária, serpentina por linhas e por colunas.",
+        example: { in: "grade 8×8 colada", out: "quatro braços → PARACUMPRIRESSAPROVAVOCESDEV…" },
+      },
+      {
+        name: "Data como chave",
+        desc: "Lista de datas → inicial do signo de cada uma; data sozinha abre o painel (signo, dia da semana, dia do ano, serial do Excel, Unix e fase da lua).",
+        example: {
+          in: "11/07-29/03-23/11-17/01-13/02-02/09-07/11-05/10",
+          out: "CASCAVEL (iniciais dos signos)",
+        },
+      },
+      {
+        name: "Aritmética escondida",
+        desc: "MDC, MMC, raiz, divisão, resto e Kaprekar sobre os números da entrada, com a leitura A1Z26 de cada linha; em prosa só dispara com palavra-dica (“em comum”, “raiz”, “dividir”…).",
+        example: { in: "21 15 45 60 63 12 15", out: "MDC = 3 → 7 5 15 20 21 4 5 → GEOTUDE" },
+      },
+      {
+        name: "Cores (hex/RGB/HSL)",
+        desc: "Hex, rgb(), hsl() ou uma lista de triplas → nome aproximado na Lista de cores da Wikipédia em português, com as iniciais e os valores nos outros espaços.",
+        example: {
+          in: "245-245-220 · 244-196-48 · 0-0-128 · 0-0-255 · 255-250-250 · 153-102-204",
+          out: "Bege · Açafrão · Naval · Azul · Neve · Ametista → BANANA",
+        },
+      },
+      {
+        name: "Código de cores de resistor",
+        desc: "3 a 6 faixas → valor, tolerância e ppm (e só os dígitos, que é o que costuma encadear); também lê ao contrário e faz o caminho inverso, de ohms para cores.",
+        example: { in: "marrom preto vermelho ouro", out: "1000 Ω ±5%" },
+      },
+      {
+        name: "Faber-Castell (código da cor)",
+        desc: "Código de 3 dígitos do lápis → nome da cor (as 12 conferidas do gabarito), uma por linha, pronto para indexar.",
+        example: { in: "015", out: "Laranja escuro" },
+      },
+      {
         name: "Identificador de hash",
         desc: "Diz qual algoritmo o hash provavelmente é, pelo tamanho/formato.",
         example: { in: "5d41402abc4b2a76b9719d911017c592", out: "MD5 (32 hex)" },
@@ -199,7 +297,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: "localizacao",
     title: "Localização e mapas",
     intro:
-      "Reconhece coordenadas em vários formatos e plota no mapa. Muitos sistemas têm prefixo fixo por cidade — então um código PARCIAL (só a cauda) já é localizado, assumindo Blumenau ou Itajaí (como o atalho “Nb” do GeoHex). Quando é localização, o card também mostra o membro da frota mais próximo.",
+      "Reconhece coordenadas em vários formatos e plota no mapa. Muitos sistemas têm prefixo fixo por cidade — então um código PARCIAL (só a cauda) já é localizado, assumindo Blumenau ou Itajaí (como o atalho “Nb” do GeoHex, a zona 22J do MGRS e o “JE” do GEOREF). Quando é localização, o card também mostra o membro da frota mais próximo.",
     entries: [
       {
         name: "Coordenadas (DD, DMS, DDM)",
@@ -212,9 +310,47 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "89a835d5acbffff", out: "H3 → mapa" },
       },
       {
-        name: "GeoHex — código ou só a cauda “Nb”",
-        desc: "Código GeoHex completo, OU só os números: Blumenau e Itajaí começam com “Nb”, então a cauda numérica é completada como “Nb”+número (Vale do Itajaí).",
+        name: "MGRS / USNG (militar)",
+        desc: "Referência de grade militar (zona + quadrado de 100 km + par de coordenadas), de 100 km a 1 m de precisão.",
+        example: { in: "22JGR3221221631", out: "Itajaí (-26,9078 · -48,6618)" },
+      },
+      {
+        name: "GEOREF (aeronáutico)",
+        desc: "World Geographic Reference System: dois pares de letras para a célula de 1° e os minutos ao lado.",
+        example: { in: "JEMD2005", out: "Itajaí (-26,9083 · -48,6583)" },
+      },
+      {
+        name: "GARS (célula de 30′/15′/5′)",
+        desc: "Global Area Reference System: três dígitos de longitude, duas letras de latitude e os dígitos que dividem a célula em quadrantes e áreas.",
+        example: { in: "262FG49", out: "célula de 5′ sobre Blumenau (-26,9583 · -49,0417)" },
+      },
+      {
+        name: "Carta IBGE/DSG (articulação MI)",
+        desc: "Nomenclatura das cartas topográficas: cada sufixo desce uma escala, de 1:1.000.000 até a quadrícula de 7,5′.",
+        example: { in: "SG-22-Z-B-IV-4-SE", out: "quadrícula 1:25.000 de Blumenau" },
+      },
+      {
+        name: "Grade estatística IBGE",
+        desc: "Identificador das células do Censo (Albers/SIRGAS 2000), de 1 km ou 200 m — sai como ponto no mapa.",
+        example: {
+          in: "1KME5499000N8337000",
+          out: "célula de 1 km em Blumenau (-26,9197 · -49,0704)",
+        },
+      },
+      {
+        name: "GeoHex — código, cauda “Nb” ou curinga",
+        desc: "Código GeoHex completo, OU só os números: Blumenau e Itajaí começam com “Nb”, então a cauda numérica é completada como “Nb”+número (Vale do Itajaí). Casa desconhecida aceita curinga (x, ?, * ou _).",
         example: { in: "11478825612", out: "Itajaí no mapa (Nb11478825612)" },
+      },
+      {
+        name: "GeoTude (“GeoCoding ###”)",
+        desc: "Grade decimal aninhada: um índice de 4–6 dígitos dá a célula de 1° e cada par de dois dígitos refina um decimal — o ponto é o canto noroeste da célula, não o centro.",
+        example: { in: "68130.89.91.15.12", out: "-26.8911, -49.0848 (Blumenau)" },
+      },
+      {
+        name: "Mapcode (reconhecido pela forma)",
+        desc: "A bancada identifica a forma e avisa por um chip; a coordenada ainda não vai ao mapa, porque mapcode local não decodifica sem território (2JF.5R vale em 467 dos 533 territórios — assumindo BR-SC, cai na Prefeitura de Blumenau).",
+        example: { in: "2JF.5R", out: "chip “tem cara de Mapcode”" },
       },
       {
         name: "Atalho local: Plus Code curto",
@@ -225,6 +361,16 @@ export const HELP_SECTIONS: HelpSection[] = [
         name: "Atalho local: cauda de Geohash",
         desc: "Cauda de Geohash (com letra): antepõe o prefixo da cidade — Blumenau 6gjn / Itajaí 6gjq.",
         example: { in: "g7rpj", out: "Blumenau (6gjng7rpj)" },
+      },
+      {
+        name: "Atalho local: cauda de MGRS",
+        desc: "MGRS sem a zona: completa com a 22J do Vale do Itajaí e só aceita o que cai na região.",
+        example: { in: "FR9203021024", out: "Blumenau (22JFR9203021024)" },
+      },
+      {
+        name: "Atalho local: cauda de GEOREF",
+        desc: "GEOREF sem o par de 15° inicial: completa com o “JE” do Vale do Itajaí.",
+        example: { in: "LD5604", out: "Blumenau (JELD5604)" },
       },
       {
         name: "what3words",
@@ -264,6 +410,37 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "7891000053508", out: "EAN-13 · Brasil · produto" },
       },
       {
+        name: "Boleto / conta de consumo",
+        desc: "Código de barras (44), linha digitável bancária (47) ou de arrecadação (48) → banco, valor e o vencimento escondido no fator — mostrado nas DUAS leituras, porque o fator reiniciou em 22/02/2025.",
+        example: {
+          in: "34191153800000157351234567890123456789012345",
+          out: "Itaú · R$ 157,35 · vence 14/08/2026 (ou 23/12/2001)",
+        },
+      },
+      {
+        name: "Chave de acesso (NF-e)",
+        desc: "As 44 posições da nota fiscal eletrônica fatiadas nos nove campos oficiais, com o CNPJ do emitente pronto para encadear.",
+        example: {
+          in: "43171207364617000135550000000120141000120146",
+          out: "NF-e nº 12.014 · RS · 12/2017 · CNPJ 07.364.617/0001-35",
+        },
+      },
+      {
+        name: "Título de eleitor (UF)",
+        desc: "12 dígitos com os dois verificadores conferidos: os dígitos 9–10 dizem o estado onde a pessoa vota.",
+        example: { in: "123456780990", out: "Santa Catarina (SC)" },
+      },
+      {
+        name: "Placa de veículo",
+        desc: "Converte antiga ↔ Mercosul (o 5º caractere é o 2º dígito virado letra) e aponta a UF pela faixa de letras — a Mercosul nativa não codifica estado nenhum.",
+        example: { in: "ABC-1234", out: "ABC1C34 · Paraná (PR)" },
+      },
+      {
+        name: "Rastreio postal (Correios / UPU S10)",
+        desc: "Confere o dígito verificador do código de 13 caracteres, classifica o tipo de serviço pela norma e resolve o país de postagem pelo sufixo.",
+        example: { in: "PB123456785BR", out: "DV confere · postado no Brasil" },
+      },
+      {
         name: "Quantidade de dígitos",
         desc: "Diz que documentos/códigos têm aquele tamanho.",
         example: { in: "12345678901", out: "11 díg.: CPF · PIS · título…" },
@@ -282,6 +459,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         name: "DDD (área do Brasil)",
         desc: "Código de área → UF, região e cidades.",
         example: { in: "47 48", out: "SC norte · SC sul" },
+      },
+      {
+        name: "Cidade → DDD",
+        desc: "Caminho inverso: a lista de cidades vira a sequência de códigos de área, que costuma montar um telefone (a UF vai visível para você flagrar homônimo).",
+        example: { in: "Blumenau, Porto Alegre", out: "47 · 51 → 4751" },
       },
       {
         name: "Domínio .br (Registro.br)",
@@ -322,8 +504,8 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "CEP (Santa Catarina)",
-        desc: "CEP exato ou curinga (88xxx500) → logradouro e mapa.",
-        example: { in: "88010500", out: "logradouro + mapa" },
+        desc: "CEP exato ou curinga (88xxx500) → logradouro e mapa; com só os 6 dígitos finais, testa os dois prefixos de SC (88 e 89).",
+        example: { in: "010000", out: "88010-000 Florianópolis · 89010-000 Blumenau" },
       },
     ],
   },
@@ -334,26 +516,58 @@ export const HELP_SECTIONS: HelpSection[] = [
     entries: [
       {
         name: "Decodificador",
-        desc: "A busca única: cola a entrada e vê todas as interpretações ranqueadas. Inclui ruas e CEP de Blumenau/SC (com curinga, ex.: 88xxx500) e uma barra lateral pra testar só uma cifra.",
+        desc: "A busca única: cola a entrada e vê todas as interpretações ranqueadas. Tem campo de chave, 2º campo (a fonte a indexar, a lista, o texto original), ruas e CEP de Blumenau/SC (com curinga, ex.: 88xxx500) e uma barra lateral pra rodar só uma cifra — que, quando ela sabe, também CODIFICA.",
+      },
+      {
+        name: "Cadeia (usar como entrada)",
+        desc: "Todo resultado encadeável tem “usar como entrada”: o valor volta para o campo de entrada e a barra de Cadeia guarda a trilha (até 8 passos), com desfazer e limpar — as provas são cadeias de 2 a 4 camadas.",
+        example: {
+          in: "Base64 → contagem → A1Z26",
+          out: "trilha clicável de volta a qualquer passo",
+        },
+      },
+      {
+        name: "Título da prova",
+        desc: "O nome da prova entra como pista e levanta chips de sugestão; nunca altera o ranking, e nada é selecionado sozinho.",
+        example: { in: "Químico maluco", out: "chip → tabela periódica (fórmula molecular)" },
+      },
+      {
+        name: "Chips do sniffer",
+        desc: "Faixa de “isto tem cara de…” acima dos resultados, fora da corrida: o diagnóstico negativo que nenhum decoder dá (DV que não fecha, ASCII confundido com A1Z26, MDC latente, forma de GeoTude/Mapcode/what3words). Alguns chips rodam a cifra sugerida ou já encadeiam o valor.",
+        example: { in: "70 79 82 84 65", out: "“é ASCII, não A1Z26” (valores 65–84)" },
+      },
+      {
+        name: "Selo “palavra real”",
+        desc: "Quando a saída de texto bate no dicionário pt/en, o cartão ganha o selo com as palavras reconhecidas — é o autocheck de que a leitura fechou.",
+        example: { in: "+11 -4 +7 -6 -2", out: "LAPIS com selo “palavra real”" },
       },
       {
         name: "Texto",
-        desc: "Extrai mensagens escondidas: 1ª/última letra de linha e palavra, maiúsculas, após pontuação, espelhado, leitura em coluna/diagonal, repetidas e contagens.",
-        example: { in: "bloco de texto", out: "iniciais, espelhado…" },
+        desc: "Extrai mensagens escondidas: 1ª/última letra de linha e palavra, maiúsculas, após pontuação, espelhado, leitura em coluna/diagonal e repetidas — mais as séries de contagem (palavras por parágrafo/linha, itens por bloco, ocorrências de um caractere), cada uma com a leitura A1Z26 ao lado.",
+        example: { in: "bloco de texto", out: "iniciais, espelhado, contagens…" },
       },
       {
         name: "Posições",
-        desc: "Pega letras por passo fixo (7, 14, 21…) ou por uma lista de posições.",
-        example: { in: "texto + passo 7", out: "letras nas posições" },
+        desc: "Quatro modos: passo fixo (7, 14, 21…), lista de posições, N fontes × N índices e N fontes × 1 índice (uma fonte por linha, cada uma entregando uma letra). Posições começam em 1; índice negativo conta do fim.",
+        example: { in: "3 fontes + índices 1 5 2", out: "uma letra por fonte" },
+      },
+      {
+        name: "Diferenças",
+        desc: "Compara o texto da prova com a fonte original (sem acento e sem caixa, devolvendo a grafia certa) e entrega quatro tiras copiáveis: palavras trocadas, originais correspondentes, letras que mudaram e contagem de letras de cada trecho.",
+        example: { in: "texto alterado + original", out: "as palavras que não estão no original" },
       },
       {
         name: "Anagramas",
-        desc: "Acha palavras (pt/en) com exatamente as mesmas letras.",
+        desc: "Acha o que o dicionário forma com as mesmas letras: fonte pt, en, pt+en ou bairros e ruas de Blumenau; em uma palavra ou em duas; e com sobra de 1 ou 2 letras quando não fecha exato.",
         example: { in: "amor", out: "roma · ramo · mora" },
       },
       {
         name: "Cola",
-        desc: "Referência do gabarito: cores, quantidade de dígitos, A1Z26, formatos de coordenada e checklist de técnicas.",
+        desc: "Referência do gabarito: cores, quantidade de dígitos, A1Z26, formatos de coordenada, checklist de técnicas, “Bases e onde consultar” (com o selo de aberta/manual/bloqueada/adiada), alfabeto Pigpen, alfabeto manual de Libras e compostos químicos (nome → fórmula).",
+      },
+      {
+        name: "Frota",
+        desc: "Mapa ao vivo dos celulares da equipe (Traccar): posição, status, bateria e quem está mais perto — o mesmo cálculo que aparece no cartão de localização.",
       },
     ],
   },
@@ -361,37 +575,47 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: "apis",
     title: "APIs utilizadas",
     intro:
-      "Consultas externas que o app faz (todas públicas; a maioria sem chave). Mantida em sincronia com o que é realmente chamado.",
+      "Consultas externas que o app faz. Quase tudo passa pelo backend do projeto (the-decrypter-api), que cacheia, limita a taxa e guarda as chaves — o navegador só fala direto com o OpenStreetMap. Mantida em sincronia com o que é realmente chamado.",
     entries: [
       {
-        name: "BrasilAPI",
+        name: "Backend (the-decrypter-api)",
+        desc: "Porta de entrada de toda consulta externa: /cnpj, /cep, /isbn, /ncm, /registrobr, /pix, /produto, /what3words, /geocode e /fleet.",
+        example: { in: "/api/…", out: "cache + rate-limit; chaves ficam no servidor" },
+      },
+      {
+        name: "BrasilAPI (via backend)",
         desc: "CNPJ, CEP, ISBN, NCM, participantes do PIX (ISPB) e domínios .br (Registro.br).",
         example: { in: "brasilapi.com.br", out: "grátis · sem chave" },
       },
       {
-        name: "Open Food Facts",
+        name: "Open Food Facts (via backend)",
         desc: "Nome do produto pelo código de barras (EAN/UPC).",
         example: { in: "world.openfoodfacts.org", out: "grátis · alimentos" },
       },
       {
-        name: "IBGE — Localidades",
-        desc: "Municípios do Brasil (código IBGE → cidade/UF).",
-        example: { in: "servicodados.ibge.gov.br", out: "grátis" },
-      },
-      {
-        name: "what3words",
-        desc: "Endereço de 3 palavras → coordenada.",
+        name: "what3words (via backend)",
+        desc: "Endereço de 3 palavras → coordenada; a chave fica no servidor.",
         example: { in: "api.what3words.com", out: "precisa de chave" },
       },
       {
-        name: "OpenStreetMap / Nominatim",
-        desc: "Mapas (tiles) e geocodificação de endereços/CEP.",
-        example: { in: "openstreetmap.org", out: "grátis" },
+        name: "Nominatim / OSM (via backend)",
+        desc: "Geocodificação de endereço e CEP quando a base local não resolve.",
+        example: { in: "/geocode?q=…", out: "coordenada" },
       },
       {
-        name: "OpenFlights (embutido)",
-        desc: "Base mundial de aeroportos IATA/ICAO empacotada no app.",
-        example: { in: "openflights.org", out: "offline" },
+        name: "OpenStreetMap (direto do navegador)",
+        desc: "Tiles e mapa embutido dos cartões de localização e da aba Frota.",
+        example: { in: "tile.openstreetmap.org", out: "grátis" },
+      },
+      {
+        name: "Traccar (via backend)",
+        desc: "Posições dos celulares da equipe que alimentam a aba Frota.",
+        example: { in: "/fleet", out: "só com o Traccar configurado no backend" },
+      },
+      {
+        name: "Bases embutidas (sem rede)",
+        desc: "Ruas de Blumenau, CEPs de SC, municípios do IBGE, aeroportos do OpenFlights e as listas de palavras pt/en vêm empacotados; boleto, chave de NF-e, título de eleitor, placa, rastreio S10 e todas as grades de coordenada (MGRS, GEOREF, GARS, carta e grade do IBGE) são conta local, sem rede; o Mapcode carrega a lib por import dinâmico, também sem consulta externa.",
+        example: { in: "/data/*.json", out: "offline" },
       },
     ],
   },
