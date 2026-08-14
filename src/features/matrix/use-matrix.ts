@@ -632,6 +632,13 @@ export function useMatrix() {
       setBlocoLinhas(linhas);
       setBlocoColunas(colunas);
       setBlocoFolga(n > 1 ? 1 : 0);
+      // 3 colunas × 5 linhas é O caso do acervo: a mesma fonte de segmentos
+      // aparece nas runas de 2019 e no nonograma de 2023, com quatro anos e dois
+      // formatos de entrada entre elas. Deixar em "só recortar" obrigaria a
+      // pessoa a saber trocar um seletor para ver o algarismo — que é a única
+      // coisa que ela queria. Só decidimos quando a forma não deixa dúvida.
+      if (colunas === 3 && linhas === 5) setAlfabeto("digito-3x5");
+      else if (colunas === 2 && linhas === 3) setAlfabeto("braille-2x3");
       const descartes =
         invalidos.length > 0 ? ` · ignorei ${invalidos.length} pedaço(s) que não são célula` : "";
       setResumoLista(`${n} ${n === 1 ? "bloco" : "blocos"} de ${linhas}×${colunas}${descartes}`);
