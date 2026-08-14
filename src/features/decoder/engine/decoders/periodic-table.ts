@@ -1,3 +1,4 @@
+import { lookupCompound } from "@/features/reference/compounds";
 import { defineDecoder } from "../define";
 import type { DecodeCandidate } from "../types";
 
@@ -51,33 +52,110 @@ export interface ElementInfo {
 
 const info = (n: number): ElementInfo => ({ z: n, sym: E[n][0], name: E[n][1], weight: E[n][2] });
 
-function cand(
-  label: string,
-  output: string,
-  els: ElementInfo[],
-  forcedScore: number,
-): DecodeCandidate {
+function cand(o: {
+  label: string;
+  output: string;
+  els: ElementInfo[];
+  forcedScore: number;
+  notes?: string;
+  /** Só para saída que é valor limpo — o card de elementos não encadeia sozinho. */
+  chainValue?: string;
+}): DecodeCandidate {
   return {
     decoderId: "periodic-table",
     decoderName: "Tabela periódica",
     category: "transform",
-    label,
-    output,
-    notes: els.map((e) => `${e.name} (peso ${e.weight})`).join(" · "),
-    forcedScore,
+    label: o.label,
+    output: o.output,
+    notes: o.notes ?? o.els.map((e) => `${e.name} (peso ${e.weight})`).join(" · "),
+    forcedScore: o.forcedScore,
+    ...(o.chainValue ? { chainValue: o.chainValue } : {}),
     render: "elements",
-    data: els,
+    data: o.els,
   };
+}
+
+// ---- fórmula molecular → subscritos como dígitos --------------------------
+// GIA-19 "Químico maluco": H3PO4 H2O HNO3 → 3·1·4 | 2·1 | 1·1·3 → 31421113,
+// o telefone da loja de crachás. O subscrito ausente vale 1 — é ele que fecha
+// os oito dígitos.
+
+/** Símbolo exato → número atômico. Distinto de `BY_SYM`, que normaliza a caixa. */
+const BY_SYM_EXACT = new Map<string, number>();
+E.forEach(([sym], n) => {
+  if (sym) BY_SYM_EXACT.set(sym, n);
+});
+
+interface FormulaRead {
+  /** Preenchido só quando a entrada veio pelo nome do composto. */
+  name?: string;
+  formula: string;
+  units: { el: ElementInfo; n: number }[];
+}
+
+/**
+ * Lê uma fórmula em notação padrão. A caixa é o próprio significado — CO é
+ * carbono+oxigênio e Co é cobalto — então aqui nada de `toUpperCase`. Devolve
+ * null ao primeiro caractere que sobra, senão "Hoje2" viraria fórmula.
+ */
+function parseFormula(formula: string): FormulaRead | null {
+  const parts = [...formula.matchAll(/([A-Z][a-z]?)(\d*)/g)];
+  if (parts.length === 0 || parts.map((p) => p[0]).join("") !== formula) return null;
+  const units: FormulaRead["units"] = [];
+  for (const [, sym, sub] of parts) {
+    const z = BY_SYM_EXACT.get(sym);
+    if (z === undefined) return null;
+    units.push({ el: info(z), n: sub ? Number(sub) : 1 });
+  }
+  return { formula, units };
+}
+
+/** Entrada como fórmulas soltas. Exige subscrito explícito: é o portão. */
+function readFormulas(tokens: string[]): FormulaRead[] | null {
+  const reads: FormulaRead[] = [];
+  for (const t of tokens) {
+    const r = parseFormula(t);
+    if (!r) return null;
+    reads.push(r);
+  }
+  // Sem nenhum subscrito escrito, "H O Cu" só devolveria 1s e duplicaria o
+  // modo dos símbolos.
+  if (!reads.some((r) => r.units.some((u) => u.n > 1))) return null;
+  return reads;
+}
+
+/**
+ * Entrada como nomes pt-BR ("ácido fosfórico, água, ácido nítrico"), que é o
+ * que o enunciado dá. O portão é o dicionário: ou todos os trechos são
+ * compostos conhecidos, ou o decoder se cala.
+ */
+function readNames(input: string, only: boolean): FormulaRead[] | null {
+  const parts = input
+    .split(/[,;\n+]|\s+e\s+/i)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  // Um nome sozinho ("água", "sal") é palavra comum demais para disparar no
+  // meio dos outros 74 decoders — só no modo "uma cifra só".
+  if (parts.length < (only ? 1 : 2)) return null;
+  const reads: FormulaRead[] = [];
+  for (const p of parts) {
+    const c = lookupCompound(p);
+    if (!c) return null;
+    const r = parseFormula(c.formula);
+    if (!r) return null;
+    reads.push({ ...r, name: c.name });
+  }
+  return reads;
 }
 
 export const decoders = defineDecoder({
   id: "periodic-table",
   name: "Tabela periódica",
   category: "transform",
-  decode(input) {
+  decode(input, ctx) {
     const tokens = input
       .trim()
-      .split(/[\s,]+/)
+      .split(/[\s,;+]+/)
       .filter(Boolean);
     if (tokens.length === 0) return [];
     const out: DecodeCandidate[] = [];
@@ -85,14 +163,54 @@ export const decoders = defineDecoder({
     // número(s) atômico(s) → elementos
     if (tokens.every((t) => /^\d{1,3}$/.test(t) && +t >= 1 && +t <= 118)) {
       const els = tokens.map((t) => info(Number(t)));
-      out.push(cand("número atômico", els.map((e) => e.sym).join(" "), els, 0.75));
+      const output = els.map((e) => e.sym).join(" ");
+      // 0.55 e não 0.75: TODA lista de números até 118 tem uma leitura de tabela
+      // periódica, inclusive as que são A1Z26 — e com 0.75 fixo esta linha
+      // ficava na frente da resposta certa. Medido em "7 5 15 20 21 4 5"
+      // (GIA-27): o símbolo "N B P Ca Sc Be B" batia GEOTUDE.
+      out.push(
+        cand({ label: "número atômico", output, els, forcedScore: 0.55, chainValue: output }),
+      );
     }
 
     // símbolo(s) → elementos (com nome, nº atômico e peso)
     const up = tokens.map((t) => t.toUpperCase());
     if (up.every((t) => BY_SYM.has(t))) {
       const els = up.map((t) => info(BY_SYM.get(t) as number));
-      out.push(cand("símbolos", els.map((e) => e.z).join(" "), els, 0.7));
+      const output = els.map((e) => e.z).join(" ");
+      out.push(cand({ label: "símbolos", output, els, forcedScore: 0.7, chainValue: output }));
+    }
+
+    // fórmula molecular → subscritos como dígitos (pelos nomes ou pelas fórmulas)
+    const reads = readNames(input, ctx.only === "periodic-table") ?? readFormulas(tokens) ?? [];
+    const unitCount = reads.reduce((n, r) => n + r.units.length, 0);
+    // Um símbolo só duplicaria o modo acima e viraria presa do dedup.
+    if (unitCount >= 2) {
+      // O card lista cada elemento uma vez; H3PO4·H2O·HNO3 repete H e O.
+      const els: ElementInfo[] = [];
+      for (const r of reads) {
+        for (const u of r.units) if (!els.some((e) => e.z === u.el.z)) els.push(u.el);
+      }
+      const digits = reads.map((r) => r.units.map((u) => u.n).join("")).join("");
+      const byName = reads.some((r) => r.name);
+      out.push(
+        cand({
+          label: byName ? "nomes → fórmula molecular" : "fórmula molecular",
+          output: digits,
+          els,
+          // Nome do composto é intenção declarada; três fórmulas seguidas quase
+          // não acontecem por acaso; uma fórmula solta ainda pode ser um código
+          // qualquer ("CV20"), então empata com os outros modos.
+          forcedScore: byName ? 0.85 : reads.length > 1 ? 0.8 : 0.7,
+          notes: reads
+            .map(
+              (r) =>
+                `${r.name ? `${r.name} = ` : ""}${r.formula} → ${r.units.map((u) => u.n).join("·")}`,
+            )
+            .join(" | "),
+          chainValue: digits,
+        }),
+      );
     }
 
     // peso atômico (um valor) → elemento(s)
@@ -108,12 +226,13 @@ export const decoders = defineDecoder({
         });
         if (hits.length) {
           out.push(
-            cand(
-              `peso atômico ${dec ? "≈" : "~"}${w}`,
-              hits.map((e) => `${e.name} (${e.sym})`).join(", "),
-              hits,
-              0.7,
-            ),
+            cand({
+              label: `peso atômico ${dec ? "≈" : "~"}${w}`,
+              // Saída em prosa: não encadeia (sem `chainValue`).
+              output: hits.map((e) => `${e.name} (${e.sym})`).join(", "),
+              els: hits,
+              forcedScore: 0.7,
+            }),
           );
         }
       }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DecodeContext, Decoder } from "../types";
-import { decoders as acrostic } from "./acrostic";
+import { decoders as acrostics } from "./acrostic";
 import { decoders as ascii85 } from "./ascii85";
 import { decoders as baseConverter } from "./base-converter";
 import { decoders as base58 } from "./base58";
@@ -52,7 +52,7 @@ describe("tabelas / utilitários", () => {
     expect(out(hashId, "d41d8cd98f00b204e9800998ecf8427e")[0]).toContain("MD5");
   });
   it("acróstico", () => {
-    expect(out(acrostic, "Verde Imenso Vento Azul")).toContain("VIVA");
+    expect(out(acrostics[0], "Verde Imenso Vento Azul")).toContain("VIVA");
   });
 });
 
