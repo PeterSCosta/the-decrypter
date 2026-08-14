@@ -29,7 +29,9 @@ function clean(lines: string[], lowerOnly: boolean): string[] {
     if (!w) continue;
     if (lowerOnly && w !== w.toLowerCase()) continue; // descarta nomes próprios (en)
     const disp = w.toLowerCase();
-    if (!/^[a-z]{2,15}$/.test(fold(disp))) continue; // 2–15 letras (acentos contam dobrado)
+    // 2–15 letras. O fold roda ANTES da medida, então acento não conta letra:
+    // "ação" mede 4, igual à chave do anagrama (solve.ts faz a mesma dobra).
+    if (!/^[a-z]{2,15}$/.test(fold(disp))) continue;
     if (!seen.has(disp)) {
       seen.add(disp);
       out.push(disp);

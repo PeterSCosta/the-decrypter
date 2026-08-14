@@ -1,3 +1,4 @@
+import { BRAILLE_TO_LETTER, LETTER_TO_BRAILLE } from "@/features/reference/braille";
 import { mapDecoder } from "./define";
 import type { Decoder } from "./types";
 import { bytesToText } from "./util";
@@ -195,46 +196,18 @@ function decodeMorse(input: string): string | null {
 }
 
 // ---- Braille (Grade 1, letters) ------------------------------------------
-const BRAILLE: Record<string, string> = {
-  "⠁": "a",
-  "⠃": "b",
-  "⠉": "c",
-  "⠙": "d",
-  "⠑": "e",
-  "⠋": "f",
-  "⠛": "g",
-  "⠓": "h",
-  "⠊": "i",
-  "⠚": "j",
-  "⠅": "k",
-  "⠇": "l",
-  "⠍": "m",
-  "⠝": "n",
-  "⠕": "o",
-  "⠏": "p",
-  "⠟": "q",
-  "⠗": "r",
-  "⠎": "s",
-  "⠞": "t",
-  "⠥": "u",
-  "⠧": "v",
-  "⠺": "w",
-  "⠭": "x",
-  "⠽": "y",
-  "⠵": "z",
-  "⠀": " ",
-};
+// O mapa vive em `reference/braille.ts` — compartilhado com o inspetor de
+// espaços em branco, que monta a mesma célula a partir das linhas do texto.
 function decodeBraille(input: string): string | null {
   if (!/[⠀-⣿]/.test(input)) return null;
   let out = "";
-  for (const ch of input) out += BRAILLE[ch] ?? (ch.codePointAt(0)! >= 0x2800 ? "?" : ch);
+  for (const ch of input) out += BRAILLE_TO_LETTER[ch] ?? (ch.codePointAt(0)! >= 0x2800 ? "?" : ch);
   return out.replace(/\?+/g, "").trim() ? out : null;
 }
 
 // ==== Codificadores (inverso) =============================================
 const utf8 = (s: string) => new TextEncoder().encode(s);
 const TEXT_TO_MORSE = Object.fromEntries(Object.entries(MORSE).map(([k, v]) => [v, k]));
-const TEXT_TO_BRAILLE = Object.fromEntries(Object.entries(BRAILLE).map(([k, v]) => [v, k]));
 
 const encodeBase64 = (s: string) => btoa(String.fromCharCode(...utf8(s)));
 
@@ -286,7 +259,7 @@ const encodeMorse = (s: string) =>
     .join(" / ");
 
 const encodeBraille = (s: string) =>
-  [...s.toLowerCase()].map((ch) => TEXT_TO_BRAILLE[ch] ?? "").join("");
+  [...s.toLowerCase()].map((ch) => LETTER_TO_BRAILLE[ch] ?? "").join("");
 
 const single = (
   id: string,

@@ -1,7 +1,10 @@
 import { Card } from "@/components/ui/card";
 import type { ReactNode } from "react";
 import { COLORS } from "../colors";
+import { COMPOUNDS } from "../compounds";
 import { DOC_FORMATS, lengthLabel } from "../digit-table";
+import { LIBRAS, LIBRAS_NOTES, PIGPEN_GROUPS, PIGPEN_NOTES } from "../glyphs";
+import { SOURCES_INTRO, sourcesByStatus } from "../sources";
 
 // Documentos/códigos agrupados por quantidade de dígitos (ordem do gabarito).
 const DIGIT_GROUPS: [label: string, names: string[]][] = (() => {
@@ -226,6 +229,135 @@ export function ReferencePanel() {
             </Card>
           ))}
         </div>
+      </Section>
+
+      {/* Quem está numa gincana às 23h abre a Cola, não o Roadmap — então o mapa
+          das bases (inclusive o que está bloqueado e por quê) mora aqui. */}
+      <Section title="Bases e onde consultar">
+        <p className="mb-2 text-sm text-[var(--text-secondary)]">{SOURCES_INTRO}</p>
+        <div className="flex flex-col gap-3">
+          {sourcesByStatus().map((group) => (
+            <div key={group.status}>
+              <div className="mb-1.5 flex flex-wrap items-baseline gap-2">
+                <span className="text-[0.6875rem] uppercase tracking-wide text-[var(--text-muted)]">
+                  {group.label}
+                </span>
+                <span className="text-xs text-[var(--text-muted)]">{group.hint}</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                {group.items.map((s) => (
+                  <Card key={s.id} className="p-3">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                      <span className="font-display text-sm text-[var(--text-primary)]">
+                        {s.name}
+                      </span>
+                      <span className="font-mono text-xs text-[var(--text-muted)]">
+                        {s.indexes}
+                      </span>
+                      {s.url ? (
+                        <a
+                          href={s.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="ml-auto shrink-0 text-xs text-[var(--text-secondary)] underline decoration-dotted underline-offset-2 hover:text-[var(--text-primary)]"
+                        >
+                          {s.urlLabel}
+                        </a>
+                      ) : null}
+                    </div>
+                    <p className="mt-1 text-sm text-[var(--text-secondary)]">{s.use}</p>
+                    {s.note ? (
+                      <p className="mt-1 text-xs text-[var(--text-muted)]">{s.note}</p>
+                    ) : null}
+                    {s.anchors?.length ? (
+                      <p className="mt-1 font-mono text-xs text-[var(--text-muted)]">
+                        {s.anchors.join(" · ")}
+                      </p>
+                    ) : null}
+                  </Card>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* Pigpen não pode virar decoder: não há bloco Unicode e a entrada é
+          imagem. Descrever o glifo é mais lento do que olhar a legenda. */}
+      <Section title="Pigpen / maçônico">
+        <div className="flex flex-col gap-3">
+          {PIGPEN_GROUPS.map((g) => (
+            <div key={g.grid}>
+              <div className="mb-1.5 text-[0.6875rem] uppercase tracking-wide text-[var(--text-muted)]">
+                {g.title}
+              </div>
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                {g.letters.map((gl) => (
+                  <Card key={gl.letter} className="flex flex-col items-center gap-1 p-2">
+                    <pre className="font-mono text-[0.6875rem] leading-tight text-[var(--text-secondary)]">
+                      {gl.ascii.join("\n")}
+                    </pre>
+                    <span className="font-mono text-sm font-semibold text-[var(--text-primary)]">
+                      {gl.letter}
+                    </span>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          ))}
+          <ul className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+            {PIGPEN_NOTES.map((n) => (
+              <li key={n}>· {n}</li>
+            ))}
+          </ul>
+        </div>
+      </Section>
+
+      <Section title="Libras — alfabeto manual">
+        <Card className="overflow-hidden">
+          <table className="w-full text-sm">
+            <tbody>
+              {LIBRAS.map((s) => (
+                <tr key={s.letter} className="border-b border-[var(--border-subtle)] last:border-0">
+                  <td className="px-3 py-1.5 align-top font-mono font-semibold text-[var(--text-primary)]">
+                    {s.letter}
+                  </td>
+                  <td className="px-3 py-1.5 text-[var(--text-secondary)]">
+                    {s.hand}
+                    {s.movement ? (
+                      <span className="block text-xs text-[var(--color-pulse-600)]">
+                        movimento: {s.movement}
+                      </span>
+                    ) : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+        <ul className="mt-2 flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+          {LIBRAS_NOTES.map((n) => (
+            <li key={n}>· {n}</li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section title="Compostos químicos (nome → fórmula)">
+        <Card className="overflow-hidden">
+          <table className="w-full text-sm">
+            <tbody className="font-mono">
+              {COMPOUNDS.map((c) => (
+                <tr
+                  key={c.formula}
+                  className="border-b border-[var(--border-subtle)] last:border-0"
+                >
+                  <td className="px-3 py-1.5 text-[var(--text-primary)]">{c.name}</td>
+                  <td className="px-3 py-1.5 text-right text-[var(--text-muted)]">{c.formula}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
       </Section>
     </div>
   );
