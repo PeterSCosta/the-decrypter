@@ -26,8 +26,13 @@ import { titleHints } from "./engine/title-hints";
 import { loadWordSet } from "./engine/words";
 import { type TrailStep, popStep, pushStep, truncateTo } from "./trail";
 
-export function useDecoder() {
-  const [input, setInput] = useState("");
+/**
+ * `entradaInicial` serve às outras abas: a Matriz manda a string extraída da
+ * grade para cá. Funciona como valor inicial (e não por efeito) porque a
+ * bancada é desmontada ao trocar de aba — ao voltar, ela nasce com o valor novo.
+ */
+export function useDecoder(entradaInicial = "") {
+  const [input, setInput] = useState(entradaInicial);
   const [key, setKey] = useState("");
   /** Segundo campo genérico (fonte a indexar, texto original, deslocamentos). */
   const [aux, setAux] = useState("");

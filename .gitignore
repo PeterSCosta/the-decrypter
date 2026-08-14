@@ -27,3 +27,5 @@ pnpm-debug.log*
 # raw data sources (large — see data-sources/README.md to regenerate JSON)
 data-sources/*.csv
 data-sources/*.pdf
+data-sources/*.jsonl
+data-sources/postes-state.json

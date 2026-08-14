@@ -3,23 +3,46 @@ import { AnagramPanel } from "@/features/anagram/components/anagram-panel";
 import { DecoderWorkbench } from "@/features/decoder/components/decoder-workbench";
 import { DiffPanel } from "@/features/diff/components/diff-panel";
 import { FleetPanel } from "@/features/fleet/components/fleet-panel";
+import { FontsPanel } from "@/features/fonts/components/fonts-panel";
 import { HelpPage } from "@/features/help/components/help-page";
 import { RoadmapPage } from "@/features/help/components/roadmap-page";
+import { MatrixPanel } from "@/features/matrix/components/matrix-panel";
 import { PositionsPanel } from "@/features/positions/components/positions-panel";
 import { ReferencePanel } from "@/features/reference/components/reference-panel";
 import { TextExtractPanel } from "@/features/text-extract/components/text-extract-panel";
 import { cn } from "@/lib/cn";
-import { BookOpen, GitCompare, Hash, MapPinned, Shuffle, Type, Wand2 } from "lucide-react";
-import { type ComponentType, useState } from "react";
+import {
+  BookOpen,
+  Eye,
+  GitCompare,
+  Grid3x3,
+  Hash,
+  MapPinned,
+  Shuffle,
+  Type,
+  Wand2,
+} from "lucide-react";
+import { type ComponentType, useCallback, useState } from "react";
 
-type TabId = "decoder" | "text" | "positions" | "diff" | "anagram" | "reference" | "fleet";
+type TabId =
+  | "decoder"
+  | "text"
+  | "positions"
+  | "matrix"
+  | "diff"
+  | "anagram"
+  | "fonts"
+  | "reference"
+  | "fleet";
 
 const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { id: "decoder", label: "Decodificador", icon: Wand2 },
   { id: "text", label: "Texto", icon: Type },
   { id: "positions", label: "Posições", icon: Hash },
+  { id: "matrix", label: "Matriz", icon: Grid3x3 },
   { id: "diff", label: "Diferenças", icon: GitCompare },
   { id: "anagram", label: "Anagramas", icon: Shuffle },
+  { id: "fonts", label: "Fontes", icon: Eye },
   { id: "reference", label: "Cola", icon: BookOpen },
   { id: "fleet", label: "Frota", icon: MapPinned },
 ];
@@ -30,6 +53,15 @@ export function App() {
   const [tab, setTab] = useState<TabId>("decoder");
   const [view, setView] = useState<View>("app");
   const toggle = (v: Exclude<View, "app">) => setView((cur) => (cur === v ? "app" : v));
+
+  // A grade pintada quase nunca é a resposta: ela produz uma string (os dígitos
+  // de uma fonte 3×5, as células verdadeiras em ordem) que ainda precisa passar
+  // por outra camada. Este é o mesmo encadeamento do botão "usar como entrada".
+  const [semente, setSemente] = useState("");
+  const mandarParaDecodificador = useCallback((texto: string) => {
+    setSemente(texto);
+    setTab("decoder");
+  }, []);
 
   return (
     <div className="min-h-screen bg-[var(--surface-page)]">
@@ -68,10 +100,12 @@ export function App() {
             })}
           </nav>
 
-          {tab === "decoder" && <DecoderWorkbench />}
+          {tab === "decoder" && <DecoderWorkbench entradaInicial={semente} />}
           {tab === "text" && <TextExtractPanel />}
           {tab === "positions" && <PositionsPanel />}
+          {tab === "matrix" && <MatrixPanel onDecodificador={mandarParaDecodificador} />}
           {tab === "diff" && <DiffPanel />}
+          {tab === "fonts" && <FontsPanel />}
           {tab === "anagram" && <AnagramPanel />}
           {tab === "reference" && <ReferencePanel />}
           {tab === "fleet" && <FleetPanel />}

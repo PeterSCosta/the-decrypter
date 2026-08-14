@@ -18,7 +18,7 @@ export interface HelpSection {
 }
 
 export const HELP_INTRO = [
-  "O The Decrypter é uma oficina de cifras: você cola UMA entrada (texto, números, um código) e ele tenta TODAS as interpretações ao mesmo tempo — 96 cifras, codificações, tabelas e bases de dados — e mostra os resultados ranqueados por “o que faz sentido”.",
+  "O The Decrypter é uma oficina de cifras: você cola UMA entrada (texto, números, um código) e ele tenta TODAS as interpretações ao mesmo tempo — 100 cifras, codificações, tabelas e bases de dados — e mostra os resultados ranqueados por “o que faz sentido”.",
   "Os mais prováveis aparecem em cima; o resto fica em “pouco provável”, recolhido. Cada resultado tem um selo (codificação, cifra, transformação, base de dados), um botão de copiar e, quando a saída bate no dicionário pt/en, o selo “palavra real”. Quando há chave (Vigenère, índices, deslocamentos), use o campo de chave; o 2º campo guarda a fonte a indexar ou a lista.",
   "Acima da entrada ficam os chips do sniffer (“isto tem cara de…”) e a barra de Cadeia, que empurra um resultado de volta para a entrada e registra a trilha. O campo de título lê o nome da prova como pista — ele só levanta chips, nunca mexe no ranking.",
   "Tudo roda no navegador. As consultas externas (CNPJ, CEP, ISBN, NCM, PIX, produto pelo código de barras, what3words, geocodificação) passam pelo backend do projeto, e os mapas vêm do OpenStreetMap.",
@@ -208,6 +208,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "H3PO4 H2O HNO3", out: "31421113 (subscritos da fórmula)" },
       },
       {
+        name: "Alfabetos do mundo",
+        desc: "A1Z26 no alfabeto CERTO: escolhido um alfabeto no campo de chave, número vira letra e letra vira número dentro dele — o havaiano tem 13 letras, o espanhol põe o Ñ depois do N, o português antigo para no 23. Sem chave, reconhece a escrita (grego, cirílico, hebraico, árabe, georgiano, rúnico, hangul, kana), diz quantas letras ela tem e translitera.",
+        example: { in: "5 (alfabeto: havaiano)", out: "U — 5ª de 13 (no latino seria E)" },
+      },
+      {
         name: "Notas musicais",
         desc: "Cifra anglo (C D E…) ou solfejo (Dó Ré Mi…) → letras e números.",
         example: { in: "Dó Ré Mi Fá", out: "CDEF" },
@@ -216,6 +221,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         name: "Leetspeak",
         desc: "Normaliza leet para letras.",
         example: { in: "l33t h4x0r", out: "leet haxor" },
+      },
+      {
+        name: "Texto estilizado (Unicode)",
+        desc: "𝐧𝐞𝐠𝐫𝐢𝐭𝐨, 𝔣𝔯𝔞𝔨𝔱𝔲𝔯, ⓒⓘⓡⓒⓤⓛⓞ, ｆｕｌｌｗｉｄｔｈ, ᴠᴇʀꜱᴀʟᴇᴛᴇ, ᵖʳᵒᵛᵃ sobrescrita e ʇǝxʇo de cabeça para baixo não são fonte, são outro bloco Unicode — 24 tabelas devolvidas ao ASCII, para a bancada voltar a casar. Bandeira também: cada uma é o par de indicadores regionais do código ISO 3166 do país.",
+        example: { in: "🇧🇷 🇦🇷 🇺🇾 🇵🇾", out: "BR AR UY PY (indicador regional)" },
       },
       {
         name: "Acróstico",
@@ -478,6 +488,27 @@ export const HELP_SECTIONS: HelpSection[] = [
     ],
   },
   {
+    id: "mundo",
+    title: "Países e moedas",
+    intro:
+      "Tabelas fechadas do mundo, embutidas e sem rede — a prova dá um código e pede outro. O portão é a própria tabela: sigla que não é código não acende cartão nenhum.",
+    entries: [
+      {
+        name: "País (ISO 3166 · COI · FIFA · ccTLD · placa)",
+        desc: "Converte nos dois sentidos entre alpha-2, alpha-3, numérico, domínio, o código dos Jogos, o da FIFA e a placa internacional; aceita lista (“SUI POR NED”), confronto com hífen, o nome, o apelido (“Holanda”) e a capital. Quando o código tem duas leituras, mostra as duas — ROU é Romênia no ISO e Uruguai na placa.",
+        example: {
+          in: "GER",
+          out: "Alemanha · DEU · 276 · .de · placa D (GER é o COI, não o ISO)",
+        },
+      },
+      {
+        name: "Moeda (ISO 4217)",
+        desc: "Código alfabético (USD), numérico (840) ou símbolo (R$, €, ¥) → nome em pt-BR, símbolo, casas decimais e os países que usam. Aceita vários de uma vez (BRL USD EUR), avisa quando o símbolo tem mais de um dono e ainda reconhece moeda retirada (BGN, HRK, DEM), dizendo por qual foi substituída. Atenção às casas: o iene tem 0, não 2.",
+        example: { in: "986", out: "BRL → real · R$ — 2 casas decimais · Brasil" },
+      },
+    ],
+  },
+  {
     id: "bases-blumenau",
     title: "Bases de Blumenau / Santa Catarina",
     intro: "Dados locais embutidos, usados nas provas da Equipe Arromba.",
@@ -552,6 +583,14 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "3 fontes + índices 1 5 2", out: "uma letra por fonte" },
       },
       {
+        name: "Matriz",
+        desc: "Uma grade N×M e regras que decidem o que pintar — por elemento, linha, coluna ou matriz inteira, em camadas ou primeira-que-casa, cada regra dizendo quantas células pegou. Pinta também por lista de células (A1/B1/C1), lê a grade pintada em blocos (dígito na fonte 3×5, Braille 2×3, binário) e exporta desenho, 0/1, coordenadas ou PNG. É a aba que devolve FORMA em vez de texto; a ordem de leitura (espiral, quatro braços) continua sendo do Decodificador.",
+        example: {
+          in: "A1/B1/C1/A2/C2/A3/B3/C3/A4/C4/A5/B5/C5",
+          out: "grade 3×5 pintada = o algarismo 8 (runas do ITC 2019)",
+        },
+      },
+      {
         name: "Diferenças",
         desc: "Compara o texto da prova com a fonte original (sem acento e sem caixa, devolvendo a grafia certa) e entrega quatro tiras copiáveis: palavras trocadas, originais correspondentes, letras que mudaram e contagem de letras de cada trecho.",
         example: { in: "texto alterado + original", out: "as palavras que não estão no original" },
@@ -560,6 +599,14 @@ export const HELP_SECTIONS: HelpSection[] = [
         name: "Anagramas",
         desc: "Acha o que o dicionário forma com as mesmas letras: fonte pt, en, pt+en ou bairros e ruas de Blumenau; em uma palavra ou em duas; e com sobra de 1 ou 2 letras quando não fecha exato.",
         example: { in: "amor", out: "roma · ramo · mora" },
+      },
+      {
+        name: "Fontes",
+        desc: "O lado “vejo um símbolo, que letra é essa?”. Separa as duas famílias que a prova confunde: FONTE DE SÍMBOLO do sistema (Wingdings, Webdings, Symbol, Zapf Dingbats) é desenho que a fonte dá para a letra — só existe se estiver instalada e não se copia (copiar devolve a letra), então a aba MEDE a disponibilidade e diz “não instalada” em vez de mostrar letras latinas caladamente; ESTILO UNICODE é code point, funciona em qualquer máquina e se copia. Traz a grade de referência letra→glifo (é assim que se lê a P22 de 2023, escrita em Wingdings), os 24 estilos copiáveis e o conversor Symbol ⇄ grego.",
+        example: {
+          in: "SOMA + fonte Symbol",
+          out: "ΣΟΜΑ (copiável: grego é caractere de verdade)",
+        },
       },
       {
         name: "Cola",
@@ -614,7 +661,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Bases embutidas (sem rede)",
-        desc: "Ruas de Blumenau, CEPs de SC, municípios do IBGE, aeroportos do OpenFlights e as listas de palavras pt/en vêm empacotados; boleto, chave de NF-e, título de eleitor, placa, rastreio S10 e todas as grades de coordenada (MGRS, GEOREF, GARS, carta e grade do IBGE) são conta local, sem rede; o Mapcode carrega a lib por import dinâmico, também sem consulta externa.",
+        desc: "Ruas de Blumenau, CEPs de SC, municípios do IBGE, aeroportos do OpenFlights, as tabelas de país (ISO 3166/COI/FIFA), moeda (ISO 4217), alfabetos do mundo e estilos Unicode e as listas de palavras pt/en vêm empacotados; boleto, chave de NF-e, título de eleitor, placa, rastreio S10 e todas as grades de coordenada (MGRS, GEOREF, GARS, carta e grade do IBGE) são conta local, sem rede; o Mapcode carrega a lib por import dinâmico, também sem consulta externa.",
         example: { in: "/data/*.json", out: "offline" },
       },
     ],

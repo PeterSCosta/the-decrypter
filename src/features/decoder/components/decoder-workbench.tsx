@@ -11,7 +11,7 @@ import { TrailBar } from "./trail-bar";
 
 const EXAMPLES = ["SGVsbG8gbXVuZG8=", "Wklab xli gshi", "3722", "88xxx500", "Nb11458750330"];
 
-export function DecoderWorkbench() {
+export function DecoderWorkbench({ entradaInicial }: { entradaInicial?: string }) {
   const {
     input,
     setInput,
@@ -37,7 +37,7 @@ export function DecoderWorkbench() {
     goToStep,
     clearTrail,
     hints,
-  } = useDecoder();
+  } = useDecoder(entradaInicial);
   const [showUnlikely, setShowUnlikely] = useState(false);
   const [showAux, setShowAux] = useState(false);
 

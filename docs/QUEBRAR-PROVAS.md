@@ -185,7 +185,11 @@ GIA-22 (`+11 −4 +7 −6 −2` → LAPIS) · ITC 2017 P7 Et.2 (a palavra **ante
 | Coordenadas de grade (`D1 F1 A12 M15`) | troque o número por letra, mantenha a letra | `A1Z26 (número→letra)` — ITC 2022 P7 → ALMOFADA |
 | Grade 5×5 de dígitos 1–5 | Políbio | `Quadrado de Políbio` (`polybius`) |
 | Disco de 26 setores com linha vermelha | **conte os setores à mão**, depois cole as contagens | `Roda alfabética` (`cipher-disk`) — varre as 26 origens × 2 sentidos × base 0/1 (GIA-17) |
-| Caça-palavras, cruzadinha, nonograma | **não encontrado** | manual (GIA-20, GIA-36; nonograma ITC 2023 **1/4**) |
+| Caça-palavras e cruzadinha | **não encontrado** | manual (GIA-20, GIA-36) |
+| **Lista de células** (`A1/B1/C1/A2…`, `D1 F1 A12 M15`) | aba **Matriz** — cola a lista, ela dimensiona a grade sozinha pelo maior índice e pinta; várias listas = vários blocos numa tacada | ITC 2019 madrugada Et.3 (8 runas → CEP 88.306-445); Batalha Naval 2022 |
+| **Nonograma** (pistas de linha e coluna) | aba **Matriz** | ITC 2023 pocket-7 Et.3, **1/4** — as três grades 3×5 dão 678 (Rodovia Osvaldo Reis 678) |
+| Grade pintada que **desenha** em vez de escrever | aba **Matriz** → leitura por blocos: dígito na fonte **3×5 de segmentos**, Braille 2×3, binário | é a mesma fonte 3×5 em 2019 e 2023 — reconheça o formato e os dois casos caem juntos |
+| Grade de módulos que parece **QR** | aba **Matriz** — pré-diagnóstico geométrico (dimensão 21+4k, marcadores nos cantos) e decodificação na própria aba | o acervo usa QR como **insumo** (GIA-09, ITC 2024, ITC 2025 P05), não como resultado de pintura |
 
 ### 2.7 Vejo um GEOCÓDIGO (reconhecimento pela forma)
 
@@ -648,7 +652,8 @@ Saber isto de véspera evita queimar 15 minutos procurando um botão que não ex
   traz a legenda dos dois — ver §2.4.)*
 - **Achar a fonte original de um texto adulterado** (A18) — a comparação a bancada faz (§7.2b);
   descobrir *contra o quê* comparar continua sendo busca externa manual.
-- **Caça-palavras, cruzadinha, nonograma** — manuais.
+- **Caça-palavras e cruzadinha** — manuais. *(O **nonograma** deixou de ser: a aba **Matriz**
+  resolve, e com ele a Et.3 do pocket-7 de 2023, que cumpriu 1/4.)*
 - **CNAE, FIPE, Anatel, CID-10** — **nenhum decoder**, e por decisão de projeto: esses códigos não
   têm assinatura (um VM é "um número de 4 dígitos"), então um decoder que disparasse neles seria
   ruído em toda entrada numérica. *(Já a **chave de NF-e**, o **boleto**, o **rastreio dos
