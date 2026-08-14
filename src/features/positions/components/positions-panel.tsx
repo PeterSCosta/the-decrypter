@@ -18,10 +18,13 @@ export function PositionsPanel() {
     setOnlyLetters,
     positions,
     result,
+    sources,
+    zipResult,
   } = usePositions();
 
   const chars = [...text];
   const previewPositions = positions.slice(0, 12).join(", ") + (positions.length > 12 ? ", …" : "");
+  const multi = mode === "zip" || mode === "const";
 
   return (
     <div className="flex flex-col gap-5">
@@ -30,22 +33,32 @@ export function PositionsPanel() {
           Posições — extrair letras
         </h2>
         <p className="mt-1 text-sm text-[var(--text-secondary)]">
-          Pegue letras por <strong>passo fixo</strong> (7, 14, 21…) ou por uma{" "}
-          <strong>lista de posições</strong>. Posições começam em 1.
+          Num texto só: <strong>passo fixo</strong> (7, 14, 21…) ou{" "}
+          <strong>lista de posições</strong>. Em <strong>várias fontes</strong> — uma por linha —
+          cada linha entrega uma letra. Posições começam em 1; índice negativo conta do fim.
         </p>
       </div>
 
       <Textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Cole o texto aqui…"
+        placeholder={
+          multi ? "Uma fonte por linha…\nLucius Verus\nCommodus\nAugustus" : "Cole o texto aqui…"
+        }
         aria-label="Texto de origem"
         autoFocus
       />
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="inline-flex rounded-[var(--radius-md)] border border-[var(--border-strong)] p-0.5">
-          {(["step", "list"] as const).map((m) => (
+          {(
+            [
+              ["step", "Passo fixo"],
+              ["list", "Posições"],
+              ["zip", "N fontes × N índices"],
+              ["const", "N fontes × 1 índice"],
+            ] as const
+          ).map(([m, rotulo]) => (
             <button
               key={m}
               type="button"
@@ -57,12 +70,22 @@ export function PositionsPanel() {
                   : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
               )}
             >
-              {m === "step" ? "Passo fixo" : "Posições específicas"}
+              {rotulo}
             </button>
           ))}
         </div>
 
-        {mode === "step" ? (
+        {multi ? (
+          <div className="relative min-w-[14rem] flex-1">
+            <Input
+              value={list}
+              onChange={(e) => setList(e.target.value)}
+              placeholder={mode === "zip" ? "ex.: 1 5 2 4 4 3 · I V II IV · A3L6" : "ex.: 5 ou -5"}
+              aria-label="Índices"
+              className="font-mono"
+            />
+          </div>
+        ) : mode === "step" ? (
           <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
             Contar de
             <Input
@@ -100,6 +123,61 @@ export function PositionsPanel() {
 
       {text.trim() === "" ? (
         <p className="text-sm text-[var(--text-muted)]">Cole um texto para começar.</p>
+      ) : multi ? (
+        !zipResult ? (
+          <p className="text-sm text-[var(--text-muted)]">
+            {mode === "zip"
+              ? "Informe um índice por fonte (ex.: 1 5 2 4 4 3), ou algarismos romanos."
+              : "Informe o índice a aplicar em todas as fontes (ex.: 5, ou -5 para contar do fim)."}
+          </p>
+        ) : (
+          <>
+            <p className="text-xs text-[var(--text-secondary)]">
+              {sources.length} {sources.length === 1 ? "fonte" : "fontes"} ·{" "}
+              {zipResult.picks.length} {zipResult.picks.length === 1 ? "índice" : "índices"}
+              {zipResult.misses > 0 ? (
+                <span className="text-[var(--color-pulse-600)]">
+                  {" "}
+                  · {zipResult.misses} caíram fora da fonte
+                </span>
+              ) : null}
+            </p>
+
+            <Card className="flex items-start gap-2 p-4">
+              <pre className="min-w-0 flex-1 whitespace-pre-wrap break-words font-mono text-lg text-[var(--text-primary)]">
+                {zipResult.result || "—"}
+              </pre>
+              <CopyButton value={zipResult.result} />
+            </Card>
+
+            {/* Uma linha por fonte: é onde se vê que o índice caiu no lugar certo. */}
+            <div className="flex flex-col gap-1">
+              {zipResult.picks.map((p, i) => (
+                <div
+                  key={`${p.source}-${p.position}-${i}`}
+                  className="flex items-baseline gap-2 rounded-[var(--radius-sm)] bg-[var(--surface-sunken)] px-2.5 py-1.5 text-sm"
+                >
+                  <span className="shrink-0 font-mono text-xs text-[var(--text-muted)]">
+                    {p.fromEnd ? `-${p.position}` : p.position}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-[var(--text-secondary)]">
+                    {p.source}
+                  </span>
+                  <span
+                    className={cn(
+                      "shrink-0 rounded px-1.5 font-mono font-semibold",
+                      p.char
+                        ? "bg-[var(--brand)] text-[var(--brand-ink)]"
+                        : "text-[var(--color-pulse-600)]",
+                    )}
+                  >
+                    {p.char || "fora"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        )
       ) : positions.length === 0 ? (
         <p className="text-sm text-[var(--text-muted)]">
           {mode === "step" ? "Informe um passo ≥ 1." : "Informe as posições (ex.: 3 7 12)."}

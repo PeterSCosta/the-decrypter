@@ -39,7 +39,11 @@ export function DecoderSelector({
   }, [fq]);
 
   return (
-    <aside className="md:w-56 md:shrink-0">
+    // A lista vem DEPOIS da entrada no DOM (a ~375px ninguém quer rolar 74
+    // cifras para achar o campo — e isso vale igual para tabulação e leitor de
+    // tela, por isso a ordem é do DOM, não só visual). No desktop, `order` a
+    // devolve para a esquerda.
+    <aside className="md:order-1 md:w-56 md:shrink-0">
       <div className="relative mb-2">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-muted)]" />
         <input

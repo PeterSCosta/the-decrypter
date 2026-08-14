@@ -1,10 +1,10 @@
 import { Card } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
-import { Textarea } from "@/components/ui/input";
+import { Input, Textarea } from "@/components/ui/input";
 import { useTextExtract } from "../use-text-extract";
 
 export function TextExtractPanel() {
-  const { text, setText, extractions, stats } = useTextExtract();
+  const { text, setText, countChar, setCountChar, extractions, stats, series } = useTextExtract();
   const hasText = text.trim() !== "";
 
   return (
@@ -53,6 +53,49 @@ export function TextExtractPanel() {
               </Card>
             ))}
           </div>
+
+          {/* Contagem como chave: no acervo, a série quase nunca é a resposta —
+              é o número que a camada seguinte consome, daí a leitura A1Z26 ao lado. */}
+          {series.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <h3 className="font-display text-sm text-[var(--text-primary)]">
+                  Contagens (contar como chave)
+                </h3>
+                <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                  contar o caractere
+                  <Input
+                    value={countChar}
+                    onChange={(e) => setCountChar(e.target.value)}
+                    placeholder="ex.: a"
+                    aria-label="Caractere a contar por linha"
+                    className="h-8 w-16 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-2">
+                {series.map((s) => (
+                  <Card key={s.id} className="flex items-start gap-2 p-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[0.6875rem] uppercase tracking-wide text-[var(--text-muted)]">
+                        {s.label}
+                      </div>
+                      <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-sm text-[var(--text-primary)]">
+                        {s.raw || "—"}
+                      </pre>
+                      {s.letters ? (
+                        <div className="mt-1 font-mono text-sm text-[var(--brand-strong)]">
+                          A1Z26: {s.letters}
+                        </div>
+                      ) : null}
+                    </div>
+                    {s.raw ? <CopyButton value={s.letters ?? s.raw} /> : null}
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

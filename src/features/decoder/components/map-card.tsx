@@ -1,4 +1,5 @@
 import { FleetLocationView } from "@/features/fleet/components/fleet-location-view";
+import { resolveMapcode } from "@/features/location/mapcode";
 import { fetchCep } from "@/lib/brasilapi";
 import { geocode } from "@/lib/geocode";
 import { w3wToCoordinates } from "@/lib/what3words";
@@ -13,13 +14,28 @@ export function MapCard({ data }: { data: LocationData }) {
   const [status, setStatus] = useState<"ok" | "loading" | "error">(initial ? "ok" : "loading");
   const [error, setError] = useState<string | null>(null);
 
-  // Resolve coordenada quando não veio pronta: what3words (API) ou CEP fora da
-  // base local (BrasilAPI p/ endereço + Nominatim p/ coordenada).
+  // Resolve coordenada quando não veio pronta: Mapcode (lib pesada, carregada
+  // sob demanda), what3words (API) ou CEP fora da base local (BrasilAPI p/
+  // endereço + Nominatim p/ coordenada).
   useEffect(() => {
-    if (coords || (!data.cep && !data.w3w)) return;
+    if (coords || (!data.cep && !data.w3w && !data.mapcode)) return;
     let alive = true;
     (async () => {
       try {
+        if (data.mapcode) {
+          // `resolveMapcode` faz o `import()` dinâmico da lib pesada lá dentro.
+          const r = await resolveMapcode(data.mapcode);
+          if (!alive) return;
+          if (!r) {
+            setError("Mapcode não resolve em nenhum território conhecido.");
+            setStatus("error");
+            return;
+          }
+          setDetail(r.detail);
+          setCoords({ lat: r.lat, lng: r.lng });
+          setStatus("ok");
+          return;
+        }
         if (data.w3w) {
           const r = await w3wToCoordinates(data.w3w);
           if (!alive) return;
@@ -59,7 +75,7 @@ export function MapCard({ data }: { data: LocationData }) {
     return () => {
       alive = false;
     };
-  }, [coords, data.cep, data.w3w]);
+  }, [coords, data.cep, data.w3w, data.mapcode]);
 
   return (
     <div className="flex flex-col gap-2">

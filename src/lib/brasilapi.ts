@@ -10,7 +10,15 @@ async function getJson<T>(path: string, notFound: string): Promise<T> {
   if (!res.ok) {
     throw new Error(res.status === 404 ? notFound : `Falha na consulta (HTTP ${res.status}).`);
   }
-  return (await res.json()) as T;
+  try {
+    return (await res.json()) as T;
+  } catch {
+    // Sem backend configurado, o servidor de dev responde o index.html com
+    // status 200 — e o erro de parse vazava cru para o card ("Unexpected token
+    // '<'"). Quem está numa gincana precisa saber que é a consulta que está
+    // fora, não que digitou errado.
+    throw new Error("Consulta indisponível — o serviço de dados não respondeu.");
+  }
 }
 
 export interface CnpjInfo {
