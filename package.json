@@ -20,12 +20,14 @@
     "build:streets-geo": "tsx scripts/geocode-streets.ts",
     "build:municipios": "tsx scripts/build-municipios.ts",
     "build:words": "tsx scripts/build-words.ts",
-    "build:airports": "tsx scripts/build-airports.ts"
+    "build:airports": "tsx scripts/build-airports.ts",
+    "build:postes": "tsx scripts/build-postes.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",
     "geohex": "^0.0.7",
     "h3-js": "^4.4.0",
+    "jsqr": "^1.4.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.468.0",
     "mapcode-ts": "^1.0.1",
