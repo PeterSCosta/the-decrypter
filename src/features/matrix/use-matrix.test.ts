@@ -3,6 +3,7 @@ import {
   desenharBloco,
   fatiarBlocos,
   lerBloco,
+  pareceListaDeCelulas,
   parseCellBlocks,
   parseCellRef,
   parseFaixa,
@@ -37,6 +38,35 @@ describe("parseCellRef", () => {
     expect(parseCellRef("A0")).toBeNull();
     expect(parseCellRef("xis")).toBeNull();
     expect(parseCellRef("12")).toBeNull();
+  });
+});
+
+describe("pareceListaDeCelulas — o campo de cima não pode mentir", () => {
+  // Defeito encontrado no uso real: quem tem a lista das runas cola no campo
+  // grande da origem (é o óbvio, está no topo e diz "cole do Excel"). O
+  // detector lia como grade contígua e devolvia 1×38, uma célula por caractere.
+  it("reconhece a lista de células do ITC 2019", () => {
+    expect(pareceListaDeCelulas("A1/B1/C1/A2/C2/A3/B3/C3/A4/C4/A5/B5/C5")).toBe(true);
+  });
+
+  it("reconhece a Batalha Naval separada por espaço e o par linha,coluna", () => {
+    expect(pareceListaDeCelulas("D1 F1 A12 M15")).toBe(true);
+    expect(pareceListaDeCelulas("3,2 4,5 1,1")).toBe(true);
+  });
+
+  it("NÃO confunde grade numérica com lista — a vírgula não separa token", () => {
+    expect(pareceListaDeCelulas("1 2 3\n4 5 6")).toBe(false);
+    expect(pareceListaDeCelulas("1,2,3\n4,5,6")).toBe(false);
+  });
+
+  it("NÃO dispara em grade de letras nem em texto", () => {
+    expect(pareceListaDeCelulas("ABC\nDEF\nGHI")).toBe(false);
+    expect(pareceListaDeCelulas("uma frase qualquer da prova")).toBe(false);
+  });
+
+  it("exige 3 tokens: `A1` sozinho ainda pode ser rótulo de uma grade", () => {
+    expect(pareceListaDeCelulas("A1")).toBe(false);
+    expect(pareceListaDeCelulas("A1/B1")).toBe(false);
   });
 });
 

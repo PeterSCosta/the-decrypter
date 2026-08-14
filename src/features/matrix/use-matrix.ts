@@ -146,6 +146,28 @@ export function parseCellRef(token: string): CellRef | null {
  * Cada LINHA é um bloco: colar as 8 listas de uma vez é a diferença entre
  * economizar 30 segundos e economizar 20 minutos.
  */
+/**
+ * A colagem é uma LISTA DE CÉLULAS e não uma grade de valores?
+ *
+ * Existe porque quem chega com `A1/B1/C1/A2…` na mão cola no campo grande da
+ * origem — é o campo óbvio, está no topo, e diz "cole do Excel". Sem esta
+ * checagem o detector lia aquilo como grade contígua e devolvia 1×38, uma
+ * célula por caractere: tecnicamente coerente e completamente inútil.
+ *
+ * Exige 3+ tokens e que TODOS sejam referência (`A1`, `AB12`) ou par
+ * `linha,coluna`. Três é o piso porque `A1` sozinho é ambíguo com uma grade de
+ * rótulos, e uma lista de verdade nunca tem menos que isso.
+ *
+ * A vírgula **não** separa tokens aqui, de propósito: se separasse, a grade
+ * numérica `1 2 3` viraria três tokens numéricos e seria confundida com lista.
+ * Ela só aparece dentro do par `3,2`.
+ */
+export function pareceListaDeCelulas(texto: string): boolean {
+  const tokens = texto.split(/[\s/|;\n]+/).filter(Boolean);
+  if (tokens.length < 3) return false;
+  return tokens.every((t) => /^[A-Za-z]{1,3}\d{1,3}$/.test(t) || /^\d{1,3},\d{1,3}$/.test(t));
+}
+
 export function parseCellBlocks(texto: string): BlocosDeCelulas {
   const blocos: CellRef[][] = [];
   const invalidos: string[] = [];
@@ -580,12 +602,65 @@ export function useMatrix() {
     [aplicar, origem, pintura],
   );
 
+  /**
+   * Pinta a lista colada. Com vários blocos (as 8 runas de 2019), eles vão lado
+   * a lado com uma coluna de folga — que é exatamente o que a leitura por blocos
+   * precisa para fatiar depois, e por isso a folga já sai configurada.
+   */
+  const pintarLista = useCallback(
+    (texto: string) => {
+      const { blocos, linhas, colunas, invalidos } = parseCellBlocks(texto);
+      if (blocos.length === 0) {
+        setResumoLista(
+          invalidos.length > 0
+            ? `Não reconheci nenhuma célula. Descartei: ${invalidos.slice(0, 6).join(", ")}`
+            : "Cole as células (ex.: A1/B1/C1/A2).",
+        );
+        return;
+      }
+
+      const n = blocos.length;
+      const largura = n > 1 ? n * colunas + (n - 1) : colunas;
+      let m = emptyMatrix(Math.max(linhas, 1), Math.max(largura, 1));
+      blocos.forEach((refs, i) => {
+        const desloc = i * (colunas + 1);
+        for (const { r, c } of refs) m = setCell(m, r, c + desloc, { mark: estadoAtivo || 1 });
+      });
+
+      aplicar("lista", { origem: resize(origem, m.rows, m.cols), pintura: m });
+      setLimparAoRecalcular(false);
+      setBlocoLinhas(linhas);
+      setBlocoColunas(colunas);
+      setBlocoFolga(n > 1 ? 1 : 0);
+      const descartes =
+        invalidos.length > 0 ? ` · ignorei ${invalidos.length} pedaço(s) que não são célula` : "";
+      setResumoLista(`${n} ${n === 1 ? "bloco" : "blocos"} de ${linhas}×${colunas}${descartes}`);
+    },
+    [aplicar, estadoAtivo, origem],
+  );
+
   const aplicarColagem = useCallback(() => {
+    // Quem tem uma lista de células cola AQUI — é o campo grande, está no topo e
+    // diz "cole do Excel". Antes isto virava uma grade de 1×38, uma célula por
+    // caractere. Só desviamos no modo automático: escolher o formato à mão
+    // continua mandando, inclusive para forçar a leitura como grade.
+    if (formatoColagem === "auto" && pareceListaDeCelulas(colagem)) {
+      setListaCelulas(colagem);
+      pintarLista(colagem);
+      setIssues([
+        {
+          linha: null,
+          mensagem:
+            "Isto é uma lista de células, não uma grade de valores — pintei o destino em vez de montar a origem. Para ler como grade, escolha o formato à mão.",
+        },
+      ]);
+      return;
+    }
     const r = parseMatrix(colagem, formatoColagem === "auto" ? undefined : formatoColagem);
     setIssues(r.issues);
     if (r.matrix.rows === 0) return;
     aplicar("colar", { origem: r.matrix, pintura: makeDestination(r.matrix, espelharTexto) });
-  }, [aplicar, colagem, formatoColagem, espelharTexto]);
+  }, [aplicar, colagem, formatoColagem, espelharTexto, pintarLista]);
 
   const aplicarRecorte = useCallback(() => {
     const faixa = parseFaixa(recorte);
@@ -600,39 +675,10 @@ export function useMatrix() {
     });
   }, [aplicar, recorte, origem, pintura]);
 
-  /**
-   * Pinta a lista colada. Com vários blocos (as 8 runas de 2019), eles vão lado
-   * a lado com uma coluna de folga — que é exatamente o que a leitura por blocos
-   * precisa para fatiar depois, e por isso a folga já sai configurada.
-   */
-  const aplicarListaCelulas = useCallback(() => {
-    const { blocos, linhas, colunas, invalidos } = parseCellBlocks(listaCelulas);
-    if (blocos.length === 0) {
-      setResumoLista(
-        invalidos.length > 0
-          ? `Não reconheci nenhuma célula. Descartei: ${invalidos.slice(0, 6).join(", ")}`
-          : "Cole as células (ex.: A1/B1/C1/A2).",
-      );
-      return;
-    }
-
-    const n = blocos.length;
-    const largura = n > 1 ? n * colunas + (n - 1) : colunas;
-    let m = emptyMatrix(Math.max(linhas, 1), Math.max(largura, 1));
-    blocos.forEach((refs, i) => {
-      const desloc = i * (colunas + 1);
-      for (const { r, c } of refs) m = setCell(m, r, c + desloc, { mark: estadoAtivo || 1 });
-    });
-
-    aplicar("lista", { origem: resize(origem, m.rows, m.cols), pintura: m });
-    setLimparAoRecalcular(false);
-    setBlocoLinhas(linhas);
-    setBlocoColunas(colunas);
-    setBlocoFolga(n > 1 ? 1 : 0);
-    const descartes =
-      invalidos.length > 0 ? ` · ignorei ${invalidos.length} pedaço(s) que não são célula` : "";
-    setResumoLista(`${n} ${n === 1 ? "bloco" : "blocos"} de ${linhas}×${colunas}${descartes}`);
-  }, [aplicar, listaCelulas, estadoAtivo, origem]);
+  const aplicarListaCelulas = useCallback(
+    () => pintarLista(listaCelulas),
+    [pintarLista, listaCelulas],
+  );
 
   // ----------------------------------------------------------------- regras
 
