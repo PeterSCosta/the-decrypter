@@ -50,7 +50,11 @@ jobs:
           cache-from: type=registry,ref=petercosta/the-decrypter:buildcache
           cache-to: type=registry,ref=petercosta/the-decrypter:buildcache,mode=max
 
+      # Faxina é higiene, não requisito: se a API do Docker Hub falhar (401, 5xx,
+      # JSON sem `.results` → jq sai != 0 → `bash -e` derruba o passo), o deploy
+      # NÃO pode ficar preso atrás dela — a imagem já foi publicada.
       - name: Clean old Docker Hub tags
+        continue-on-error: true
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

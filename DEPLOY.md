@@ -9,7 +9,7 @@ Domínio alvo: **arromba.thelogiclab.com.br**
 ## Build local (testar a imagem)
 
 ```bash
-docker build -t the-decrypter --build-arg VITE_W3W_API_KEY=SUA_CHAVE .
+docker build -t the-decrypter --build-arg VITE_API_BASE_URL=https://apiarromba.thelogiclab.com.br .
 docker run --rm -p 8080:80 the-decrypter   # abre http://localhost:8080
 ```
 
@@ -17,8 +17,10 @@ docker run --rm -p 8080:80 the-decrypter   # abre http://localhost:8080
 
 1. Dokploy → **Create Application** → fonte = este repositório, branch `main`.
 2. Build type = **Dockerfile** (raiz do repo).
-3. **Build args**: `VITE_W3W_API_KEY` = sua chave do what3words (opcional — sem
-   ela o what3words só não resolve; o resto funciona).
+3. **Build args**: `VITE_API_BASE_URL` = base do `the-decrypter-api`
+   (ex.: `https://apiarromba.thelogiclab.com.br`). É a **única** var `VITE_*`
+   que o código lê. Sem ela o bundle cai em `/api` relativo — e o nginx daqui
+   não faz proxy, então toda consulta externa quebra.
 4. **Domains**: adicione `arromba.thelogiclab.com.br`, **Container Port = 80**,
    HTTPS/Let's Encrypt ligado.
 5. Deploy. Pushes na `main` podem ser auto-deployados (webhook do Dokploy).
@@ -32,7 +34,9 @@ então** (2) dispara o Dokploy pela API (`POST /api/compose.deploy`). Como o tri
 deployar o `latest` antigo.
 
 Secrets do GitHub necessários: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`,
-`DOKPLOY_URL`, `DOKPLOY_API_KEY`, `DOKPLOY_COMPOSE_ID` e (opcional) `VITE_W3W_API_KEY`.
+`DOKPLOY_URL`, `DOKPLOY_API_KEY`, `DOKPLOY_COMPOSE_ID`.
+(`VITE_W3W_API_KEY` é **vestigial** — a chave do what3words mudou para o
+backend; nada em `src/` a lê. O secret pode ser removido do GitHub.)
 
 No Dokploy:
 1. **Create → Docker Compose**, apontando para
@@ -72,10 +76,10 @@ docker run --rm -p 8080:80 \
 
 ## Notas
 
-- `VITE_W3W_API_KEY` é embutida no bundle (inerente a app front-end). Use uma
-  chave com restrição de domínio quando possível.
-- As consultas (BrasilAPI, Nominatim, what3words) saem **do navegador do
-  usuário** direto para as APIs — o nginx só serve os arquivos estáticos, não
-  faz proxy. Não há backend.
+- Nenhuma chave de API vai para o bundle. As consultas (BrasilAPI, Open Food
+  Facts, Nominatim, what3words, lista PIX) saem do navegador para o
+  **the-decrypter-api** (`VITE_API_BASE_URL`), que guarda as chaves e faz cache
+  + rate-limit. Este nginx só serve arquivos estáticos, não faz proxy — logo o
+  backend precisa estar no ar e com CORS liberado para o domínio do app.
 - CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) roda lint +
   typecheck + testes + build em cada push/PR.

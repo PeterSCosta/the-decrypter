@@ -11,113 +11,109 @@ import { api } from "./api";
  * synchronously (or null before the first load resolves).
  */
 
-let streetsPromise: Promise<StreetsData> | null = null;
-let streetsCache: StreetsData | null = null;
+/** Estado de um dataset carregado sob demanda. */
+interface Slot<T> {
+  promise: Promise<T> | null;
+  value: T | null;
+}
 
-export function loadStreets(): Promise<StreetsData> {
-  if (!streetsPromise) {
-    streetsPromise = fetch("/data/streets.json")
-      .then((r) => r.json() as Promise<StreetsData>)
+/**
+ * Carrega uma vez, com cache — e **esquece a falha**.
+ *
+ * Memoizar a promessa REJEITADA era um defeito silencioso caro: um 502 de dois
+ * segundos durante o próprio deploy, ou o 4G piscando no meio da gincana,
+ * desligava aquele dataset pelo resto da sessão. Sem mensagem, sem nova
+ * tentativa — a pessoa concluía que a bancada não sabia buscar CEP. Zerando o
+ * memo no erro, a próxima chamada tenta de novo.
+ *
+ * O `res.ok` também não é firula: sem backend, o servidor responde a página de
+ * erro com status 200, e o corpo HTML chegava a `JSON.parse` como
+ * "Unexpected token '<'" — ou, pior, era fatiado em linhas e entregue ao score
+ * como se fosse vocabulário (ver `engine/words.ts`).
+ */
+function loadOnce<T>(slot: Slot<T>, url: string, parse: (r: Response) => Promise<T>): Promise<T> {
+  if (!slot.promise) {
+    slot.promise = fetch(url)
+      .then((r) => {
+        if (!r.ok) throw new Error(`Consulta indisponível (HTTP ${r.status}).`);
+        return parse(r);
+      })
       .then((d) => {
-        streetsCache = d;
+        slot.value = d;
         return d;
+      })
+      .catch((e) => {
+        slot.promise = null; // a próxima tentativa recomeça do zero
+        throw e;
       });
   }
-  return streetsPromise;
+  return slot.promise;
+}
+
+const asJson = <T>(r: Response) => r.json() as Promise<T>;
+
+const streets: Slot<StreetsData> = { promise: null, value: null };
+
+export function loadStreets(): Promise<StreetsData> {
+  return loadOnce(streets, "/data/streets.json", asJson<StreetsData>);
 }
 
 export function getStreets(): StreetsData | null {
-  return streetsCache;
+  return streets.value;
 }
 
-let cepsPromise: Promise<CepsData> | null = null;
-let cepsCache: CepsData | null = null;
+const ceps: Slot<CepsData> = { promise: null, value: null };
 
 export function loadCeps(): Promise<CepsData> {
-  if (!cepsPromise) {
-    cepsPromise = fetch("/data/ceps.json")
-      .then((r) => r.json() as Promise<CepsData>)
-      .then((d) => {
-        cepsCache = d;
-        return d;
-      });
-  }
-  return cepsPromise;
+  return loadOnce(ceps, "/data/ceps.json", asJson<CepsData>);
 }
 
 export function getCeps(): CepsData | null {
-  return cepsCache;
+  return ceps.value;
 }
 
-let municipiosPromise: Promise<MunicipiosData> | null = null;
-let municipiosCache: MunicipiosData | null = null;
+const municipios: Slot<MunicipiosData> = { promise: null, value: null };
 
 export function loadMunicipios(): Promise<MunicipiosData> {
-  if (!municipiosPromise) {
-    municipiosPromise = fetch("/data/municipios.json")
-      .then((r) => r.json() as Promise<MunicipiosData>)
-      .then((d) => {
-        municipiosCache = d;
-        return d;
-      });
-  }
-  return municipiosPromise;
+  return loadOnce(municipios, "/data/municipios.json", asJson<MunicipiosData>);
 }
 
 export function getMunicipios(): MunicipiosData | null {
-  return municipiosCache;
+  return municipios.value;
 }
 
-let airportsPromise: Promise<AirportsData> | null = null;
-let airportsCache: AirportsData | null = null;
+const airports: Slot<AirportsData> = { promise: null, value: null };
 
 export function loadAirports(): Promise<AirportsData> {
-  if (!airportsPromise) {
-    airportsPromise = fetch("/data/airports.json")
-      .then((r) => r.json() as Promise<AirportsData>)
-      .then((d) => {
-        airportsCache = d;
-        return d;
-      });
-  }
-  return airportsPromise;
+  return loadOnce(airports, "/data/airports.json", asJson<AirportsData>);
 }
 
 export function getAirports(): AirportsData | null {
-  return airportsCache;
+  return airports.value;
 }
 
 // Participantes PIX (~900 instituições) via backend /api/pix. Carregado sob
 // demanda e cacheado; indexado por ISPB no decoder. O backend já entrega no
 // formato {ispb, nome, nomeReduzido, tipo}, então não há mapeamento aqui.
-let pixPromise: Promise<PixData> | null = null;
-let pixCache: PixData | null = null;
+const pix: Slot<PixData> = { promise: null, value: null };
 
 export function loadPix(): Promise<PixData> {
-  if (!pixPromise) {
-    pixPromise = fetch(api("/pix"))
-      .then((r) => r.json() as Promise<PixData>)
-      .then((rows) => {
-        pixCache = rows;
-        return rows;
-      });
-  }
-  return pixPromise;
+  return loadOnce(pix, api("/pix"), asJson<PixData>);
 }
 
 export function getPix(): PixData | null {
-  return pixCache;
+  return pix.value;
 }
 
 export type WordLang = "pt" | "en";
-const wordsPromise: Partial<Record<WordLang, Promise<string[]>>> = {};
+const words: Record<WordLang, Slot<string[]>> = {
+  pt: { promise: null, value: null },
+  en: { promise: null, value: null },
+};
 
 /** Carrega a lista de palavras (uma por linha) do idioma, com cache. */
 export function loadWords(lang: WordLang): Promise<string[]> {
-  if (!wordsPromise[lang]) {
-    wordsPromise[lang] = fetch(`/data/words-${lang}.txt`)
-      .then((r) => r.text())
-      .then((t) => t.split("\n").filter(Boolean));
-  }
-  return wordsPromise[lang] as Promise<string[]>;
+  return loadOnce(words[lang], `/data/words-${lang}.txt`, (r) =>
+    r.text().then((t) => t.split("\n").filter(Boolean)),
+  );
 }
