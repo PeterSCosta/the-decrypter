@@ -1,5 +1,6 @@
 import { cepByCode, formatCep } from "@/features/cep/types";
 import { detectLocation, detectWhat3Words } from "@/features/location/formats";
+import { detectMapcode } from "@/features/location/mapcode";
 import { defineDecoder } from "../define";
 import type { DecodeCandidate } from "../types";
 
@@ -13,6 +14,12 @@ export interface LocationData {
   cep?: string;
   /** Endereço what3words a resolver via API. */
   w3w?: string;
+  /**
+   * Mapcode a resolver no card. Fica assíncrono como o what3words, mas por
+   * outro motivo: a lib pesa ~305 KB gz — mais que o bundle inteiro — e entra
+   * por `import()` dinâmico, para não cobrar isso de quem nunca vai usar.
+   */
+  mapcode?: string;
 }
 
 function mapCandidate(data: LocationData, score: number): DecodeCandidate {
@@ -55,6 +62,20 @@ export const decoders = defineDecoder({
             format: loc.format,
           },
           0.9,
+        ),
+      );
+    }
+
+    // Mapcode: só a DETECÇÃO é síncrona e barata (é a forma do código). A
+    // coordenada sai no card, porque a lib é pesada e nem sempre resolve —
+    // mapcode local é válido em 467 dos 543 territórios, então sem território
+    // explícito a bancada assume BR-SC e diz que assumiu.
+    const mc = detectMapcode(input);
+    if (mc) {
+      out.push(
+        mapCandidate(
+          { lat: null, lng: null, label: mc.full, format: "Mapcode", mapcode: mc.full },
+          0.85,
         ),
       );
     }

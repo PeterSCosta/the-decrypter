@@ -6,7 +6,14 @@
 import { getCellByCode, getCellByLocation } from "geohex";
 import { cellToLatLng, isValidCell } from "h3-js";
 import { ANCHORS, VALE_BBOX, inBBox, scopeLabel } from "./anchors";
+import { cartaScaleLabel, decodeCartaIbge } from "./carta-ibge";
+import { decodeGars, garsCellLabel } from "./gars";
+import { decodeGeoref, decodeGeorefLocal } from "./georef";
+import { decodeGeoTude } from "./geotude";
+import { decodeGradeIbge, gradeCellLabel } from "./grade-ibge";
+import { decodeMgrs, decodeMgrsLocal, mgrsPrecisionLabel } from "./mgrs";
 import { decodePlusCodeLib, recoverPlusCodeLib } from "./plus-code";
+import { utmToLatLng } from "./utm";
 
 export interface GeoPoint {
   lat: number;
@@ -149,61 +156,18 @@ export function decodePlusCode(raw: string): GeoPoint | null {
 }
 
 // ---- UTM (inverso, WGS84): "22J 734643E 7012408N" ------------------------
+/**
+ * A conta mora em `utm.ts` porque o MGRS é a mesma projeção com outra grafia e
+ * precisa dela sem importar este módulo de volta (ciclo).
+ */
 export function parseUTM(raw: string): GeoPoint | null {
   const m = raw
     .trim()
     .match(/^(\d{1,2})\s*([C-HJ-NP-Xc-hj-np-x])\s+(\d{3,7})\s*E?\s+(\d{3,8})\s*N?$/);
   if (!m) return null;
-  const zone = Number(m[1]);
   const band = m[2].toUpperCase();
-  const easting = Number(m[3]);
-  const northing = Number(m[4]);
-  if (zone < 1 || zone > 60) return null;
-  const isNorth = band >= "N";
-
-  const a = 6378137.0;
-  const f = 1 / 298.257223563;
-  const k0 = 0.9996;
-  const e2 = f * (2 - f);
-  const ep2 = e2 / (1 - e2);
-  const x = easting - 500000;
-  let y = northing;
-  if (!isNorth) y -= 10000000;
-
-  const M = y / k0;
-  const mu = M / (a * (1 - e2 / 4 - (3 * e2 ** 2) / 64 - (5 * e2 ** 3) / 256));
-  const e1 = (1 - Math.sqrt(1 - e2)) / (1 + Math.sqrt(1 - e2));
-  const fp =
-    mu +
-    ((3 * e1) / 2 - (27 * e1 ** 3) / 32) * Math.sin(2 * mu) +
-    ((21 * e1 ** 2) / 16 - (55 * e1 ** 4) / 32) * Math.sin(4 * mu) +
-    ((151 * e1 ** 3) / 96) * Math.sin(6 * mu) +
-    ((1097 * e1 ** 4) / 512) * Math.sin(8 * mu);
-
-  const sinF = Math.sin(fp);
-  const cosF = Math.cos(fp);
-  const tanF = Math.tan(fp);
-  const C1 = ep2 * cosF ** 2;
-  const T1 = tanF ** 2;
-  const R1 = (a * (1 - e2)) / (1 - e2 * sinF ** 2) ** 1.5;
-  const N1 = a / Math.sqrt(1 - e2 * sinF ** 2);
-  const D = x / (N1 * k0);
-
-  const lat =
-    fp -
-    ((N1 * tanF) / R1) *
-      ((D * D) / 2 -
-        ((5 + 3 * T1 + 10 * C1 - 4 * C1 ** 2 - 9 * ep2) * D ** 4) / 24 +
-        ((61 + 90 * T1 + 298 * C1 + 45 * T1 ** 2 - 3 * C1 ** 2 - 252 * ep2) * D ** 6) / 720);
-  const lng0 = ((zone * 6 - 183) * Math.PI) / 180;
-  const lng =
-    lng0 +
-    (D -
-      ((1 + 2 * T1 + C1) * D ** 3) / 6 +
-      ((5 - 2 * C1 + 28 * T1 - 3 * C1 ** 2 + 8 * ep2 + 24 * T1 ** 2) * D ** 5) / 120) /
-      cosF;
-
-  return valid((lat * 180) / Math.PI, (lng * 180) / Math.PI);
+  const pt = utmToLatLng(Number(m[1]), band >= "N", Number(m[3]), Number(m[4]));
+  return pt ? valid(pt.lat, pt.lng) : null;
 }
 
 // ---- Quadkey (Bing tile) → centro do tile --------------------------------
@@ -327,6 +291,28 @@ export function decodeGeohashLocal(raw: string): LocalGeoHit | null {
 }
 
 /**
+ * Mapcode (mapcode.com): a DETECÇÃO é síncrona e barata (só a forma), mas a
+ * coordenada é assíncrona — um mapcode local não decodifica sem território e a
+ * lib que resolve isso pesa mais que o bundle inteiro, então entra por
+ * `import()` dinâmico. Mesmo arranjo do what3words: aqui só se reconhece,
+ * `resolveMapcode` é que resolve.
+ */
+export { detectMapcode, resolveMapcode } from "./mapcode";
+export type { DetectedMapcode, MapcodeResolution, MapcodeScope } from "./mapcode";
+
+/**
+ * Os geocódigos de grade militar/oficial moram em arquivo próprio (cada um tem
+ * sua aritmética), mas saem por aqui: `formats.ts` continua sendo a porta única
+ * de quem só quer "código → coordenada".
+ */
+export { decodeMgrs, decodeMgrsLocal, parseMgrs } from "./mgrs";
+export { decodeGeoref, decodeGeorefLocal, parseGeoref } from "./georef";
+export { decodeGars, parseGars } from "./gars";
+export { decodeCartaIbge, parseCartaIbge } from "./carta-ibge";
+export { albersToLatLng, decodeGradeIbge, latLngToAlbers, parseGradeIbge } from "./grade-ibge";
+export { utmToLatLng } from "./utm";
+
+/**
  * Endereço what3words: 3 palavras separadas por ponto, com "///" opcional
  * (ex.: "filled.count.soap"). Resolução em coordenada é assíncrona (API).
  */
@@ -336,29 +322,95 @@ export function detectWhat3Words(raw: string): string | null {
 }
 
 // ---- Detecção -------------------------------------------------------------
+
+/** Nomeia a folha/célula junto do formato: "MGRS/USNG · 1 m". */
+const withDetail = (format: string, detail: string) => `${format} · ${detail}`;
+
+/**
+ * Formatos com identificador próprio (grade e carta), avaliados antes da lista
+ * genérica porque o rótulo carrega a escala/tamanho da célula — o código nomeia
+ * uma ÁREA, e esconder isso faria o card parecer mais preciso do que é.
+ */
+function detectNamedGrid(input: string): DetectedLocation | null {
+  const grade = decodeGradeIbge(input);
+  if (grade) {
+    return {
+      lat: grade.lat,
+      lng: grade.lng,
+      format: withDetail("Grade estatística IBGE", `célula de ${gradeCellLabel(grade.cell)}`),
+    };
+  }
+  const carta = decodeCartaIbge(input);
+  if (carta) {
+    return {
+      lat: carta.lat,
+      lng: carta.lng,
+      format: withDetail("Carta IBGE/DSG", cartaScaleLabel(carta.scale)),
+    };
+  }
+  return null;
+}
+
 export function detectLocation(raw: string): DetectedLocation | null {
   const input = raw.trim();
   if (!input) return null;
+
+  // Prefixo literal / hífens: não disputam entrada com nada da lista abaixo.
+  const named = detectNamedGrid(input);
+  if (named) return named;
+
+  const mgrs = decodeMgrs(input);
+  const gars = decodeGars(input);
+  const georef = decodeGeoref(input);
+
   const attempts: [string, GeoPoint | null][] = [
     ["Graus decimais (DD)", parseDD(input)],
     ["DMS", parseDMS(input)],
     ["Graus e minutos (DDM)", parseDDM(input)],
     ["Plus Code", decodePlusCode(input)],
     ["UTM", parseUTM(input)],
+    // MGRS é a UTM em letras: vem logo depois dela, e ANTES do Geohash — todo
+    // MGRS é lexicalmente um Geohash válido (o gate de maiúsculas é o que
+    // impede o inverso, já que Geohash se escreve minúsculo).
+    [mgrs ? withDetail("MGRS/USNG", mgrsPrecisionLabel(mgrs.parts.digits)) : "MGRS/USNG", mgrs],
     ["Maidenhead", decodeMaidenhead(input)],
+    // GEOREF (4 letras + dígitos) e GARS (3 dígitos + 2 letras) também casariam
+    // como Geohash se chegassem depois dele.
+    ["GEOREF", georef],
+    [gars ? withDetail("GARS", `célula de ${garsCellLabel(gars.cell)}`) : "GARS", gars],
     ["Quadkey", decodeQuadkey(input)],
     // H3 e GeoHex antes do Geohash: ambos (hex / 2 letras + dígitos) também
     // passariam no teste base32 do Geohash.
     ["H3", parseH3(input)],
     ["GeoHex", parseGeoHex(input)],
-    ["Geohash", decodeGeohash(input)],
   ];
   for (const [format, pt] of attempts) if (pt) return { ...pt, format };
 
-  // Atalho do Vale: número puro como cauda de um código "Nb…" (Blumenau/Itajaí).
-  const geohexLocal = parseGeoHexBlumenau(input);
-  if (geohexLocal) {
-    return { ...geohexLocal, format: `GeoHex (${scopeLabel(geohexLocal) ?? "Vale do Itajaí"})` };
+  // ---- Atalhos de cauda local (o prefixo da cidade fica subentendido) -----
+  // Vem ANTES do Geohash de propósito: uma cauda de MGRS como "FR9203021024"
+  // é lexicalmente um Geohash válido, e o Geohash levaria. Inverter a ordem só
+  // é seguro porque os três atalhos são auto-validantes — só passam se o ponto
+  // cair na caixa do Vale — e porque exigem MAIÚSCULA (ou só dígitos), enquanto o
+  // Geohash da região se escreve minúsculo e começa em "6gj".
+  const local: [string, GeoPoint | null][] = [
+    // Número puro como cauda de um código "Nb…" (Blumenau/Itajaí).
+    ["GeoHex", parseGeoHexBlumenau(input)],
+    // "FR9203021024" = MGRS sem o fuso "22J", comum às duas cidades: 100% dos
+    // 5.268 CEPs com coordenada de Blumenau+Itajaí em `ceps.json` caem em 22J.
+    ["MGRS/USNG", decodeMgrsLocal(input)],
+    // "LD5604" = GEOREF sem a célula de 15° "JE" — idem, 100% dos 5.268.
+    ["GEOREF", decodeGeorefLocal(input)],
+  ];
+  for (const [format, pt] of local) {
+    if (pt) return { ...pt, format: `${format} (${scopeLabel(pt) ?? "Vale do Itajaí"})` };
   }
+
+  // Os mais frouxos por último: o Geohash aceita quase todo alfanumérico curto,
+  // e o GeoTude, todo decimal pontuado.
+  const loose: [string, GeoPoint | null][] = [
+    ["Geohash", decodeGeohash(input)],
+    ["GeoTude", decodeGeoTude(input)],
+  ];
+  for (const [format, pt] of loose) if (pt) return { ...pt, format };
   return null;
 }
