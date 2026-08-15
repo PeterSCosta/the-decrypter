@@ -10,6 +10,7 @@ import { MatrixPanel } from "@/features/matrix/components/matrix-panel";
 import { PositionsPanel } from "@/features/positions/components/positions-panel";
 import { ReferencePanel } from "@/features/reference/components/reference-panel";
 import { TextExtractPanel } from "@/features/text-extract/components/text-extract-panel";
+import { TriangulatePanel } from "@/features/triangulate/components/triangulate-panel";
 import { cn } from "@/lib/cn";
 import {
   BookOpen,
@@ -19,6 +20,7 @@ import {
   Hash,
   MapPinned,
   Shuffle,
+  Triangle,
   Type,
   Wand2,
 } from "lucide-react";
@@ -33,6 +35,7 @@ type TabId =
   | "anagram"
   | "fonts"
   | "reference"
+  | "triangulate"
   | "fleet";
 
 const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string }> }[] = [
@@ -44,6 +47,7 @@ const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string
   { id: "anagram", label: "Anagramas", icon: Shuffle },
   { id: "fonts", label: "Fontes", icon: Eye },
   { id: "reference", label: "Cola", icon: BookOpen },
+  { id: "triangulate", label: "Triangulação", icon: Triangle },
   { id: "fleet", label: "Frota", icon: MapPinned },
 ];
 
@@ -108,6 +112,7 @@ export function App() {
           {tab === "fonts" && <FontsPanel />}
           {tab === "anagram" && <AnagramPanel />}
           {tab === "reference" && <ReferencePanel />}
+          {tab === "triangulate" && <TriangulatePanel />}
           {tab === "fleet" && <FleetPanel />}
         </main>
       )}

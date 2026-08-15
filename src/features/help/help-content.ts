@@ -613,6 +613,14 @@ export const HELP_SECTIONS: HelpSection[] = [
         desc: "Referência do gabarito: cores, quantidade de dígitos, A1Z26, formatos de coordenada, checklist de técnicas, “Bases e onde consultar” (com o selo de aberta/manual/bloqueada/adiada), alfabeto Pigpen, alfabeto manual de Libras e compostos químicos (nome → fórmula).",
       },
       {
+        name: "Triangulação",
+        desc: "Vários pontos digitados em qualquer forma — coordenada (todos os formatos da bancada), CEP, endereço com número, nome de rua ou nome de ponte, inclusive pelo apelido — viram mapa. Com três, dá os quatro centros que não são a mesma coisa: o CENTROIDE (média das posições), o EQUIDISTANTE (circuncentro — à mesma distância dos três, que é o que “triangular” costuma querer dizer), o INCENTRO (equidistante dos lados) e a MENOR SOMA (mediana geométrica: o encontro mais curto para todos, e o único que não é arrastado por um ponto muito distante), mais os lados, ângulos e área do triângulo. Com qualquer quantidade, desenha a rota na ordem digitada, com distância e rumo de cada perna, e reordena pelo trajeto mais curto sem mexer no ponto de partida. Distâncias em linha reta, não pela malha viária.",
+        example: {
+          in: "Ponte dos Arcos · Ponte de Ferro · Ponte do Salto",
+          out: "equidistante −26.876451, −49.060724 · rota 5,89 km",
+        },
+      },
+      {
         name: "Frota",
         desc: "Mapa ao vivo dos celulares da equipe (Traccar): posição, status, bateria e quem está mais perto — o mesmo cálculo que aparece no cartão de localização.",
       },
@@ -661,7 +669,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Bases embutidas (sem rede)",
-        desc: "Ruas de Blumenau, CEPs de SC, municípios do IBGE, aeroportos do OpenFlights, as tabelas de país (ISO 3166/COI/FIFA), moeda (ISO 4217), alfabetos do mundo e estilos Unicode e as listas de palavras pt/en vêm empacotados; boleto, chave de NF-e, título de eleitor, placa, rastreio S10 e todas as grades de coordenada (MGRS, GEOREF, GARS, carta e grade do IBGE) são conta local, sem rede; o Mapcode carrega a lib por import dinâmico, também sem consulta externa.",
+        desc: "Ruas de Blumenau, as 94 pontes/passarelas/viadutos nomeados de Blumenau (lei de denominação + geometria do OSM), CEPs de SC, municípios do IBGE, aeroportos do OpenFlights, as tabelas de país (ISO 3166/COI/FIFA), moeda (ISO 4217), alfabetos do mundo e estilos Unicode e as listas de palavras pt/en vêm empacotados; boleto, chave de NF-e, título de eleitor, placa, rastreio S10 e todas as grades de coordenada (MGRS, GEOREF, GARS, carta e grade do IBGE) são conta local, sem rede; o Mapcode carrega a lib por import dinâmico, também sem consulta externa.",
         example: { in: "/data/*.json", out: "offline" },
       },
     ],
