@@ -1,4 +1,5 @@
 import type { AirportsData } from "@/features/airport/types";
+import type { BridgesData } from "@/features/bridge/types";
 import type { CepsData } from "@/features/cep/types";
 import type { MunicipiosData } from "@/features/ibge/types";
 import type { PixData } from "@/features/pix/types";
@@ -90,6 +91,17 @@ export function loadAirports(): Promise<AirportsData> {
 
 export function getAirports(): AirportsData | null {
   return airports.value;
+}
+
+// Pontes, passarelas e viadutos nomeados de Blumenau (lei + OSM).
+const bridges: Slot<BridgesData> = { promise: null, value: null };
+
+export function loadBridges(): Promise<BridgesData> {
+  return loadOnce(bridges, "/data/bridges.json", asJson<BridgesData>);
+}
+
+export function getBridges(): BridgesData | null {
+  return bridges.value;
 }
 
 // Participantes PIX (~900 instituições) via backend /api/pix. Carregado sob

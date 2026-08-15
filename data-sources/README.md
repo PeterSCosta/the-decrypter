@@ -23,6 +23,24 @@ generated JSON in `public/data/` is committed. Regenerate with `pnpm build:data`
   into a lookup array; parses `centroide` (`POINT(lng lat)`) into `[lat, lng]`.
 - Override the input path: `CEP_CSV=/path/to.csv pnpm build:ceps`.
 
+## `pontes-*.json` / `bairros-blumenau.geojson` — named bridges
+
+- **`pontes-leis.json`** — the naming laws. Origin: Câmara Municipal de Blumenau, *Leis
+  Municipais* (`digital.camarablu.sc.gov.br`), full-text search for `ponte`, `passarela` and
+  `viaduto`; 73 laws, 1950→2023, with ementa, integral text (when the portal publishes it) and
+  permalink. **Committed** on purpose: the portal has since put a human-verification wall in front
+  of the search, so this file is the only reproducible copy of the harvest.
+- **`pontes-osm.json`** — OSM ways tagged `bridge` / `man_made=bridge` inside Blumenau, with
+  geometry (Overpass). 426 ways; only ~40 carry a name.
+- **`pontes-hidrografia.json`** — named `river`/`stream`/`canal` ways, for the "what does it cross"
+  join. **`bairros-blumenau.geojson`** — bairro polygons from the city's ArcGIS
+  (`geo.blumenau.sc.gov.br`, `Limites/Bairros`), trimmed to name + código.
+- **Parser:** [`scripts/build-bridges.ts`](../scripts/build-bridges.ts) → `public/data/bridges.json`
+  (94 structures). Joins law ↔ OSM by name and keeps rows that exist on only one side — the laws
+  name ~50 bridges OSM never mapped, OSM maps a few no law we found names.
+- The geoportal has **no bridge layer** (checked: Vias, Rodovias, Lotes, Bairros, Hidrografia), so
+  there is no official geometry to use instead of OSM.
+
 ## `postes-raw.jsonl` — Blumenau street-lighting poles (plaquetas)
 
 - **Origin:** *Cidade Iluminada* portal (Exati Tecnologia), Blumenau instance

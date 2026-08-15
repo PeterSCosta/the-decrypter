@@ -1,0 +1,665 @@
+{
+ "source": "Câmara Municipal de Blumenau — base de Leis Municipais (digital.camarablu.sc.gov.br)",
+ "coleta": "2026-08-14, busca full-text por \"ponte\", \"passarela\" e \"viaduto\" no tipo Leis Municipais",
+ "nota": "Texto integral quando o portal o publica; caso contrário só a ementa. Inclui a Lei 9237/2022, que REVOGA uma denominação — ela não nomeia ponte alguma, entra como metadado.",
+ "count": 73,
+ "leis": [
+  {
+   "lei": "105/1950",
+   "num": 105,
+   "ano": 1950,
+   "data": "04/03/1950",
+   "ementa": "Art º 1º - Fica denominada de “DESEMBARGADOR PEDRO SILVA” a nova ponte de concreto armado sobre o Ribeirão do Garcia, na Rua 15 de Novembro, nesta cidade. Artº 2º - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.....",
+   "texto": "Art º 1º - Fica denominada de “DESEMBARGADOR PEDRO SILVA” a nova ponte de concreto armado sobre o Ribeirão do Garcia, na Rua 15 de Novembro, nesta cidade. Artº 2º - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário. .",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-105-1950-19967"
+  },
+  {
+   "lei": "800/1957",
+   "num": 800,
+   "ano": 1957,
+   "data": "20/08/1957",
+   "ementa": "DÁ DENOMINAÇÃO À PONTE SOBRE O RIO ITAJAÍ-AÇU. (QUE LIGA O CENTRO DA CIDADE AO BAIRRO DA PONTA AGUDA) Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-800-1957-22695"
+  },
+  {
+   "lei": "1057/1961",
+   "num": 1057,
+   "ano": 1961,
+   "data": "13/12/1961",
+   "ementa": "DÁ DENOMINAÇÃO À PONTE SOBRE O RIBEIRÃO SARMENTO NA VILA ITOUPAVA. - (HEINRICH FELDMANN) Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º - É denominada \"PONTE HEINRICH FELDMANN\" a ponte construída sobre o Ribeirão Sarmento, na Vila Itoupava, distrito do mesmo nome, neste Município. Art. 2º - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-1057-1961-14054"
+  },
+  {
+   "lei": "1095/1962",
+   "num": 1095,
+   "ano": 1962,
+   "data": "24/08/1962",
+   "ementa": "DÁ DENOMINAÇÃO À PONTE SOBRE O RIBEIRÃO CEGO, NA VELHA CENTRAL. (JOSÉ REUTER) Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º - É denominada \"Ponte José Reuter\" a ponte construída sobre o Ribeirão do Cego, na estrada da Velha Central. Art. 2º - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-1095-1962-14085"
+  },
+  {
+   "lei": "1096/1962",
+   "num": 1096,
+   "ano": 1962,
+   "data": "24/08/1962",
+   "ementa": "DÁ DENOMINÇÃO À PONTE SOBRE O RIBEIRÃO DA VELHA, ENTRE OS BAIRROS DA VELHA E DO RIBEIRÃO BRANCO. (HENRIQUE DUGGEN). Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º - É denominada \"Ponte Henrique Duggen\" a ponte construída sobre o Ribeirão da Velha, ligando a Rua João Pessoa com a Rua General Osório. Art. 2°- Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-1096-1962-14086"
+  },
+  {
+   "lei": "1183/1963",
+   "num": 1183,
+   "ano": 1963,
+   "data": "05/09/1963",
+   "ementa": "DÁ DENOMINAÇÃO À PONTE CONSTRUÍDA SOBRE O RIBEIRÃO DA VELHA, NA RUA MARECHAL DEODORO. - (PONTE RUDOLFO RUEDIGER ). Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º - É denominada \"PONTE RUDOLFO RUEDIGER\" a ponte construída sobre o Ribeirão da Velha, na Rua Marechal Deodoro, ligando o bairro da Velha com o de Vila Nova. Art. 2º - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-1183-1963-14170"
+  },
+  {
+   "lei": "1278/1964",
+   "num": 1278,
+   "ano": 1964,
+   "data": "16/10/1964",
+   "ementa": "DÁ DENOMINAÇÃO À PONTE CONSTRUIDA SOBRE O RIBEIRÃO ITOUPAVA EM ITOUPAVA CENTRAL. - ( PONTE CARLOS JENSEN). Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1° - É denominada \"PONTE CARLOS JENSEN\" a ponte de concreto armado construída sobre o Ribeirão Itoupava, em Itoupava Central, junto á Companhia Jensen, Agricultura, Indústria e Comércio. Art. 2° - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-1278-1964-14264"
+  },
+  {
+   "lei": "1850/1972",
+   "num": 1850,
+   "ano": 1972,
+   "data": "14/06/1972",
+   "ementa": "DÁ DENOMINAÇÃO DE (PONTE ARMANDO DA SILVA ), A PONTE QUE LIGA AS RUAS CAPINZAL À RUA CENTENÁRIO NO BAIRRO DO GARCIA. Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º - Denominar-se-á \"PONTE ARMANDO DA SILVA\", a ponte que liga a Rua Capinzal à Rua Centenário, junto à Sociedade Recreativa e Desportiva Centenário. Art. 2º - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-1850-1972-15260"
+  },
+  {
+   "lei": "2116/1975",
+   "num": 2116,
+   "ano": 1975,
+   "data": "05/12/1975",
+   "ementa": "DÁ DENOMINAÇÃO À PONTE SOBRE O RIO ITAJAÍ-AÇÚ ENTRE OS BAIRROS DA PONTA AGUDA E VORSTADT. ( PONTE JOSÉ FERREIRA DA SILVA) Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º - É denominada \"JOSÉ FERREIRA DA SILVA\" a ponte sobre o Rio Itajaí-Açú, ligando a Rua República Argentina, no bairro da Ponta Aguda, à Rua São Bento, no bairro Vorstadt. Art. 2º - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-2116-1975-15524"
+  },
+  {
+   "lei": "2123/1975",
+   "num": 2123,
+   "ano": 1975,
+   "data": "17/12/1975",
+   "ementa": "DÁ DENOMINAÇÃO À PONTE EM CONSTRUÇÃO SOBRE O RIBEIRÃO VELHA GRANDE, NA LOCALIDADE DE VELHA CENTRAL. (PONTE HEMANN GEBIEN) Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º - É denominada \"PONTE HERMANN GEBIEN\" a ponte de concreto armado sobre o Ribeirão Velha Grande, na localidade de Velha Central, no final da Rua Governador Jorge Lacerda. Art. 2º - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-2123-1975-15531"
+  },
+  {
+   "lei": "2206/1976",
+   "num": 2206,
+   "ano": 1976,
+   "data": "11/11/1976",
+   "ementa": "DÁ DENOMINAÇÃO À PONTE CONSTRUÍDA SOBRE O RIBEIRÃO GARCIA LIGANDO A RUA PROGRESSO COM A RUA EMÍLIO TALLMANN. (PONTE JOSÉ RULENSKI) Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1° - É denominada \"JOSÉ RULENSKI\" a ponte de concreto armado construída sobre o Ribeirão Garcia, ligando a Rua Progresso com a Rua Emílio Tallmann, no Bairro do Garcia. Art. 2º - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-2206-1976-15614"
+  },
+  {
+   "lei": "2327/1978",
+   "num": 2327,
+   "ano": 1978,
+   "data": "29/03/1978",
+   "ementa": "DÁ DENOMINAÇÃO DE GUSTAVO KRUG A PONTE DE CONCRETO ARMADO CONSTRUÍDA SOBRE O RIBEIRÃO GARCIA NO BAIRRO PROGRESSO, LIGANDO A RUA RUI BARBOSA COM A RUA PROGRESSO. Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º - É denominada \"GUSTAVO KRUG\" a ponte de concreto armado construída sobre o Ribeirão Garcia, no bairro Progresso, na Rua Rui Barbosa, ligando esta com a Rua Progresso. Art. 2º - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-2327-1978-15735"
+  },
+  {
+   "lei": "2339/1978",
+   "num": 2339,
+   "ano": 1978,
+   "data": "11/04/1978",
+   "ementa": "DÁ DENOMINAÇÃO À PONTE DE CONCRETO ARMADO CONSTRUÍDA SOBRE O RIBEIRÃO BRANCO, NA RUA BAHIA, NA LOCALIDADE DE PASSO MANSO.(PONTE HEINRICH GEORG WEISE) Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º - É denominada \"Heinrich Georg Weise\" a ponte de concreto armado construída sobre o ribeirão Branco, na Rua Bahia, na localidade de Passo Manso, nesta cidade. Art. 2º - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-2339-1978-15747"
+  },
+  {
+   "lei": "2376/1978",
+   "num": 2376,
+   "ano": 1978,
+   "data": "06/07/1978",
+   "ementa": "DÁ DENOMINAÇÃO À PONTE CONSTRUÍDA SOBRE O RIBEIRÃO JARARACA NO BAIRRO ASILO, NA RUA JÚLIO RÜDIGER SENIOR (PONTE MANOEL EMÍLIO LAURENTINO DE SOUZA). Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º - É denominada \"Manoel Emílio Laurentino de Souza\" a ponte de concreto armado construída sobre o Ribeirão Jararaca, no bairro do Asilo, na Rua Júlio Rüdiger Senior. Art. 2º - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-2376-1978-15784"
+  },
+  {
+   "lei": "2388/1978",
+   "num": 2388,
+   "ano": 1978,
+   "data": "11/07/1978",
+   "ementa": "DÁ DENOMINAÇÃO DE PAULO KOWATSCH À PONTE DE CONCRETO ARMADO CONSTRUÍDA SOBRE O RIBEIRÃO SALTO DO NORTE, NA RUA MAX HUMPL. Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º - É denominada \"PAULO KOWATSCH\" a ponte de concreto armado construída sobre o Ribeirão Salto do Norte, na Rua Professor Max Humpl, no bairro do Salto, nesta cidade. Art. 2º - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-2388-1978-15796"
+  },
+  {
+   "lei": "2396/1978",
+   "num": 2396,
+   "ano": 1978,
+   "data": "20/09/1978",
+   "ementa": "DÁ DENOMINAÇÃO DE AFONSO MANOEL TOBIAS À PONTE DE CONCRETO ARMADO CONSTRUÍDA SOBRE O RIBEIRÃO DA RUA PEDRO KRAUSS SÊNIOR, NO BAIRRO VORSTADT NESTA CIDADE. Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º - É denominada \"Afonso Manoel Tobias\" a ponte de concreto armado construída sobre o ribeirão da Rua Pedro Krauss Senior, na Rua Urubici, no Bairro Vorstadt, nesta cidade. Art. 2º - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-2396-1978-15804"
+  },
+  {
+   "lei": "2458/1979",
+   "num": 2458,
+   "ano": 1979,
+   "data": "07/06/1979",
+   "ementa": "DÁ DENOMINAÇÃO À PONTE EM CONSTRUÇÃO SOBRE O RIBEIRÃO DA VELHA LIGANDO ESTA COM A RUA ALMIRANTE TAMANDARÉ. Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º - É denominada \"ALBERTO BUSNARDO\" a ponte de concreto armado, em construção, sobre o ribeirão da Velha, no bairro do mesmo nome, na Rua Alberto Stein, ligando esta com a Rua Almirante Tamandaré. Art. 2º - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-2458-1979-15866"
+  },
+  {
+   "lei": "2520/1979",
+   "num": 2520,
+   "ano": 1979,
+   "data": "23/11/1979",
+   "ementa": "DÁ DENOMINAÇÕES A PONTES. (PONTE IRMÃOS BERARDUS, LOCALIZADA NA RUA DE ACESSO À IGREIJA CATÓLICA, VIA TRANVERSAL DA RUA HENRIQUE CONRAD E PONTE LUDWIIG GREVE, LOCALIZADA NA ESTRADA GERAL RIBEIRÃO AREIA). Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º - Ficam denominadas as pontes, abaixo descritas e situadas em Vila Itoupava, Distrito de Blumenau: a) \"Ponte Irmão Berardus Thier\", a ponte localizada na rua de acesso à Igreja Católica de Vila Itoupava, via esta transversal da Rua Henrique Conrad; b) \"Ponte Ludwig Greve\", a ponte localizada na Estrada Geral de Itoupava Rega, próxima a confluência com a Estrada Geral Ribeirão Areia e que dista de Vila Itoupava, aproximadamente, 5 km. Art. 2º - Esta lei entrará em vigor na data de sua publicação.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-2520-1979-15928"
+  },
+  {
+   "lei": "2603/1980",
+   "num": 2603,
+   "ano": 1980,
+   "data": "22/09/1980",
+   "ementa": "DÁ DENOMINAÇÃO DE DOUTOR EDGAR BARRETO À PONTE CONSTRUÍDA SOBRE O RIBEIRÃO DA VELHA, NA RUA ITORORÓ, NO BAIRRO DA VELHA. Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º - É denominada \"DR. EDGAR BARRETO\" a ponte de concreto armado construída sobre o Ribeirão da Velha, na Rua Itororó, no bairro da velha, nesta cidade. Art. 2º - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-2603-1980-15986"
+  },
+  {
+   "lei": "2725/1981",
+   "num": 2725,
+   "ano": 1981,
+   "data": "22/10/1981",
+   "ementa": "DÁ DENOMINAÇÃO À PONTE CONSTRUÍDA SOBRE O RIBEIRÃO ITOUPAVA, NA LOCALIDADE DE FIDELIS. (DE FRIDA ROSEMANN) Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1° - E denominada \"Frida Rosemann\" a ponte de concreto armado construída sobre o ribeirão Itoupava, na Rua Guilherme Scharf, próxima ao entroncamento da mesma com a Rua Dr. Pedro Zimmermann, na localidade de Fidélis, nesta cidade. Art. 2° - Esta lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-2725-1981-16107"
+  },
+  {
+   "lei": "3459/1988",
+   "num": 3459,
+   "ano": 1988,
+   "data": "25/05/1988",
+   "ementa": "DENOMINA \"GERHARD NEUFERT\" A PONTE CONSTRUÍDA SOBRE A FOZ DO RIBEIRÃO DA VELHA, LIGANDO A AVENIDA CASTELO BRANCO À AVENIDA MARTIN LUTHER. Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º - É denominada \"GERHARD NEUFERT\" a ponte construída pela Município sobre a foz do Ribeirão da Velha e que liga a Avenida presidente Castelo Branco à Avenida Martin Luther, nesta cidade. Art. 2º - Esta lei entrará vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-3459-1988-16813"
+  },
+  {
+   "lei": "3721/1990",
+   "num": 3721,
+   "ano": 1990,
+   "data": "30/05/1990",
+   "ementa": "Art. 1º - É denominada de \"ALDO PEREIRA DE ANDRADE\" a ponte de ferro sobre o rio Itajaí - Açú, ligando a Avenida Martin Luther á rua Vitório Alcântara.Art. 2º - Esta lei entrará em vigor na data de sua publicação....",
+   "texto": "Art. 1º - É denominada de \"ALDO PEREIRA DE ANDRADE\" a ponte de ferro sobre o rio Itajaí - Açú, ligando a Avenida Martin Luther á rua Vitório Alcântara. Art. 2º - Esta lei entrará em vigor na data de sua publicação.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-3721-1990-17048"
+  },
+  {
+   "lei": "3730/1990",
+   "num": 3730,
+   "ano": 1990,
+   "data": "13/06/1990",
+   "ementa": "Art. 1º - É denominada de \"Alfredo Maul\", a ponte localizada na rua Hermann Lange.Art. 2º - Esta lei entrará em vigor na data de sua publicação....",
+   "texto": "Art. 1º - É denominada de \"Alfredo Maul\", a ponte localizada na rua Hermann Lange. Art. 2º - Esta lei entrará em vigor na data de sua publicação.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-3730-1990-17057"
+  },
+  {
+   "lei": "3900/1991",
+   "num": 3900,
+   "ano": 1991,
+   "data": "06/09/1991",
+   "ementa": "Art. 1º - É denominada \"Henrique Kratz\" a ponte edificada sobre o Ribeirão do Cego, à Rua Hermann Kratz, no bairro da Velha, distante 80,00 metros da parede lateral esquerda da residência nº 1.235, da referida rua.Art. 2º - Esta Lei entrará em vigor na data de sua...",
+   "texto": "Art. 1º - É denominada \"Henrique Kratz\" a ponte edificada sobre o Ribeirão do Cego, à Rua Hermann Kratz, no bairro da Velha, distante 80,00 metros da parede lateral esquerda da residência nº 1.235, da referida rua. Art. 2º - Esta Lei entrará em vigor na data de sua publicação, revogadas as disposições em contrário.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-3900-1991-17226"
+  },
+  {
+   "lei": "4484/1995",
+   "num": 4484,
+   "ano": 1995,
+   "data": "10/07/1995",
+   "ementa": "Art. 1º - É denominada \"CELSO LEON SALLES\" a ponte edificada sobre o Ribeirão Garcia, à rua Gertrud Metzger, no ponto distante cerca de 145,00 metros da esquina formada pelo lado par desta com o lado par da rua Amazonas.Art. 2º - Esta lei entrará em vigor na data da sua...",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-4484-1995-17761"
+  },
+  {
+   "lei": "4489/1995",
+   "num": 4489,
+   "ano": 1995,
+   "data": "11/07/1995",
+   "ementa": "Art. 1º - Fica denominada de \"WILLY HARTUNG\", a ponte de concreto armado, sobre o Ribeirão da Velha Pequena, localizada na rua dos Pescadores, no bairro da Velha.Art. 2º - Esta lei entra em vigor na data de sua publicação....",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-4489-1995-17766"
+  },
+  {
+   "lei": "4538/1995",
+   "num": 4538,
+   "ano": 1995,
+   "data": "20/10/1995",
+   "ementa": "Art. 1º - Fica denominada de \"TEKLA RULENSKI\", a ponte de concreto armado localizada sobre o Ribeirão Garcia, interligando a rua São Januário com a rua Progresso, no bairro Progresso.Art. 2º - Esta lei entra em vigor na data de sua publicação....",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-4538-1995-17815"
+  },
+  {
+   "lei": "4581/1995",
+   "num": 4581,
+   "ano": 1995,
+   "data": "14/12/1995",
+   "ementa": "Art. 1º - Fica denominada de \"OSCAR JOSÉ PERING\", a ponte de concreto armado, localizada sobre o ribeirão Garcia, interligando a rua Santa Maria com a rua Helmuth Goll, no bairro Progresso.Art. 2º- Esta lei entra em vigor na data de sua publicação....",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-4581-1995-17858"
+  },
+  {
+   "lei": "4628/1996",
+   "num": 4628,
+   "ano": 1996,
+   "data": "29/04/1996",
+   "ementa": "DENOMINA DE \"BERTOLDO BACHMANN\" PONTE EDIFICADA SOBRE O RIBEIRÃO DA VELHA, À RUA GUILHERME J.NAZÁRIO, NO BAIRRO DA VELHA. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-4628-1996-17905"
+  },
+  {
+   "lei": "4644/1996",
+   "num": 4644,
+   "ano": 1996,
+   "data": "22/05/1996",
+   "ementa": "DENOMINA ENGENHEIRO ANTÔNIO VICTORINO ÁVILA FILHO PONTE EDIFICADA SOBRE O RIO ITAJAÍ-AÇÚ. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-4644-1996-17919"
+  },
+  {
+   "lei": "4706/1996",
+   "num": 4706,
+   "ano": 1996,
+   "data": "30/08/1996",
+   "ementa": "DENOMINA DE EMMA HEMMER PONTE EDIFICADA SOBRE O RIBEIRÃO DO TESTO, À RUA ARNOLD HEMMER, NO BAIRRO BADENFURT. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-4706-1996-17959"
+  },
+  {
+   "lei": "4747/1996",
+   "num": 4747,
+   "ano": 1996,
+   "data": "07/11/1996",
+   "ementa": "DENOMINA DE \"OTTOMAR BELZ\", PONTE DE CONCRETO LOCALIZADA NO BAIRRO ITOUPAVA CENTRAL. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-4747-1996-17998"
+  },
+  {
+   "lei": "4777/1996",
+   "num": 4777,
+   "ano": 1996,
+   "data": "17/12/1996",
+   "ementa": "DENOMINA DE \"GUILHERME PRIM\" PONTE EDIFICADA SOBRE O RIBEIRÃO GARCIA, À RUA SANTA MARIA, NO BAIRRO GARCIA. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-4777-1996-18028"
+  },
+  {
+   "lei": "4978/1998",
+   "num": 4978,
+   "ano": 1998,
+   "data": "11/05/1998",
+   "ementa": "DENOMINA DE \"ERWIN WENDELICH\" PONTE DE CONCRETO LOCALIZADA NA RUA SANTA MARIA. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-4978-1998-18228"
+  },
+  {
+   "lei": "5312/1999",
+   "num": 5312,
+   "ano": 1999,
+   "data": "13/09/1999",
+   "ementa": "DENOMINA DE \"GOVERNADOR VILSON PEDRO KLEINUBING\", PONTE SOBRE O RIO ITAJAÍ-AÇÚ. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-5312-1999-18562"
+  },
+  {
+   "lei": "6239/2003",
+   "num": 6239,
+   "ano": 2003,
+   "data": "01/08/2003",
+   "ementa": "DENOMINA DE \"ACÁCIO BERNARDES\", PONTE PROJETADA SOBRE O RIO ITAJAÍ-AÇÚ. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-6239-2003-21912"
+  },
+  {
+   "lei": "6438/2004",
+   "num": 6438,
+   "ano": 2004,
+   "data": "01/04/2004",
+   "ementa": "DENOMINA DE “VEREADOR INGO STEIN”, VIADUTO LOCALIZADO NO BAIRRO FORTALEZA. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-6438-2004-22180"
+  },
+  {
+   "lei": "6519/2004",
+   "num": 6519,
+   "ano": 2004,
+   "data": "27/07/2004",
+   "ementa": "DENOMINA DE “EUCLIDIO VILMAR GESSER”, VIADUTO LOCALIZADO NO BAIRRO FORTALEZA. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-6519-2004-23218"
+  },
+  {
+   "lei": "6860/2006",
+   "num": 6860,
+   "ano": 2006,
+   "data": "17/02/2006",
+   "ementa": "DENOMINA DE “ARNO MAX JÚLIO GAERTNER”, PONTE LOCALIZADA NO BAIRRO VICTOR KONDER. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-6860-2006-22289"
+  },
+  {
+   "lei": "6943/2006",
+   "num": 6943,
+   "ano": 2006,
+   "data": "18/07/2006",
+   "ementa": "DENOMINA DE “HEINRICH GIELAND”, PONTE LOCALIZADA NO BAIRRO PROGRESSO. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-6943-2006-23654"
+  },
+  {
+   "lei": "7311/2008",
+   "num": 7311,
+   "ano": 2008,
+   "data": "01/07/2008",
+   "ementa": "DENOMINA DE “VICTORINO GOLL”, PONTE LOCALIZADA NA RUA BRUNO SCHREIBER, NO BAIRRO PROGRESSO. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-7311-2008-14593"
+  },
+  {
+   "lei": "7382/2009",
+   "num": 7382,
+   "ano": 2009,
+   "data": "08/04/2009",
+   "ementa": "DENOMINA DE “RODOLPHO KERN”, PASSARELA LOCALIZADA NA RUA JOSÉ AUGUSTO MABA, NO BAIRRO FORTALEZA Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-7382-2009-14709"
+  },
+  {
+   "lei": "7403/2009",
+   "num": 7403,
+   "ano": 2009,
+   "data": "30/06/2009",
+   "ementa": "DENOMINA DE “TERESA CARDOSO VENTURA”, PASSARELA SOBRE A VIA EXPRESSA, NO BAIRRO FORTALEZA. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-7403-2009-23753"
+  },
+  {
+   "lei": "7461/2009",
+   "num": 7461,
+   "ano": 2009,
+   "data": "05/11/2009",
+   "ementa": "DENOMINA DE “BERNARDO WOLFGANG WERNER”, COMPLEXO VIÁRIO DA PONTE DO BADENFURT. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-7461-2009-25575"
+  },
+  {
+   "lei": "7481/2009",
+   "num": 7481,
+   "ano": 2009,
+   "data": "16/12/2009",
+   "ementa": "DENOMINA “CLAUDINO KIENEN” A PONTE QUE LIGA A RUA HELMUND TRAPP COM A RODOVIA JOÃO KARSTEN, LOCALIZADA NO BAIRRO TESTO SALTO. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-7481-2009-23799"
+  },
+  {
+   "lei": "7680/2011",
+   "num": 7680,
+   "ano": 2011,
+   "data": "19/09/2011",
+   "ementa": "DENOMINA DE HONORATO TOMELIN, VIADUTO LOCALIZADO NO BAIRRO FORTALEZA. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-7680-2011-24083"
+  },
+  {
+   "lei": "7742/2012",
+   "num": 7742,
+   "ano": 2012,
+   "data": "02/04/2012",
+   "ementa": "DENOMINA DE “JUSTINO REGIS”, PONTE LOCALIZADA NA RUA ANTONIO ZENDRON, NO BAIRRO GARCIA. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-7742-2012-24275"
+  },
+  {
+   "lei": "7996/2014",
+   "num": 7996,
+   "ano": 2014,
+   "data": "07/07/2014",
+   "ementa": "DENOMINA “JOSÉ HERCÍLIO JUNGES” A PONTE SITUADA NA RUA ERICH BELZ, QUE LIGA A RUA PROFESSOR JACOB INEICHEN COM A RUA DOUTOR PEDRO ZIMMERMANN, LOCALIZADA NO BAIRRO ITOUPAVA CENTRAL. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-7996-2014-22218"
+  },
+  {
+   "lei": "8016/2014",
+   "num": 8016,
+   "ano": 2014,
+   "data": "27/08/2014",
+   "ementa": "DENOMINA DE “LINDA SEIBT”, PONTE LOCALIZADA NO BAIRRO VELHA CENTRAL. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-8016-2014-22228"
+  },
+  {
+   "lei": "8108/2015",
+   "num": 8108,
+   "ano": 2015,
+   "data": "13/05/2015",
+   "ementa": "DENOMINA DE “HELMUT DOS SANTOS”, PONTE LOCALIZADA DO BAIRRO VELHA GRANDE. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-8108-2015-22441"
+  },
+  {
+   "lei": "8164/2015",
+   "num": 8164,
+   "ano": 2015,
+   "data": "02/10/2015",
+   "ementa": "DENOMINA DE “ADEMAR JOÃO MAIOCHI”, PONTE LOCALIZADA NO BAIRRO DA VELHA. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-8164-2015-22504"
+  },
+  {
+   "lei": "8204/2015",
+   "num": 8204,
+   "ano": 2015,
+   "data": "01/12/2015",
+   "ementa": "DENOMINA DE “ERNO OTTO”, PONTE LOCALIZADA NO BAIRRO ITOUPAVA CENTRAL Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-8204-2015-22557"
+  },
+  {
+   "lei": "8255/2016",
+   "num": 8255,
+   "ano": 2016,
+   "data": "16/03/2016",
+   "ementa": "DENOMINA DE “ALVINO VOLPI”, PONTE LOCALIZADA NO BAIRRO ITOUPAVA CENTRAL. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-8255-2016-22606"
+  },
+  {
+   "lei": "8320/2016",
+   "num": 8320,
+   "ano": 2016,
+   "data": "01/09/2016",
+   "ementa": "DENOMINA DE “ROBERTO LUIZ HOLETZ”, PONTE LOCALIZADA NO BAIRRO VELHA. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-8320-2016-22664"
+  },
+  {
+   "lei": "8328/2016",
+   "num": 8328,
+   "ano": 2016,
+   "data": "21/09/2016",
+   "ementa": "DENOMINA DE “EMILIO VOIGT”, PONTE LOCALIZADA NO BAIRRO ITOUPAVA CENTRAL. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-8328-2016-24951"
+  },
+  {
+   "lei": "8338/2016",
+   "num": 8338,
+   "ano": 2016,
+   "data": "31/10/2016",
+   "ementa": "DENOMINA DE “ARMIN PAUL WOTMEYER”, A PASSARELA PARA PEDESTRES LOCALIZADA NO BAIRRO VELHA GRANDE. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-8338-2016-24791"
+  },
+  {
+   "lei": "8361/2016",
+   "num": 8361,
+   "ano": 2016,
+   "data": "06/12/2016",
+   "ementa": "DENOMINA DE “EMILIO JURK”, PONTE LOCALIZADA NO DISTRITO DE VILA ITOUPAVA. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-8361-2016-25177"
+  },
+  {
+   "lei": "8379/2017",
+   "num": 8379,
+   "ano": 2017,
+   "data": "13/03/2017",
+   "ementa": "DENOMINA DE “MAESTRO FRANK GRAF”, PONTE LOCALIZADA NA DIVISA DOS BAIRROS CENTRO, VILA NOVA E VICTOR KONDER. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-8379-2017-22722"
+  },
+  {
+   "lei": "8439/2017",
+   "num": 8439,
+   "ano": 2017,
+   "data": "16/06/2017",
+   "ementa": "DENOMINA DE “DEPUTADO MANOEL VITOR GONÇALVES”, PONTE LOCALIZADA ENTRE OS BAIRROS CENTRO E PONTA AGUDA. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-8439-2017-22772"
+  },
+  {
+   "lei": "8461/2017",
+   "num": 8461,
+   "ano": 2017,
+   "data": "18/08/2017",
+   "ementa": "DENOMINA DE “ALWIN HEIN” A PONTE SITUADA NA RUA HERMANN HEIN, TRANSVERSAL DA RUA HENRIQUE CONRAD, LOCALIZADA NO DISTRITO DA VILA ITOUPAVA, NESTA CIDADE. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-8461-2017-22812"
+  },
+  {
+   "lei": "8492/2017",
+   "num": 8492,
+   "ano": 2017,
+   "data": "23/10/2017",
+   "ementa": "DENOMINA DE “PONTE MINISTRO LAURO MULLER”, “PONTE ENGENHEIRO UDO DEEKE”, “PONTE GOVERNADOR JORGE LACERDA”, “PONTE 25 DE JULHO”, “PONTE GOVERNADOR IRINEU BORNHAUSEN” E “PONTE JORNALISTA LUIZ ANTONIO SOARES” AS PONTES SITUADAS NOS LOCAIS ESPECIFICADOS. Objeto: DENOMINAÇÕES",
+   "texto": "Art. 1º As Pontes descritas nos incisos deste artigo, ficam assim denominadas: I - PONTE MINISTRO LAURO MULLER, conhecida como “Ponte do Salto”, a ponte construída sobre o Rio Itajaí-Açu, localizada na Rua Bahia, próximo ao nº. 2.220, ligando a Rua Pomerode, entre os bairros do Salto e Salto do Norte; II - PONTE ENGENHEIRO UDO DEEKE, conhecida como “Ponte da Rua 7 de Setembro”, a ponte de concreto construída sobre o Ribeirão Garcia, localizada na Rua 7 de Setembro, próximo ao Parque dos Animais Dra. Lúcia Sevegnani e ao nº. 239, entre os bairros Centro e Garcia; III - PONTE GOVERNADOR JORGE LACERDA, conhecida como “Ponte da Rua São Paulo”, a ponte de concreto construída sobre o Ribeirão da Velha, localizada na Rua São Paulo, distando cerca de 15,00 metros do final da Avenida Castelo Branco, entre os bairros Centro e Victor Konder; IV - PONTE 25 DE JULHO, conhecida como “Ponte da Alameda com Rua Amazonas”, a ponte de concreto construída sobre o Ribeirão Fresco, localizada no final da Alameda Duque de Caxias e início da Rua Amazonas, entre os bairros Centro, Garcia e Ribeirão Fresco; V - PONTE GOVERNADOR IRINEU BORNHAUSEN, conhecida como “Ponte da Itoupava Norte”, a ponte de concreto construída sobre o Rio Itajaí-Açu, localizada na rua Santa Catarina, próximo ao nº. 216, entre os bairros Itoupava Seca e Itoupava Norte; VI - PONTE JORNALISTA LUIZ ANTONIO SOARES, conhecida como “Ponte da Rua Paraíba”, a ponte de concreto localizada na Rua Paraíba, sobre o Ribeirão da Velha, próximo ao nº. 350, entre os bairros Centro e Victor Konder. Art. 2º Esta Lei entra em vigor na data da sua publicação.",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-8492-2017-22977"
+  },
+  {
+   "lei": "8498/2017",
+   "num": 8498,
+   "ano": 2017,
+   "data": "03/11/2017",
+   "ementa": "DENOMINA DE “CELSO MÁRIO OTTIQUIR”, PONTE LOCALIZADA NO BAIRRO FORTALEZA. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-8498-2017-23023"
+  },
+  {
+   "lei": "8638/2018",
+   "num": 8638,
+   "ano": 2018,
+   "data": "31/10/2018",
+   "ementa": "DENOMINA DE “JOSÉ KLOCK”, PONTE LOCALIZADA NOS BAIRROS GARCIA E VALPARAÍSO. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-8638-2018-23140"
+  },
+  {
+   "lei": "8639/2018",
+   "num": 8639,
+   "ano": 2018,
+   "data": "31/10/2018",
+   "ementa": "DENOMINA DE “WILSON SEILER”, PONTE LOCALIZADA NOS BAIRROS GARCIA E VALPARAÍSO. Objeto: DENOMINAÇÕES",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-8639-2018-23139"
+  },
+  {
+   "lei": "8842/2020",
+   "num": 8842,
+   "ano": 2020,
+   "data": "16/03/2020",
+   "ementa": "DENOMINA DE RUY EDUARDO WILLECKE, PONTE A SER CONSTRUÍDA SOBRE O RIBEIRÃO GARCIA, NO BAIRRO CENTRO.",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-no-8842-2020-379876"
+  },
+  {
+   "lei": "9113/2021",
+   "num": 9113,
+   "ano": 2021,
+   "data": "08/12/2021",
+   "ementa": "DENOMINA DE ARNO KURTH, PONTE LOCALIZADA NO DISTRITO DE VILA ITOUPAVA E DÁ OUTRAS PROVIDÊNCIAS.",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-no-9113-2021-426917"
+  },
+  {
+   "lei": "9220/2022",
+   "num": 9220,
+   "ano": 2022,
+   "data": "12/09/2022",
+   "ementa": "DENOMINA DE \"ENGENHEIRO EGON ALBERTO STEIN\", PONTE LOCALIZADA PARALELAMENTE À PONTE ADOLFO KONDER, QUE LIGA A AVENIDA PRESIDENTE CASTELO BRANCO COM A RUA REPÚBLICA ARGENTINA, NO BAIRRO CENTRO.",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-no-9220-2022-446715"
+  },
+  {
+   "lei": "9237/2022",
+   "num": 9237,
+   "ano": 2022,
+   "data": "09/09/2022",
+   "ementa": "REVOGA A LEI Nº 8.439, DE 16 DE JUNHO DE 2017, QUE “DENOMINA DE ‘DEPUTADO MANOEL VITOR GONÇALVES' PONTE LOCALIZADA ENTRE OS BAIRROS CENTRO E PONTA AGUDA.”",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-no-9237-2022-446631"
+  },
+  {
+   "lei": "9319/2023",
+   "num": 9319,
+   "ano": 2023,
+   "data": "10/05/2023",
+   "ementa": "DENOMINA DE HENRIQUE KRETZ, PONTE EM CONSTRUÇÃO SOBRE O RIO TESTO, NO BAIRRO BADENFURT.",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-no-9319-2023-463439"
+  },
+  {
+   "lei": "9321/2023",
+   "num": 9321,
+   "ano": 2023,
+   "data": "10/05/2023",
+   "ementa": "DENOMINA DE WERNER SCHMIDT, PONTE EM CONSTRUÇÃO SOBRE O RIBEIRÃO GARCIA, NO BAIRRO PROGRESSO.",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-no-9321-2023-463443"
+  },
+  {
+   "lei": "9344/2023",
+   "num": 9344,
+   "ano": 2023,
+   "data": "19/05/2023",
+   "ementa": "DENOMINA DE ROBERTO MARINHO HOERNIG, PONTE LOCALIZADA NA RUA BRUNO KIMMICHS, NO BAIRRO VILA ITOUPAVA.",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-no-9344-2023-464284"
+  },
+  {
+   "lei": "9419/2023",
+   "num": 9419,
+   "ano": 2023,
+   "data": "29/11/2023",
+   "ementa": "DENOMINA DE MARCOS HENRIQUE BUECHLER, PONTE EM CONSTRUÇÃO SOBRE O RIBEIRÃO DA VELHA, NA DIVISA DOS BAIRROS VILA NOVA E CENTRO.",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-no-9419-2023-480297"
+  },
+  {
+   "lei": "9420/2023",
+   "num": 9420,
+   "ano": 2023,
+   "data": "29/11/2023",
+   "ementa": "DENOMINA DE DESEMBARGADOR JOÃO DE BORBA, PONTE A SER CONSTRUÍDA SOBRE O RIO ITAJAÍ-AÇU, ENTRE OS BAIRROS ITOUPAVA SECA E ITOUPAVA NORTE.",
+   "texto": "",
+   "url": "https://digital.camarablu.sc.gov.br/documento/lei-ordinaria-no-9420-2023-480302"
+  }
+ ]
+}
