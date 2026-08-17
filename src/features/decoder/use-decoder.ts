@@ -1,7 +1,9 @@
+import { PARECE_ESTRUTURA } from "@/features/bridge/match";
+import type { BridgesData } from "@/features/bridge/types";
 import { aoCarregarH3 } from "@/features/location/formats";
 import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
-import { getPix, getStreets, loadPix, loadStreets } from "@/lib/data";
+import { getBridges, getPix, getStreets, loadBridges, loadPix, loadStreets } from "@/lib/data";
 import { type LookupHits, cancelarSuperadas, consultar, valeConsultar } from "@/lib/lookup-cache";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -34,6 +36,7 @@ export function useDecoder(entradaInicial = "") {
   const [trail, setTrail] = useState<TrailStep[]>([]);
   const [streets, setStreets] = useState<StreetsData | null>(getStreets);
   const [pix, setPix] = useState<PixData | null>(getPix);
+  const [bridges, setBridges] = useState<BridgesData | null>(getBridges);
 
   const debInput = useDebouncedValue(input, 160);
   const debKey = useDebouncedValue(key, 160);
@@ -95,6 +98,21 @@ export function useDecoder(entradaInicial = "") {
       alive = false;
     };
   }, [pareceRua, streets]);
+
+  // Pontes: mesmo desenho preguiçoso das ruas. O gate é a palavra escrita
+  // ("ponte", "passarela", "viaduto"), e não a forma do texto — é o que
+  // impede o decoder de virar ruído, e é o mesmo gate que o decoder aplica.
+  const pareceEstrutura = PARECE_ESTRUTURA.test(debInput);
+  useEffect(() => {
+    if (!pareceEstrutura || bridges) return;
+    let alive = true;
+    loadBridges()
+      .then((d) => alive && setBridges(d))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [pareceEstrutura, bridges]);
 
   const digits = debInput.replace(/\D/g, "");
 
@@ -164,8 +182,9 @@ export function useDecoder(entradaInicial = "") {
       hitsErro,
       streets,
       pix,
+      bridges,
     }),
-    [debKey, debAux, selectedId, hits, hitsCarregando, hitsErro, streets, pix],
+    [debKey, debAux, selectedId, hits, hitsCarregando, hitsErro, streets, pix, bridges],
   );
 
   // `wordsReady` está nas dependências de propósito: o vocabulário do realce

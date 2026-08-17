@@ -543,6 +543,14 @@ export const HELP_SECTIONS: HelpSection[] = [
         desc: "Número da plaqueta → o poste: rua, número, bairro, luminária e coordenada. Só aparece quando existe um poste com aquela plaqueta — não é palpite pela forma do número, e por isso plaqueta curta pontua menos que longa.",
         example: { in: "65299", out: "Rua XV de Novembro, 920 · Centro" },
       },
+      {
+        name: "Ponte / passarela (Blumenau)",
+        desc: 'Nome ou apelido de ponte, passarela ou viaduto → a lei que a nomeou, a data, o que ela transpõe, comprimento e coordenada. Precisa da palavra escrita ("ponte", "passarela", "viaduto", "pontilhão") — sem ela o nome sozinho viraria ruído. Metade das estruturas só existe na lei, sem geometria: o card mostra a lei e diz que não há mapa, em vez de esconder a resposta.',
+        example: {
+          in: "ponte de ferro",
+          out: "Ponte Aldo Pereira de Andrade · Lei 3721/1990 · transpõe o Rio Itajaí-Açu",
+        },
+      },
     ],
   },
   {

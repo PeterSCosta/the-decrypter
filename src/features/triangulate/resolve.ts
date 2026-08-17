@@ -1,4 +1,4 @@
-import type { BridgeRow } from "@/features/bridge/types";
+import { achaPonte } from "@/features/bridge/match";
 import { type GeoPoint, detectLocation, prepararDeteccao } from "@/features/location/formats";
 import type { StreetRow } from "@/features/street-guide/types";
 import { fetchCep } from "@/lib/brasilapi";
@@ -51,19 +51,6 @@ function normaliza(s: string): string {
     .replace(/[^A-Z0-9 ]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-/** Casa "ponte de ferro" com "Ponte Aldo Pereira de Andrade (Ponte de Ferro)". */
-function achaPonte(alvo: string, rows: BridgeRow[]): BridgeRow | null {
-  const q = normaliza(alvo);
-  if (q.length < 4) return null;
-  const comGeo = rows.filter((r) => r.lat !== null && r.lng !== null);
-  const candidatos = comGeo.filter((r) =>
-    [r.nome, r.nomeOsm ?? "", ...r.apelidos].some((n) => n && normaliza(n).includes(q)),
-  );
-  if (!candidatos.length) return null;
-  // Empate ("ponte" casa com tudo): o nome mais curto é o mais específico.
-  return candidatos.sort((a, b) => a.nome.length - b.nome.length)[0];
 }
 
 /**
@@ -141,7 +128,8 @@ export async function resolvePonto(entrada: string, indice = 0): Promise<Resulta
   // 3. Ponte pelo nome ou pelo apelido — a base local sabe onde cada uma está.
   if (/\b(ponte|passarela|viaduto)\b/i.test(texto)) {
     const base = await loadBridges().catch(() => null);
-    const p = base && achaPonte(texto, base.rows);
+    const acerto = base && achaPonte(texto, base.rows, { exigirGeo: true });
+    const p = acerto?.ponte;
     if (p?.lat != null && p.lng != null) {
       return {
         indice,

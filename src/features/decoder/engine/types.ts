@@ -1,4 +1,5 @@
 import type { AirportsData } from "@/features/airport/types";
+import type { BridgesData } from "@/features/bridge/types";
 import type { CepsData } from "@/features/cep/types";
 import type { MunicipiosData } from "@/features/ibge/types";
 import type { PixData } from "@/features/pix/types";
@@ -60,6 +61,13 @@ export interface DecodeContext {
   /** Idem CEP/município: agora vem por `hits`. Mantido opcional pelos testes. */
   airports?: AirportsData | null;
   pix?: PixData | null;
+  /**
+   * Pontes, passarelas e viadutos — LOCAIS e preguiçosas.
+   *
+   * São 94 linhas (86 KB): mandá-las à API custaria um RTT para responder o
+   * que cabe na memória. Chegam quando a entrada diz "ponte"/"passarela".
+   */
+  bridges?: BridgesData | null;
 }
 
 export interface DecodeCandidate {
@@ -94,7 +102,8 @@ export interface DecodeCandidate {
     | "registrobr"
     | "math"
     | "wheel"
-    | "poste";
+    | "poste"
+    | "ponte";
   /** Structured payload for custom renderers. */
   data?: unknown;
 }

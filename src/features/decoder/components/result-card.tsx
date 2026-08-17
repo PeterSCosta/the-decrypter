@@ -2,6 +2,8 @@ import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ConfidenceBar } from "@/components/ui/confidence-bar";
 import { CopyButton } from "@/components/ui/copy-button";
+import { PonteCard } from "@/features/bridge/components/ponte-card";
+import type { BridgeRow } from "@/features/bridge/types";
 import { CepCard } from "@/features/cep/components/cep-card";
 import type { CepHit } from "@/features/cep/types";
 import type { MathReport } from "@/features/math/arith";
@@ -109,6 +111,8 @@ export function ResultCard({
           <DocumentCard doc={c.data as DocResult} />
         ) : c.render === "poste" ? (
           <PosteCard poste={c.data as Poste} />
+        ) : c.render === "ponte" ? (
+          <PonteCard ponte={c.data as BridgeRow} />
         ) : c.render === "map" ? (
           <MapCard data={c.data as LocationData} />
         ) : c.render === "isbn" ? (

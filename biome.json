@@ -4,6 +4,7 @@
   "files": {
     "ignore": [
       "public/data/*.json",
+      "seed-data/*.json",
       "data-sources/*.txt",
       "data-sources/*.json",
       "data-sources/*.geojson",
