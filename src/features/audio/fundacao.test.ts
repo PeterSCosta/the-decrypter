@@ -320,3 +320,56 @@ describe("força do achado — a defesa contra o falso positivo", () => {
     for (const e of f.embutidos) expect(e.forca).toBe("dentro-do-dado");
   });
 });
+
+describe("taxa de m4a e aac — os 20% do acervo que ficavam sem parser", () => {
+  /** MP4 mínimo com moov > trak > mdia > mdhd, e o timescale dentro. */
+  function m4a(timescale: number, versaoMdhd = 0): Uint8Array {
+    const box = (nome: string, carga: number[]): number[] => {
+      const t = carga.length + 8;
+      return [
+        (t >> 24) & 0xff,
+        (t >> 16) & 0xff,
+        (t >> 8) & 0xff,
+        t & 0xff,
+        ...[...nome].map((c) => c.charCodeAt(0)),
+        ...carga,
+      ];
+    };
+    const be32 = (n: number) => [(n >> 24) & 0xff, (n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff];
+    // v0: versão+flags(4) + criação(4) + modificação(4) + timescale
+    // v1: os dois tempos viram 64 bits, e o timescale anda 8 bytes
+    const carga =
+      versaoMdhd === 1
+        ? [1, 0, 0, 0, ...Array(16).fill(0), ...be32(timescale), ...Array(8).fill(0)]
+        : [0, 0, 0, 0, ...Array(8).fill(0), ...be32(timescale), ...Array(4).fill(0)];
+    const mdhd = box("mdhd", carga);
+    const mdia = box("mdia", mdhd);
+    const trak = box("trak", mdia);
+    const moov = box("moov", trak);
+    const ftyp = box("ftyp", [...[..."M4A "].map((c) => c.charCodeAt(0)), 0, 0, 0, 0]);
+    return Uint8Array.from([...ftyp, ...moov]);
+  }
+
+  it("lê o timescale do mdhd como taxa", () => {
+    expect(analisarContainer(m4a(44100), "a.m4a").taxaDeclarada).toBe(44100);
+    expect(analisarContainer(m4a(48000, 1), "b.m4a").taxaDeclarada).toBe(48000);
+  });
+
+  it("recusa timescale de vídeo em vez de aceitá-lo como taxa", () => {
+    // 600 e 90000 são timescales típicos de trilha de vídeo. Aceitar isso como
+    // taxa de amostragem seria pior que admitir que não sabe.
+    const f = analisarContainer(m4a(600), "video.mp4");
+    expect(f.taxaDeclarada).toBeNull();
+    expect(f.observacoes.join(" ")).toContain("taxa de amostragem");
+  });
+
+  it("lê a taxa de um AAC cru pelo índice do ADTS", () => {
+    // Sync FFF1, índice 4 (44100 Hz) nos bits 2-5 do byte 2.
+    const adts = new Uint8Array(64);
+    adts[0] = 0xff;
+    adts[1] = 0xf1;
+    adts[2] = (4 << 2) | 0x00; // índice 4 = 44100
+    adts[3] = 0x80; // channel_configuration = 2
+    expect(analisarContainer(adts, "x.aac").taxaDeclarada).toBe(44100);
+  });
+});

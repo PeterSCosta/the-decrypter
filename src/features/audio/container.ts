@@ -179,6 +179,79 @@ function textoLegivel(b: Uint8Array, min = 4): string {
   return melhor.length >= min ? melhor : "";
 }
 
+/**
+ * Taxa de amostragem de um AAC cru (ADTS) — 4 bits de índice numa tabela fixa.
+ *
+ * Entra porque a crítica do plano mediu o acervo real: 78 mp3, **18 aac e 1
+ * m4a**. Um parser que só lê WAV e MP3 deixa 20% dos arquivos sem taxa — e a
+ * taxa é o que evita a reamostragem silenciosa do `decodeAudioData`, que
+ * descarta a faixa alta sem avisar. Ficar sem ela em 1 de cada 5 arquivos é
+ * exatamente onde uma portadora ultrassônica sumiria sem deixar rastro.
+ */
+const TAXAS_ADTS = [
+  96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350,
+];
+
+function taxaDoAdts(b: Uint8Array): { taxa: number; canais: number } | null {
+  // Sync de 12 bits: FF Fx.
+  if (b.length < 7 || b[0] !== 0xff || (b[1] & 0xf0) !== 0xf0) return null;
+  const indice = (b[2] >> 2) & 0x0f;
+  if (indice >= TAXAS_ADTS.length) return null;
+  // channel_configuration: 3 bits, atravessando os bytes 2 e 3.
+  const canais = ((b[2] & 0x01) << 2) | ((b[3] >> 6) & 0x03);
+  return { taxa: TAXAS_ADTS[indice], canais: canais || 0 };
+}
+
+/**
+ * Taxa de um M4A/MP4: o `timescale` do átomo `mdhd`, dentro de
+ * `moov > trak > mdia`.
+ *
+ * Percorrer a árvore é obrigatório — os átomos declaram o próprio tamanho e a
+ * ordem não é garantida. As mesmas armadilhas do `fim.ts` valem aqui:
+ * `size == 0` significa "até o fim" e `size == 1` manda ler 64 bits.
+ */
+function taxaDoM4a(b: Uint8Array): { taxa: number; canais: number | null } | null {
+  const nome = (o: number) => ASCII(b, o + 4, 4);
+
+  const procurar = (inicio: number, fim: number, alvo: string, dentro: string[]): number | null => {
+    let off = inicio;
+    while (off + 8 <= fim) {
+      let tamanho = u32be(b, off);
+      let corpo = off + 8;
+      if (tamanho === 1) {
+        if (off + 16 > fim) return null;
+        // Só a metade baixa: arquivo acima de 4 GB não é caso desta bancada.
+        tamanho = u32be(b, off + 12);
+        corpo = off + 16;
+      } else if (tamanho === 0) {
+        tamanho = fim - off;
+      }
+      if (tamanho < 8 || off + tamanho > fim) return null;
+      const n = nome(off);
+      if (n === alvo) return corpo;
+      if (dentro.includes(n)) {
+        const achado = procurar(corpo, off + tamanho, alvo, dentro);
+        if (achado !== null) return achado;
+      }
+      off += tamanho;
+    }
+    return null;
+  };
+
+  const mdhd = procurar(0, b.length, "mdhd", ["moov", "trak", "mdia"]);
+  if (mdhd === null || mdhd + 20 > b.length) return null;
+  const versao = b[mdhd];
+  // v0: versão+flags(4) + criação(4) + modificação(4) → timescale em +12.
+  // v1: os tempos viram 64 bits → timescale em +20.
+  const off = versao === 1 ? mdhd + 20 : mdhd + 12;
+  if (off + 4 > b.length) return null;
+  const taxa = u32be(b, off);
+  // Timescale de faixa de áudio É a taxa de amostragem; de vídeo costuma ser
+  // 600 ou 90000, e aceitar isso como "taxa" seria pior que não saber.
+  if (taxa < 8000 || taxa > 192000) return null;
+  return { taxa, canais: null };
+}
+
 /** Frames de texto do ID3v2 que carregam algo que uma pessoa escreveu. */
 function lerId3(b: Uint8Array): { textos: { fonte: string; texto: string }[]; fim: number } {
   if (ASCII(b, 0, 3) !== "ID3" || b.length < 10) return { textos: [], fim: 0 };
@@ -261,10 +334,26 @@ export function analisarContainer(bytes: Uint8Array, nomeDoArquivo = ""): FichaD
         if (t) ficha.textos.push({ fonte: `chunk ${c.id}`, texto: t });
       }
     }
+  } else if (formato === "m4a") {
+    const m = taxaDoM4a(bytes);
+    if (m) {
+      ficha.taxaDeclarada = m.taxa;
+      ficha.canaisDeclarados = m.canais;
+    } else {
+      ficha.observacoes.push(
+        "Não consegui ler a taxa de amostragem deste MP4/M4A — sem ela, não dá para saber se a decodificação reamostrou e descartou a faixa alta.",
+      );
+    }
   } else if (formato === "mp3") {
     const { textos, fim } = lerId3(bytes);
     ficha.textos.push(...textos);
     if (fim > 0) ficha.fimDeclarado = null; // o ID3 é o começo, não o fim
+    // AAC cru (ADTS) costuma vir com extensão .aac e cair aqui pelo sync.
+    const adts = taxaDoAdts(bytes);
+    if (adts) {
+      ficha.taxaDeclarada = adts.taxa;
+      if (adts.canais > 0) ficha.canaisDeclarados = adts.canais;
+    }
     // ID3v1: 128 bytes finais começando com "TAG".
     if (bytes.length > 128 && ASCII(bytes, bytes.length - 128, 3) === "TAG") {
       const t = textoLegivel(bytes.subarray(bytes.length - 125, bytes.length - 30));

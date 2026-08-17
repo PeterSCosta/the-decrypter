@@ -8,9 +8,9 @@ import { type DragEvent, useCallback, useMemo, useRef, useState } from "react";
 import { AudioPainel } from "../audio/components/audio-painel";
 import type { Recorte } from "../carve";
 import { type Ficha, calcularHashes, montarFicha } from "../ficha";
+import { ImagemPainel } from "../imagem/components/imagem-painel";
 import { type Achado, type NoDeArquivo, noDeRecorte, noRaiz } from "../no";
 import { Hexdump } from "./hexdump";
-import { PreviaDeImagem } from "./previa";
 
 const tamanho = (n: number) =>
   n >= 1024 * 1024
@@ -304,9 +304,9 @@ export function ArquivoPanel({
         </Card>
       ) : null}
 
-      {/* Se é imagem, MOSTRA a imagem — metade das provas se resolve olhando. */}
+      {/* Se é imagem, MOSTRA a imagem — e deixa cavar nela. */}
       {analise.identidade.familia === "imagem" ? (
-        <PreviaDeImagem bytes={atual.bytes} nome={atual.nome} />
+        <ImagemPainel bytes={atual.bytes} nome={atual.nome} onDecodificador={onDecodificador} />
       ) : null}
 
       {/* Painel do tipo — por enquanto, áudio. */}
