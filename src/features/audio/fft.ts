@@ -134,7 +134,12 @@ export function hann(n: number): Float64Array {
  */
 export function goertzel(amostras: Float64Array, taxa: number, frequencia: number): number {
   const n = amostras.length;
-  const k = Math.round((n * frequencia) / taxa);
+  // k NÃO é arredondado, de propósito. O Goertzel é um ressonador: ele funciona
+  // com k fracionário, e arredondar desloca a frequência realmente medida para
+  // o centro do bin mais próximo. Numa janela de 20 ms a 8 kHz o bin tem 50 Hz,
+  // então o 770 Hz do DTMF virava 750 e o dígito "5" sumia da leitura — foi
+  // exatamente o que um teste de sequência pegou.
+  const k = (n * frequencia) / taxa;
   const w = (2 * Math.PI * k) / n;
   const coef = 2 * Math.cos(w);
   let s0 = 0;

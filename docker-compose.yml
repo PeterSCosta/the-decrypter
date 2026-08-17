@@ -6,14 +6,13 @@ services:
     environment:
       - TZ=America/Sao_Paulo
       # Basic Auth do nginx — SUPERADO pelo login do app (e-mail + senha com
-      # aprovação manual do admin). Continua aqui só para não quebrar quem já
-      # tem as variáveis definidas, mas **deixe as duas vazias no Dokploy**:
-      # com elas preenchidas a pessoa leva dois prompts de senha seguidos, um do
-      # navegador e outro da tela de login.
+      # aprovação manual do admin), e JÁ REMOVIDO do Dokploy em agosto/2026.
+      # As duas variáveis continuam declaradas só para o compose não quebrar em
+      # ambiente que ainda as tenha; vazias, o nginx não pede senha nenhuma.
       #
       # Vale lembrar por que ele não bastava: o Basic Auth é uma senha só,
       # compartilhada, e protege apenas este domínio — a API em
-      # apiarromba.thelogiclab.com.br ficava aberta a quem soubesse a URL. Agora
+      # apidecrypter.thelogiclab.com.br ficava aberta a quem soubesse a URL. Agora
       # os endpoints de dados exigem token.
       - BASIC_AUTH_USER=${BASIC_AUTH_USER:-}
       - BASIC_AUTH_PASSWORD=${BASIC_AUTH_PASSWORD:-}
@@ -21,7 +20,7 @@ services:
     networks:
       - logiclabnetwork
 
-# Domínio (arromba.thelogiclab.com.br) e porta (80) são configurados no Dokploy.
+# Domínio (decrypter.thelogiclab.com.br) e porta (80) são configurados no Dokploy.
 networks:
   logiclabnetwork:
     name: logiclabnetwork

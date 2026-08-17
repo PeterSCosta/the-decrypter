@@ -4,12 +4,12 @@ App **Vite estática** servida por **nginx**. Mesmo padrão do Logic Lab, mas o
 runtime é nginx (não Node), porque aqui é só HTML/JS/CSS + os JSONs em
 `public/data/`.
 
-Domínio alvo: **arromba.thelogiclab.com.br**
+Domínio alvo: **decrypter.thelogiclab.com.br**
 
 ## Build local (testar a imagem)
 
 ```bash
-docker build -t the-decrypter --build-arg VITE_API_BASE_URL=https://apiarromba.thelogiclab.com.br .
+docker build -t the-decrypter --build-arg VITE_API_BASE_URL=https://apidecrypter.thelogiclab.com.br .
 docker run --rm -p 8080:80 the-decrypter   # abre http://localhost:8080
 ```
 
@@ -18,10 +18,10 @@ docker run --rm -p 8080:80 the-decrypter   # abre http://localhost:8080
 1. Dokploy → **Create Application** → fonte = este repositório, branch `main`.
 2. Build type = **Dockerfile** (raiz do repo).
 3. **Build args**: `VITE_API_BASE_URL` = base do `the-decrypter-api`
-   (ex.: `https://apiarromba.thelogiclab.com.br`). É a **única** var `VITE_*`
+   (ex.: `https://apidecrypter.thelogiclab.com.br`). É a **única** var `VITE_*`
    que o código lê. Sem ela o bundle cai em `/api` relativo — e o nginx daqui
    não faz proxy, então toda consulta externa quebra.
-4. **Domains**: adicione `arromba.thelogiclab.com.br`, **Container Port = 80**,
+4. **Domains**: adicione `decrypter.thelogiclab.com.br`, **Container Port = 80**,
    HTTPS/Let's Encrypt ligado.
 5. Deploy. Pushes na `main` podem ser auto-deployados (webhook do Dokploy).
 
@@ -42,7 +42,7 @@ No Dokploy:
 1. **Create → Docker Compose**, apontando para
    [`docker-compose.yml`](docker-compose.yml) (usa a rede externa
    `logiclabnetwork`, a mesma do Logic Lab).
-2. **Domains**: `arromba.thelogiclab.com.br` → serviço `the-decrypter`, porta 80.
+2. **Domains**: `decrypter.thelogiclab.com.br` → serviço `the-decrypter`, porta 80.
 3. **Desligue o "Auto Deploy"** — quem deploya é a Action (depois do push da imagem).
    Pegue o **API key** (Settings) e o **`composeId`** (URL do serviço) → coloque nos
    secrets do GitHub acima.

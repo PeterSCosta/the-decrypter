@@ -8,7 +8,9 @@ import { corteMinimo, offsetDoPcm, varrerLsb } from "@/features/audio/lsb";
 import { cn } from "@/lib/cn";
 import { Download, Play, Square, Wand2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { type AchadoDtmf, type RecusaDtmf, ehDtmf, lerDtmf } from "../dtmf";
 import { type AchadoMorse, type RecusaMorse, ehAchado, lerMorse } from "../morse";
+import { type AchadoNotas, type RecusaNotas, ehNotas, lerNotas } from "../notas";
 import { type OpcoesDeRender, RENDER_PADRAO } from "../render";
 import { type Vista, useAudioAnalise } from "../use-audio-analise";
 import { EspectrogramaCanvas } from "./espectrograma-canvas";
@@ -51,6 +53,9 @@ export function AudioPainel({
   const [tocando, setTocando] = useState(false);
   const [morse, setMorse] = useState<Record<string, AchadoMorse | RecusaMorse> | null>(null);
   const [selecao, setSelecao] = useState<{ de: number; ate: number } | null>(null);
+  const [dtmf, setDtmf] = useState<Record<string, AchadoDtmf | RecusaDtmf> | null>(null);
+  const [notas, setNotas] = useState<Record<string, AchadoNotas | RecusaNotas> | null>(null);
+  const [urlInvertido, setUrlInvertido] = useState<string | null>(null);
   const [canalDoRecorte, setCanalDoRecorte] = useState<"esquerdo" | "direito" | "ambos">("ambos");
   const refAudio = useRef<HTMLAudioElement>(null);
 
@@ -108,6 +113,39 @@ export function AudioPainel({
     const faixa = selecao ? `-${selecao.de.toFixed(1)}s-${selecao.ate.toFixed(1)}s` : "";
     const qual = canais.length > 1 && canalDoRecorte !== "ambos" ? `-${canalDoRecorte}` : "";
     return { blob: montarWav(escolhidos, taxa), nome: `${nome}${qual}${faixa}.wav` };
+  };
+
+  /**
+   * Roda um leitor canal a canal, SEMPRE sobre o áudio original a 1,0×.
+   *
+   * Canal a canal porque o truque mais comum é pôr a mensagem num só, e a
+   * mistura destruiria a portadora. E sobre o original porque a variante de
+   * reprodução (velocidade, modo fita) desloca toda frequência — em modo fita a
+   * 0,5× o par DTMF de 697/1209 Hz vira 348,6/603,5 e o detector não acha nada,
+   * sem erro nenhum.
+   */
+  const porCanal = <T,>(ler: (x: Float32Array, taxa: number) => T): Record<string, T> => {
+    const r: Record<string, T> = {};
+    if (!analise) return r;
+    const { canais, taxa } = analise.carregado;
+    const [e, d] = canais;
+    r[canais.length > 1 ? "Esquerdo" : "Mono"] = ler(e, taxa);
+    if (d) r.Direito = ler(d, taxa);
+    if (d && analise.metricas.maiorDiferenca > 0) r.Diferença = ler(side(e, d), taxa);
+    return r;
+  };
+
+  /** O áudio ao contrário — para o OUVIDO, e explicitamente fora da análise. */
+  const ouvirAoContrario = () => {
+    if (!analise) return;
+    const { canais, taxa } = analise.carregado;
+    const invertidos = canais.map((c) => {
+      const v = new Float32Array(c.length);
+      for (let i = 0; i < c.length; i++) v[i] = c[c.length - 1 - i];
+      return v;
+    });
+    if (urlInvertido) URL.revokeObjectURL(urlInvertido);
+    setUrlInvertido(URL.createObjectURL(montarWav(invertidos, taxa)));
   };
 
   const baixarRecorte = () => {
@@ -389,29 +427,127 @@ export function AudioPainel({
             />
             modo fita (muda o tom junto)
           </label>
+          <Button size="sm" variant="ghost" onClick={ouvirAoContrario}>
+            Ouvir ao contrário
+          </Button>
         </div>
+        {urlInvertido ? (
+          <div className="mt-3">
+            <p className="mb-1 text-xs text-[var(--text-muted)]">
+              Áudio invertido. O espectrograma de magnitude do invertido é o espelho EXATO do
+              original — então isto é para ouvir, não para analisar.
+            </p>
+            {/** biome-ignore lint/a11y/useMediaCaption: áudio de prova, sem faixa de legenda possível */}
+            <audio src={urlInvertido} controls className="w-full" />
+          </div>
+        ) : null}
+      </Card>
+
+      {/* DTMF e notas — os dois leitores que fecham cadeia com decoders existentes. */}
+      <Card className="p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-display text-sm text-[var(--text-primary)]">
+            Tons do telefone (DTMF)
+          </h3>
+          <Button size="sm" variant="secondary" onClick={() => setDtmf(porCanal(lerDtmf))}>
+            Procurar DTMF
+          </Button>
+        </div>
+        {dtmf ? (
+          <ul className="mt-3 space-y-2">
+            {Object.entries(dtmf).map(([canal, r]) => (
+              <li key={canal} className="rounded-[var(--radius-md)] bg-[var(--surface-sunken)] p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone={ehDtmf(r) ? "brand" : "neutral"}>{canal}</Badge>
+                  {ehDtmf(r) ? (
+                    <>
+                      <code className="font-mono text-sm tracking-widest text-[var(--text-primary)]">
+                        {r.texto}
+                      </code>
+                      <CopyButton value={r.texto} />
+                      {onDecodificador ? (
+                        <button
+                          type="button"
+                          title="Mandar ao Decodificador"
+                          onClick={() => onDecodificador(r.texto)}
+                          className="rounded p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                        >
+                          <Wand2 className="h-3.5 w-3.5" />
+                        </button>
+                      ) : null}
+                    </>
+                  ) : (
+                    <span className="text-sm text-[var(--text-secondary)]">{r.motivo}</span>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-xs text-[var(--text-muted)]">
+            Cada tecla é a SOMA de dois senos, e é essa definição que torna o detector rigoroso: um
+            acorde tem energia espalhada e não passa.
+          </p>
+        )}
+      </Card>
+
+      <Card className="p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-display text-sm text-[var(--text-primary)]">Notas musicais</h3>
+          <Button size="sm" variant="secondary" onClick={() => setNotas(porCanal(lerNotas))}>
+            Identificar notas
+          </Button>
+        </div>
+        {notas ? (
+          <ul className="mt-3 space-y-2">
+            {Object.entries(notas).map(([canal, r]) => (
+              <li key={canal} className="rounded-[var(--radius-md)] bg-[var(--surface-sunken)] p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone={ehNotas(r) ? "brand" : "neutral"}>{canal}</Badge>
+                  {ehNotas(r) ? (
+                    <>
+                      <code className="font-mono text-sm text-[var(--text-primary)]">
+                        {r.textoSolfejo}
+                      </code>
+                      <CopyButton value={r.textoSolfejo} />
+                      {onDecodificador ? (
+                        <button
+                          type="button"
+                          title="Mandar ao Decodificador (vira letras e daí A1Z26)"
+                          onClick={() => onDecodificador(r.textoSolfejo)}
+                          className="rounded p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                        >
+                          <Wand2 className="h-3.5 w-3.5" />
+                        </button>
+                      ) : null}
+                    </>
+                  ) : (
+                    <span className="text-sm text-[var(--text-secondary)]">{r.motivo}</span>
+                  )}
+                </div>
+                {ehNotas(r) ? (
+                  <p className="mt-1 font-mono text-[0.6875rem] text-[var(--text-muted)]">
+                    {r.textoAnglo} · {r.notas.length} notas · afinação A4={r.a4} Hz · desvio máx{" "}
+                    {Math.max(...r.notas.map((x) => Math.abs(x.centavos)))} centavos
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-xs text-[var(--text-muted)]">
+            Lê uma sequência de notas sustentadas e devolve “Dó Ré Mi Fá” — que o decoder{" "}
+            <strong>Notas musicais</strong> já converte em letras, e daí em A1Z26. Acorde é
+            recusado: inventar uma linha melódica dentro dele seria inventar dado.
+          </p>
+        )}
       </Card>
 
       {/* Morse por tom */}
       <Card className="p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="font-display text-sm text-[var(--text-primary)]">Morse por tom</h3>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              // Cada canal em separado: o truque mais comum é pôr a mensagem
-              // num só, e a mistura dos dois destruiria a portadora.
-              const r: Record<string, AchadoMorse | RecusaMorse> = {};
-              const [e, d] = carregado.canais;
-              r[metricas.estereo ? "Esquerdo" : "Mono"] = lerMorse(e, carregado.taxa);
-              if (d) r.Direito = lerMorse(d, carregado.taxa);
-              if (metricas.estereo && metricas.maiorDiferenca > 0) {
-                r.Diferença = lerMorse(side(e, d), carregado.taxa);
-              }
-              setMorse(r);
-            }}
-          >
+          <Button size="sm" variant="secondary" onClick={() => setMorse(porCanal(lerMorse))}>
             Procurar Morse
           </Button>
         </div>

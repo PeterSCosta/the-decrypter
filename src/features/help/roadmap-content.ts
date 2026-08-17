@@ -120,10 +120,10 @@ export const ROADMAP: RoadGroup[] = [
         note: "Saiu de “ideia” para “a fazer”: a objeção era o peso de EMBARCAR centenas de KB, e a investigação de agosto/2026 mostrou que as três se resolvem por CONSULTA, sem embarcar nada. Endpoints verificados na mão: CNAE pela API do IBGE (mesmo host dos municípios), FIPE pela API do próprio site (do navegador, nunca do backend — o WAF de lá bloqueia IP de datacenter), TSE por JSON estático com CORS liberado. Os três caminhos estão escritos na Cola, com as armadilhas. O CID-10 saiu desta linha: só existe em ZIP do DATASUS, e por isso ficou como base adiada.",
       },
       {
-        title: "Aba Arquivo (áudio, imagem, vídeo e binário)",
+        title: "Aba Arquivo — imagem, documento, vídeo",
         status: "todo",
         desc: "Soltar QUALQUER arquivo e descobrir o que ele esconde: metadados, sobra depois do fim, arquivo colado dentro de outro, espectrograma, LSB, EXIF, planos de bit, quadro de vídeo em segundo específico.",
-        note: "Engoliu o antigo “Inspetor de imagem”, e por um motivo de desenho: a primeira pergunta quando um arquivo de prova chega não é “o que faço com esta imagem”, é “o que é isto de verdade” — e isso se responde nos bytes, antes de saber o tipo. Uma aba por tipo obrigaria a escolher no momento de maior chance de erro (um .wav que é JPEG), e o caso de um áudio com uma foto colada dentro não teria endereço nenhum. O motor de áudio já existe (8 módulos, 38 testes) e ainda não tem tela; o plano completo está em docs/PLANO-ARQUIVO.md.",
+        note: "NO AR desde agosto/2026 as duas primeiras camadas: identidade pelos bytes, sobra depois do fim declarado, arquivo embutido recortado byte a byte, texto, entropia, hexdump ancorado, ficha com metadados e hashes — mais o painel de áudio (espectrograma com as três vistas de canal, Morse por tom, LSB, recorte por trecho e canal). Falta imagem (planos de bit, EXIF, QR), documento (ZIP/OOXML, PDF), vídeo (quadro em segundo específico), YouTube e microfone. Engoliu o antigo “Inspetor de imagem” por uma razão de desenho: a primeira pergunta quando um arquivo chega não é “o que faço com esta imagem”, é “o que é isto de verdade”, e isso se responde nos bytes. Plano completo em docs/PLANO-ARQUIVO.md.",
       },
       {
         title: "Engine esperto",
