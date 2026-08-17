@@ -16,6 +16,7 @@ import { cn } from "@/lib/cn";
 import {
   BookOpen,
   Eye,
+  FileSearch,
   GitCompare,
   Grid3x3,
   Hash,
@@ -43,6 +44,9 @@ const LibraryPanel = lazy(() =>
 const PostesPanel = lazy(() =>
   import("@/features/poste/components/postes-panel").then((m) => ({ default: m.PostesPanel })),
 );
+const ArquivoPanel = lazy(() =>
+  import("@/features/arquivo/components/arquivo-panel").then((m) => ({ default: m.ArquivoPanel })),
+);
 const TriangulatePanel = lazy(() =>
   import("@/features/triangulate/components/triangulate-panel").then((m) => ({
     default: m.TriangulatePanel,
@@ -61,6 +65,7 @@ function PainelCarregando() {
 
 type TabId =
   | "decoder"
+  | "arquivo"
   | "text"
   | "positions"
   | "matrix"
@@ -75,6 +80,10 @@ type TabId =
 
 const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { id: "decoder", label: "Decodificador", icon: Wand2 },
+  // Logo depois do Decodificador: é a segunda porta de entrada mais provável
+  // quando a prova chega, porque a primeira pergunta sobre um arquivo é "o que
+  // é isto de verdade" — e essa se responde nos bytes, antes de saber o tipo.
+  { id: "arquivo", label: "Arquivo", icon: FileSearch },
   { id: "text", label: "Texto", icon: Type },
   { id: "positions", label: "Posições", icon: Hash },
   { id: "matrix", label: "Matriz", icon: Grid3x3 },
@@ -166,6 +175,7 @@ export function App() {
           {tab === "anagram" && <AnagramPanel />}
           {tab === "reference" && <ReferencePanel />}
           <Suspense fallback={<PainelCarregando />}>
+            {tab === "arquivo" && <ArquivoPanel onDecodificador={mandarParaDecodificador} />}
             {tab === "triangulate" && <TriangulatePanel />}
             {tab === "postes" && <PostesPanel />}
             {tab === "library" && <LibraryPanel aoAbrirPostes={() => setTab("postes")} />}

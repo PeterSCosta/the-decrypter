@@ -569,6 +569,14 @@ export const HELP_SECTIONS: HelpSection[] = [
     intro: "Além do Decodificador, abas com funções dedicadas.",
     entries: [
       {
+        name: "Arquivo",
+        desc: "Solte QUALQUER arquivo e descubra o que ele esconde. Ele identifica o que o arquivo é pelos BYTES (não pela extensão, que qualquer um renomeia), mede quantos bytes existem depois do fim declarado, procura outros arquivos embutidos e os RECORTA para você abrir e baixar, extrai o texto legível de dentro do binário e desenha o mapa de entropia. Cada achado leva ao byte exato no hexdump, para você conferir em vez de acreditar. Um recorte vira arquivo novo e volta ao topo da análise, com trilha de migalhas. Tudo local: nada é enviado para lugar nenhum.",
+        example: {
+          in: "um .wav com uma foto colada no fim",
+          out: "“Este arquivo contém um JPEG inteiro dentro dele” — 9 KB a partir do byte 176.444",
+        },
+      },
+      {
         name: "Decodificador",
         desc: "A busca única: cola a entrada e vê todas as interpretações ranqueadas. Tem campo de chave, 2º campo (a fonte a indexar, a lista, o texto original), ruas e CEP de Blumenau/SC (com curinga, ex.: 88xxx500) e uma barra lateral pra rodar só uma cifra — que, quando ela sabe, também CODIFICA.",
       },
