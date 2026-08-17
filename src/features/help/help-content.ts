@@ -577,6 +577,32 @@ export const HELP_SECTIONS: HelpSection[] = [
         },
       },
       {
+        name: "Arquivo · Áudio",
+        desc: "Espectrograma com três vistas de canal (Esquerdo, Direito e Diferença E−D, que revela mensagem em antifase — a que some quando o som vira mono), com piso de dB e faixa de frequência ajustáveis. Lê Morse por tom, DTMF e notas musicais, sempre CANAL A CANAL e sempre no áudio original a 1,0× — velocidade e modo fita são para o ouvido e nunca alimentam detector. Extrai os bits menos significativos com o corte na tela. E recorta trecho e canal para levar a outra ferramenta.",
+        example: {
+          in: "um WAV com Morse só no canal esquerdo",
+          out: "PONTE DE FERRO · 802 Hz · 11 WPM",
+        },
+      },
+      {
+        name: "Arquivo · Imagem",
+        desc: "Planos de bit (é onde se esconde: o bit menos significativo muda 1/255 da cor e some a olho nu), canais isolados, canal alfa forçado a opaco — pixel transparente ainda carrega cor — e EXIF, com a MINIATURA embutida, que costuma ser do original não editado e revela o que foi apagado da foto grande.",
+        example: {
+          in: "um PNG com texto no bit 0 do azul",
+          out: "a frase aparece nítida no plano isolado",
+        },
+      },
+      {
+        name: "Arquivo · Vídeo",
+        desc: "Quadro de um segundo específico e tira de miniaturas para achar o instante. Mostra o segundo REAL entregue ao lado do pedido, porque o navegador salta para o quadro decodificável mais próximo. Cada quadro extraído vira um PNG e volta ao topo da análise.",
+        example: { in: "1:23,4", out: "o quadro, com aviso se o vídeo entregou 1:22,9" },
+      },
+      {
+        name: "Arquivo · YouTube",
+        desc: "Cole o link: título, canal, formato, o player pulando para o segundo, e os quadros que o YouTube publica (dois deles em 1920×1080), analisáveis como imagem. NÃO baixa vídeo nem áudio — é regra dos termos de uso deles, não limitação técnica. E não rode análise de bits nesses quadros: são recomprimidos a partir de vídeo já com perdas.",
+        example: { in: "youtu.be/dQw4w9WgXcQ", out: "ficha do vídeo + 7 quadros publicados" },
+      },
+      {
         name: "Decodificador",
         desc: "A busca única: cola a entrada e vê todas as interpretações ranqueadas. Tem campo de chave, 2º campo (a fonte a indexar, a lista, o texto original), ruas e CEP de Blumenau/SC (com curinga, ex.: 88xxx500) e uma barra lateral pra rodar só uma cifra — que, quando ela sabe, também CODIFICA.",
       },

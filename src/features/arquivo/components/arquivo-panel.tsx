@@ -10,7 +10,9 @@ import type { Recorte } from "../carve";
 import { DocumentoPainel } from "../documento/components/documento-painel";
 import { type Ficha, calcularHashes, montarFicha } from "../ficha";
 import { ImagemPainel } from "../imagem/components/imagem-painel";
-import { type Achado, type NoDeArquivo, noDeRecorte, noRaiz } from "../no";
+import { type Achado, type NoDeArquivo, analisar, noDeRecorte, noRaiz } from "../no";
+import { VideoPainel } from "../video/components/video-painel";
+import { YoutubePainel } from "../youtube/components/youtube-painel";
 import { Hexdump } from "./hexdump";
 
 const tamanho = (n: number) =>
@@ -70,6 +72,25 @@ export function ArquivoPanel({
     setArrastando(false);
     const f = e.dataTransfer.files[0];
     if (f) void carregar(f);
+  };
+
+  /** Bytes que vieram de fora do arquivo (quadro de vídeo, quadro do YouTube). */
+  const abrirBytes = (novos: Uint8Array, nomeNovo: string, origem: string, mime: string | null) => {
+    setTrilha((t) => {
+      const pai = t[t.length - 1];
+      return [
+        ...t,
+        {
+          nome: nomeNovo,
+          bytes: novos,
+          origem,
+          profundidade: (pai?.profundidade ?? -1) + 1,
+          analise: analisar(novos, nomeNovo, mime),
+        },
+      ];
+    });
+    setAncora(undefined);
+    setHashes(null);
   };
 
   const abrirRecorte = (r: Recorte) => {
@@ -133,6 +154,14 @@ export function ArquivoPanel({
           }}
         />
         {erro ? <p className="text-sm text-[var(--color-pulse-600)]">{erro}</p> : null}
+
+        {/* Prova costuma vir como LINK, não como arquivo — e não havia onde
+            colar um. O que o YouTube publica de propósito entra por aqui. */}
+        <YoutubePainel
+          aoAnalisarQuadro={(b, n) =>
+            abrirBytes(b, n, "quadro publicado pelo YouTube", "image/jpeg")
+          }
+        />
       </div>
     );
   }
@@ -313,6 +342,17 @@ export function ArquivoPanel({
       {/* Compactado ou documento do Office: os dois são ZIP. */}
       {analise.identidade.familia === "arquivo-comprimido" || analise.identidade.tipo === "ZIP" ? (
         <DocumentoPainel bytes={atual.bytes} onDecodificador={onDecodificador} />
+      ) : null}
+
+      {/* Vídeo: cada quadro extraído volta ao funil como PNG. */}
+      {analise.identidade.familia === "video" ? (
+        <VideoPainel
+          bytes={atual.bytes}
+          nome={atual.nome}
+          aoExtrairQuadro={(png, nomeDoQuadro) =>
+            abrirBytes(png, nomeDoQuadro, `quadro de ${atual.nome}`, "image/png")
+          }
+        />
       ) : null}
 
       {/* Painel do tipo. */}
