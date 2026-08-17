@@ -75,7 +75,7 @@ describe("agrupamento por selo", () => {
   });
 
   it("uma lista filtrada não inventa grupo", () => {
-    expect(sourcesByStatus([get("tse")]).map((g) => g.status)).toEqual(["consulta-manual"]);
+    expect(sourcesByStatus([get("hathitrust")]).map((g) => g.status)).toEqual(["consulta-manual"]);
   });
 });
 
@@ -126,10 +126,23 @@ describe("links oficiais conferidos na resolução da própria prova", () => {
     expect(s.note).toMatch(/2025/);
   });
 
-  it("Anatel aponta para o Fique Ligado usado no caderno do ITC-2023", () => {
-    expect(get("anatel-fique-ligado").url).toMatch(
-      /^https:\/\/sistemas\.anatel\.gov\.br\/fiqueligado/,
-    );
+  /**
+   * ESTE CASO FOI REESCRITO, e a razão é constrangedora: ele travava um LINK
+   * MORTO no lugar. O "Fique Ligado" acabou — `sistemas.anatel.gov.br/fiqueligado`
+   * responde 302 para o painel novo (verificado em agosto/2026). O teste estava
+   * cumprindo o papel oposto ao que devia: garantia fidelidade ao caderno do
+   * ITC-2023 e, com isso, garantia que a equipe fosse mandada a lugar nenhum.
+   *
+   * A âncora do ITC-2023 continua na ficha; o que muda é para onde o link vai.
+   * O teste passa a exigir que a nota EXPLIQUE o desaparecimento, para ninguém
+   * "consertar" isto de volta olhando só o caderno antigo.
+   */
+  it("Anatel aponta para o painel vivo, e a nota registra que o Fique Ligado acabou", () => {
+    const s = get("anatel-fique-ligado");
+    expect(s.url).toMatch(/^https:\/\/informacoes\.anatel\.gov\.br/);
+    expect(s.url).not.toMatch(/fiqueligado/);
+    expect(s.note).toMatch(/acabou|302/i);
+    expect(s.anchors).toContain("ITC-2023");
   });
 });
 
@@ -155,16 +168,48 @@ describe("decisões registradas — não regredir", () => {
     expect(s.note).toMatch(/não houve bypass|não burlar|continua valendo/i);
   });
 
-  it("SIATU fica adiada, com o motivo técnico e o caminho de dados abertos", () => {
+  /**
+   * REESCRITO. `adiada` aqui queria dizer "é só pedir por LAI e vira dado
+   * aberto". O geoportal desmentiu: `VLR_PGV` existe em três camadas do ArcGIS
+   * público e está ZERADA nos 9.372 eixos — não é dado que falta, é dado
+   * suprimido na publicação, e pedir de novo o mesmo canal não muda isso. O VM
+   * só existe no Anexo II da LC 632/2007, em PDF.
+   *
+   * A política não mudou: continua valendo que dado em arquivo vira consulta
+   * quando dá (é por isso que o `cid10` FOI para `adiada` no mesmo commit). O
+   * que mudou é o fato sobre esta base.
+   */
+  it("SIATU é consulta manual, e a nota explica por que não é só pedir", () => {
     const s = get("siatu-vm");
-    expect(s.status).toBe("adiada");
-    expect(s.note).toMatch(/VIEWSTATE|WebForms/);
-    expect(s.note).toMatch(/CORS/);
-    expect(s.note).toMatch(/LAI|dados abertos/);
+    expect(s.status).toBe("consulta-manual");
+    expect(s.note).toMatch(/VLR_PGV/);
+    expect(s.note).toMatch(/zerada|suprimido/i);
+    expect(s.note).toMatch(/LC 632|PDF/);
   });
 
-  it("TSE é consulta manual — reconhecer e linkar, nunca raspar", () => {
-    expect(get("tse").status).toBe("consulta-manual");
+  /**
+   * REESCRITO. A regra que este caso protegia era "reconhecer e linkar, nunca
+   * raspar", e ela continua inteira — o que mudou é que NÃO É RASPAGEM: o TSE
+   * publica os resultados como JSON estático com `Access-Control-Allow-Origin: *`,
+   * ou seja, oferece a consulta de propósito. A nota anterior dizia "sem JSON
+   * aberto amigável" e era simplesmente falsa.
+   *
+   * O que despistava era o caminho: `dados-simplificados/…-r.json` dá 404 por
+   * município. O certo é `dados/…-u.json`.
+   */
+  it("TSE está aberto porque o TSE publica JSON com CORS — não porque afrouxamos a regra", () => {
+    const s = get("tse");
+    expect(s.status).toBe("aberta");
+    expect(s.note).toMatch(/CORS|Access-Control/i);
+    expect(s.note).toMatch(/dados-simplificados|-u\.json/);
+  });
+
+  /** CID-10 tomou o lugar do SIATU como o caso legítimo de `adiada`. */
+  it("CID-10 é adiada: existe só em arquivo, e a nota diz qual", () => {
+    const s = get("cid10");
+    expect(s.status).toBe("adiada");
+    expect(s.note).toMatch(/ZIP|DATASUS/);
+    expect(s.note).toMatch(/404|gov\.br/);
   });
 
   it("Faber-Castell é consulta manual e declara que Pantone não entra", () => {
@@ -174,12 +219,23 @@ describe("decisões registradas — não regredir", () => {
     expect(s.note).toMatch(/12 cores/);
   });
 
-  // `cidade-iluminada` saiu desta lista porque a barreira não existe (ver
-  // acima); as demais continuam guardadas.
+  /**
+   * A lista encolheu duas vezes, e nas duas por FATO, não por conveniência:
+   * `cidade-iluminada` saiu porque a barreira não existia (ver acima), e agora
+   * `tse` e `fipe` saem porque as duas fontes oferecem consulta — o TSE em JSON
+   * com CORS, a FIPE pela API que o próprio site dela usa.
+   *
+   * O que este caso guarda é o que importa: `siatu-vm` e `correios-rastreio`
+   * exigem sessão/formulário e continuam fora. E a nota da FIPE registra a
+   * regra que sobra: a chamada sai do NAVEGADOR do usuário, nunca do backend,
+   * porque o WAF de lá bloqueia IP de datacenter e forjar cabeçalho para
+   * escapar seria driblar barreira posta de propósito.
+   */
   it("nenhuma base com gate aparece como aberta", () => {
-    for (const id of ["siatu-vm", "tse", "correios-rastreio", "fipe"]) {
+    for (const id of ["siatu-vm", "correios-rastreio"]) {
       expect(get(id).status, id).not.toBe("aberta");
     }
+    expect(get("fipe").note).toMatch(/forjar|driblar/i);
   });
 
   it("as bases que já respondem na bancada estão todas listadas como abertas", () => {
@@ -194,7 +250,17 @@ describe("decisões registradas — não regredir", () => {
       // A bancada passou a responder plaqueta de poste (aba Postes, 45.285
       // pontos pela API). A ordem aqui é a do arquivo, e o Cidade Iluminada
       // ficou no bloco que era o das bloqueadas.
+      // As três abaixo consultam a fonte DIRETO DO NAVEGADOR, sem backend e sem
+      // dado embarcado — um terceiro modo de "aberta", que a legenda passou a
+      // mencionar. Ficam aqui porque a ordem é a do arquivo, e elas nasceram no
+      // bloco que era o das consulta-manual.
+      "tse",
+      "fipe",
+      "cnae",
       "cidade-iluminada",
+      // Achado colateral da investigação do SIATU: o COD_LOG, que é o "número
+      // por rua" que se procurava lá, e este é público e consultável.
+      "cod-log-blumenau",
     ]);
   });
 
@@ -208,9 +274,21 @@ describe("decisões registradas — não regredir", () => {
     expect(get("pix-ispb").note).toMatch(/backend/);
   });
 
+  /**
+   * AJUSTADO junto com as fichas. Duas das três premissas caducaram:
+   *
+   * - A FIPE saiu de "descartada": ela continua sem ser EMBARCADA (o motivo do
+   *   mês segue valendo, e o teste continua exigindo que a nota o diga), mas
+   *   passou a ser consultada ao vivo.
+   * - A nota da Anatel não fala mais em "download em lote", porque o problema
+   *   deixou de ser esse: o produto que a ficha descrevia deixou de existir.
+   */
   it("os descartados sob demanda dizem por que não viram dataset", () => {
+    // Não embarcar segue valendo — o preço tem mês de referência.
     expect(get("fipe").note).toMatch(/m[eê]s/i);
     expect(get("correios-rastreio").note).toMatch(/autenticada/);
-    expect(get("anatel-fique-ligado").note).toMatch(/lote|bulk/i);
+    // A Anatel agora justifica pela restrição da própria fonte, não pela falta
+    // de download em lote.
+    expect(get("anatel-fique-ligado").note).toMatch(/restrita|WAF/i);
   });
 });

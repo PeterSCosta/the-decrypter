@@ -15,9 +15,15 @@
  * equipe faz agora, à mão, quando a bancada não pode fazer por ela.
  *
  * REGRA QUE ESTA LISTA REGISTRA: base com captcha ou login de terceiro fica
- * `bloqueada` — não se burla nem um nem outro. Base sem CORS (SIATU) fica
- * `adiada` até virar dado aberto por pedido oficial (LAI) — o mesmo caminho que
- * ruas e CEP já percorreram.
+ * `bloqueada` — não se burla nem um nem outro. Base que só existe em arquivo
+ * (ZIP, PDF) fica `adiada` até virar consulta, por dados abertos ou pedido
+ * oficial — o mesmo caminho que ruas e CEP já percorreram.
+ *
+ * O exemplo que este cabeçalho dava — "base sem CORS (SIATU) fica adiada" —
+ * saiu, porque ele descrevia mal os dois lados: o SIATU manda header de CORS, e
+ * o que trava ali não é rede, é o VM não estar publicado em lugar nenhum além
+ * de um PDF. Ele agora é `consulta-manual`, e o `cid10` tomou o lugar como o
+ * caso legítimo de `adiada`.
  *
  * CORREÇÃO DE FATO (agosto/2026): o Cidade Iluminada estava aqui como
  * `bloqueada` por "reCAPTCHA + login". A anotação estava errada. Aquilo vale
@@ -63,7 +69,8 @@ export const SOURCE_STATUS_LABEL: Record<SourceStatus, string> = {
 
 /** Uma linha explicando o selo — vira a legenda da seção. */
 export const SOURCE_STATUS_HINT: Record<SourceStatus, string> = {
-  aberta: "A bancada já consulta por você (dado embarcado ou pelo backend).",
+  aberta:
+    "A bancada já consulta por você — com dado embarcado, pelo backend, ou chamando a fonte direto do navegador.",
   "consulta-manual": "Tem site oficial, mas quem busca é você: abre o link e procura.",
   bloqueada: "Exige captcha ou login de terceiro. Não automatizamos e não burlamos.",
   adiada: "Daria para ter offline, mas depende de pedido oficial (LAI/dados abertos).",
@@ -154,8 +161,8 @@ export const SOURCES: DataSourceRef[] = [
     use: "Número de 4-5 dígitos → candidato → índice de letra no nome dele.",
     url: "https://sig.tse.jus.br/ords/dwapr/r/seai/sig-eleicao-resultados/home",
     urlLabel: "sig.tse.jus.br",
-    status: "consulta-manual",
-    note: "Sem JSON aberto amigável. Escolha município, cargo e ano no SIG Eleição e procure a votação na lista.",
+    status: "aberta",
+    note: "A nota anterior dizia “sem JSON aberto amigável”, e estava errada: os resultados oficiais SÃO JSON estático, com CORS liberado, consultáveis direto do navegador — `resultados.tse.jus.br/oficial/ele2024/619/dados/sc/sc80470-c0011-e000619-u.json` (verificado: HTTP 200, `Access-Control-Allow-Origin: *`). Repare no `dados/` e no sufixo `-u`: o caminho `dados-simplificados/…-r` só traz agregado nacional e dá 404 por município — foi o que despistou. Cobre o ciclo corrente; anteriores só em ZIP nacional dos dados abertos. Votação repetida entre candidatos é comum: mostre todos os empates, não finja resposta única.",
     anchors: ["GIA-34"],
   },
   {
@@ -205,12 +212,12 @@ export const SOURCES: DataSourceRef[] = [
   {
     id: "anatel-fique-ligado",
     name: "Anatel — Fique Ligado",
-    indexes: "Mapa de telefones públicos e estações por localidade.",
-    use: "Número de orelhão → onde ele fica (e o contrário).",
-    url: "https://sistemas.anatel.gov.br/fiqueligado/",
-    urlLabel: "sistemas.anatel.gov.br",
+    indexes: "Contagem de telefones públicos por município e prestadora.",
+    use: "Serve para conferir se uma cidade ainda tem orelhão, não para achar UM orelhão.",
+    url: "https://informacoes.anatel.gov.br/paineis/acompanhamento-e-controle/orelhoes",
+    urlLabel: "informacoes.anatel.gov.br",
     status: "consulta-manual",
-    note: "Sem download em lote e sem API pública: a consulta é ponto a ponto no mapa. Dataset só sob demanda.",
+    note: "CORREÇÃO (agosto/2026): o “Fique Ligado” ACABOU — a URL antiga responde 302 para este painel novo (verificado). A ficha vendia uma capacidade que morreu: o painel atual dá contagem por município e prestadora, e NÃO um mapa pesquisável por número de orelhão. Sem API: a base de estações é marcada como restrita pela própria Anatel, e o `TUP.geojson` devolve HTTP 200 com o corpo do bloqueio do WAF — status 200 ali não é sucesso.",
     anchors: ["ITC-2023"],
   },
   {
@@ -241,8 +248,8 @@ export const SOURCES: DataSourceRef[] = [
     use: "Código → modelo → nome do carro.",
     url: "https://veiculos.fipe.org.br",
     urlLabel: "veiculos.fipe.org.br",
-    status: "consulta-manual",
-    note: "Muda todo mês e o JSON daqui é commitado dentro da imagem: um dataset embarcado nasceria desatualizado. Consulta oficial e pronto.",
+    status: "aberta",
+    note: "Consultada AO VIVO, do navegador. A nota anterior argumentava contra EMBARCAR o dataset (e nisso continua certa: muda todo mês e nasceria velho dentro da imagem), mas isso nunca foi argumento contra consultar. Caminho verificado: `ConsultarTabelaDeReferencia` dá o mês vigente, e `ConsultarValorComTodosParametros` com `modeloCodigoExterno=001267-0` + `tipoConsulta=codigo` devolve marca, modelo e preço. Armadilha que me custou meia hora: `ConsultarAnoModeloPeloCodigoFipe` recusa o mesmo código com “Parâmetros inválidos” — o endpoint da busca reversa é o outro. Mande form-urlencoded (com JSON o preflight barra) e varra os tipos 1/2/3, porque o tipo não está no código. Do NAVEGADOR, nunca do backend: o WAF da FIPE bloqueia IP de datacenter (foi o que derrubou a BrasilAPI, cujo `/api/fipe/preco` dá 500 permanente), e forjar cabeçalho para escapar dele seria driblar barreira posta de propósito. É API interna e sem contrato: se mudarem o site, trate como fonte fora do ar.",
   },
   {
     id: "cnae",
@@ -251,8 +258,8 @@ export const SOURCES: DataSourceRef[] = [
     use: "Número com aquela pontuação típica → texto da atividade.",
     url: "https://concla.ibge.gov.br/busca-online-cnae.html",
     urlLabel: "concla.ibge.gov.br",
-    status: "consulta-manual",
-    note: "Só menções no acervo, nenhuma prova resolvida por ele. Dataset sob demanda.",
+    status: "aberta",
+    note: "Resolvida pela API do IBGE — `servicodados.ibge.gov.br/api/v2/cnae/subclasses/6201501` — sem chave e direto do navegador (verificado: HTTP 200 com a hierarquia inteira, subclasse → classe → grupo → divisão → seção). Vários códigos numa chamada só, separados por `|`; é o mesmo host que a bancada já usa para municípios. Duas armadilhas: `00.00-0/00` é SUBCLASSE, de 7 dígitos, e mandar isso em `/classes` (que é de 5) devolve `[]` em silêncio; e código inexistente devolve HTTP 200 com `[]`, não 404. Só resolve código → atividade: busca por texto exige o dataset embarcado.",
   },
   {
     id: "cid10",
@@ -261,8 +268,8 @@ export const SOURCES: DataSourceRef[] = [
     use: "Letra + 3 dígitos → nome da doença (e daí letras, iniciais, contagem).",
     url: "http://www2.datasus.gov.br/cid10/V2008/cid10.htm",
     urlLabel: "datasus.gov.br",
-    status: "consulta-manual",
-    note: "~500 KB de dataset para zero prova resolvida no acervo. Sob demanda.",
+    status: "adiada",
+    note: "Não existe API: o `cid10.ia.br/api/*` devolve 404 (o site é só HTML) e o portal de dados abertos exige conta no gov.br. O que existe é ZIP do DATASUS, ou seja, dado aberto em arquivo — que é exatamente a definição de `adiada` aqui, e não de consulta manual. São ~14 mil linhas, pequenas o bastante para embarcar no dia em que uma prova pedir; até lá, zero prova resolvida no acervo não justifica o peso.",
   },
 
   {
@@ -276,6 +283,17 @@ export const SOURCES: DataSourceRef[] = [
     note: "A bancada já responde: 45.285 postes na aba Postes. A anotação anterior dizia 'reCAPTCHA + login' — isso vale para abrir chamado, não para a consulta do mapa, que é anônima e tem `USAR_CAPTCHA: 0` na configuração de Blumenau. Não houve bypass de nada: a coleta usou o mesmo endereço público que o mapa do site usa, num ritmo educado. A regra de não burlar captcha nem login continua valendo — o que mudou foi o fato.",
     anchors: ["GIA-25"],
   },
+  {
+    id: "cod-log-blumenau",
+    name: "Código de logradouro de Blumenau (COD_LOG)",
+    indexes: "Nome da rua ↔ COD_LOG, um número estável de 1 a 4 dígitos; e bairro e CEP do trecho.",
+    use: "É o “número secreto por rua” que se procurava no VM — e este existe, é público e é consultável. Número de ~4 dígitos → rua → letra, bairro ou CEP.",
+    url: "https://geo.blumenau.sc.gov.br",
+    urlLabel: "geo.blumenau.sc.gov.br",
+    status: "aberta",
+    note: "Achado colateral da investigação do SIATU, e vale mais que ela. O geoportal da Prefeitura é ArcGIS REST público: a camada `consulta_construir/Rol_de_ruas/MapServer/0` traz `COD_LOG` em 9.370 eixos, com `DESCRICAO`, `BAIRRO_DIR` e `CEP_DIREIT`. Verificado aqui: `7 DE SETEMBRO` → 998, no Centro, CEP 89010-200. Atenção a dois detalhes: a mesma rua aparece em vários eixos (um por trecho), então o mesmo código volta repetido com bairros diferentes; e o campo do nome é `DESCRICAO`, não `NOME` — consultar `NOME` devolve erro 400, não lista vazia.",
+    anchors: ["GIA-20", "GIA-34"],
+  },
 
   // ── Adiada: dá para ter offline, falta o pedido oficial ────────────────────
   {
@@ -286,8 +304,8 @@ export const SOURCES: DataSourceRef[] = [
     use: "VM → rua, e VM lido como ano eleitoral. É o melhor “número secreto por rua” que existe.",
     url: "https://www.blumenau.sc.gov.br/cidadao/Pages/Siatu/Imobiliario/ConsultaImovel/ConsultaImovel.aspx",
     urlLabel: "blumenau.sc.gov.br · SIATU",
-    status: "adiada",
-    note: "A consulta é ASP.NET WebForms (__VIEWSTATE), sem CORS: não sai do navegador. Dá para consultar à mão. Caminho certo: pedir o cadastro por dados abertos/LAI e virar JSON offline, como já foi feito com ruas e CEP.",
+    status: "consulta-manual",
+    note: "CORREÇÃO (agosto/2026): o selo `adiada` supunha que bastava pedir por LAI para o VM virar dado aberto. O geoportal MOSTRA que não: a coluna `VLR_PGV` existe em três camadas do ArcGIS público e está zerada em 100% dos 9.372 eixos (verificado por estatística no servidor) — não é dado ausente, é dado suprimido na publicação. O VM só existe no Anexo II da LC 632/2007, em PDF de 202 páginas. A consulta do SIATU segue ASP.NET WebForms e continua sendo à mão. Em compensação, a caça ao VM achou o que ela queria: veja `cod-log-blumenau`.",
     anchors: ["GIA-20", "GIA-34"],
   },
 ];
