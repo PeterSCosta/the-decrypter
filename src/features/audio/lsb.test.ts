@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { analisarContainer } from "./container";
 import { montarWavBytes } from "./decode";
-import { CORRIDA_MINIMA, detectarAnomaliaDeBit, extrairLsb, offsetDoPcm, varrerLsb } from "./lsb";
+import { corteMinimo, detectarAnomaliaDeBit, extrairLsb, offsetDoPcm, varrerLsb } from "./lsb";
 
 /**
  * Gera um WAV PCM 16 bits com `nAmostras` por canal, ruído determinístico, e
@@ -129,13 +129,34 @@ describe("extração de LSB", () => {
     expect(melhor.opcoes.ordem).toBe("lsb-primeiro");
   });
 
-  it("áudio LIMPO não produz corrida longa — a disciplina do falso positivo", () => {
-    // O pecado capital seria gritar "mensagem" aqui. Um segundo de áudio dá
-    // ~11 mil bytes de LSB; corridas curtas por acaso são esperadas, longas não.
+  it("áudio LIMPO não produz trecho — a disciplina do falso positivo", () => {
+    // O pecado capital seria gritar "mensagem" aqui.
     const limpo = wavComSegredo({ nAmostras: 44100, canais: 2 });
-    const melhor = varrerLsb(limpo, BASE)[0];
-    expect(melhor.maiorCorrida.length).toBeLessThan(CORRIDA_MINIMA);
-    expect(melhor.trechos).toEqual([]);
+    for (const r of varrerLsb(limpo, BASE)) expect(r.trechos).toEqual([]);
+  });
+
+  /**
+   * ESTE CASO EXISTE PORQUE O ANTERIOR PASSAVA POR SORTE.
+   *
+   * Com o corte fixo em 16, a fixture de 1 segundo dava 0,02 falso esperado e
+   * passava sempre. Num arquivo de 60 s varrido em 12 interpretações a conta
+   * vira 1,2 falsos, e em 5 min vira 6,1 — ou seja, a ferramenta anunciaria
+   * meia dúzia de mensagens inexistentes justo no tamanho de arquivo que uma
+   * prova de verdade tem.
+   */
+  it("arquivo LONGO e limpo também não produz trecho", () => {
+    const longo = wavComSegredo({ nAmostras: 44100 * 30, canais: 2 });
+    const resultados = varrerLsb(longo, BASE);
+    // O corte subiu sozinho por causa do tamanho da busca.
+    expect(resultados[0].corteUsado).toBeGreaterThan(16);
+    for (const r of resultados) expect(r.trechos).toEqual([]);
+  });
+
+  it("o corte cresce com o tamanho da busca", () => {
+    expect(corteMinimo(1_000)).toBeLessThan(corteMinimo(1_000_000));
+    expect(corteMinimo(40_000_000)).toBeGreaterThanOrEqual(23);
+    // E não desce abaixo do piso, nem num arquivo minúsculo.
+    expect(corteMinimo(1)).toBe(12);
   });
 });
 

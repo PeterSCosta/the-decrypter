@@ -16,7 +16,8 @@
  * mensagem. Ele extrai, mede e devolve evidência: a maior corrida de caracteres
  * legíveis, o desvio estatístico do bit, e o texto para o humano ler. Áudio
  * limpo produz corridas legíveis por puro acaso — a régua está em
- * `CORRIDA_MINIMA`, e mesmo acima dela o vocabulário é "possível", nunca "é".
+ * `corteMinimo()` — que ESCALA com o tamanho da busca —, e mesmo acima dele o
+ * vocabulário é "possível", nunca "é".
  */
 
 export interface OpcoesLsb {
@@ -44,18 +45,51 @@ export interface ResultadoLsb {
   trechos: string[];
   /** Fração de bytes que são ASCII imprimível — texto real fica perto de 1. */
   fracaoImprimivel: number;
+  /** O corte usado, para a tela poder mostrá-lo junto do resultado. */
+  corteUsado: number;
 }
 
+/** Fração de bytes que é ASCII imprimível num fluxo aleatório: 96/256. */
+const P_IMPRIMIVEL = 96 / 256;
+
+/** Quantos falsos aceitamos por arquivo analisado. */
+const FALSOS_TOLERADOS = 0.01;
+
+/** Piso: abaixo disto nem vale mostrar, mesmo em arquivo minúsculo. */
+const CORRIDA_PISO = 12;
+
 /**
- * Abaixo disto é ruído com sorte, não mensagem.
+ * O corte de "isto é mensagem" **escala com o tamanho da busca**.
  *
- * Num fluxo aleatório, a chance de um byte ser ASCII imprimível é ~96/256 =
- * 0,375. Uma corrida de 12 sai em 0,375^12 ≈ 1 em 20 mil bytes — e um WAV de um
- * minuto rende ~330 mil bytes de LSB, ou seja, dezenas de corridas de 12 por
- * puro acaso. A 16 a conta vira 1 em 5 milhões, o que já é raro o bastante para
- * merecer o olho de quem está resolvendo a prova.
+ * Esta função substituiu uma constante — `CORRIDA_MINIMA = 16` — e a razão é
+ * uma correção de comparações múltiplas que a versão anterior ignorava. A conta:
+ * a chance de um byte aleatório ser imprimível é 0,375, então a de uma corrida
+ * de L é 0,375^L por posição; com M bytes examinados, os falsos ESPERADOS são
+ * M × 0,375^L. E M cresce duas vezes — com a duração do áudio e com o número de
+ * interpretações que a varredura testa (canal × ordem × quantidade de bits).
+ *
+ * Com o 16 fixo, varrendo 12 combinações:
+ *
+ * | duração | bytes examinados | falsos esperados a L=16 |
+ * |---|---:|---:|
+ * | 1 s | 132 mil | 0,02 |
+ * | 60 s | 7,9 milhões | **1,2** |
+ * | 5 min | 39,7 milhões | **6,1** |
+ *
+ * Ou seja: o teste de "áudio limpo não produz corrida longa" passava porque a
+ * fixture tinha 1 segundo. Num arquivo de prova de verdade, a ferramenta
+ * anunciaria meia dúzia de mensagens inexistentes — exatamente o pecado que
+ * este módulo diz não cometer.
+ *
+ * O corte resultante fica entre 15 e 24 na prática, e o número **vai para a
+ * tela** junto com o resultado: quem lê precisa saber quantas interpretações
+ * foram testadas para calibrar o que "achou" significa.
  */
-export const CORRIDA_MINIMA = 16;
+export function corteMinimo(bytesExaminados: number): number {
+  if (bytesExaminados <= 0) return CORRIDA_PISO;
+  const l = Math.log(FALSOS_TOLERADOS / bytesExaminados) / Math.log(P_IMPRIMIVEL);
+  return Math.max(CORRIDA_PISO, Math.ceil(l));
+}
 
 const IMPRIMIVEL = (b: number) => (b >= 0x20 && b < 0x7f) || b === 0x0a || b === 0x0d || b === 0x09;
 
@@ -84,7 +118,7 @@ export function offsetDoPcm(bytes: Uint8Array): number | null {
  * O `bitsPorAmostra` decide o passo em bytes; o byte MENOS significativo de cada
  * amostra é o primeiro (PCM em WAV é little-endian), e é dele que saem os bits.
  */
-export function extrairLsb(bytes: Uint8Array, opcoes: OpcoesLsb): ResultadoLsb {
+export function extrairLsb(bytes: Uint8Array, opcoes: OpcoesLsb, corte?: number): ResultadoLsb {
   const { bitsPorAmostra, quantosBits, canais, canal, ordem, offset } = opcoes;
   const bytesPorAmostra = bitsPorAmostra / 8;
   const passo = bytesPorAmostra * canais;
@@ -113,6 +147,9 @@ export function extrairLsb(bytes: Uint8Array, opcoes: OpcoesLsb): ResultadoLsb {
   }
 
   const montados = Uint8Array.from(saida);
+  // Sem corte informado, calcula pelo que ESTA extração examinou. Quem varre
+  // várias interpretações passa o corte da varredura inteira, que é maior.
+  const corteEfetivo = corte ?? corteMinimo(montados.length);
 
   // Maior corrida de imprimíveis, e todos os trechos que valem leitura.
   let corrida = "";
@@ -124,12 +161,12 @@ export function extrairLsb(bytes: Uint8Array, opcoes: OpcoesLsb): ResultadoLsb {
       imprimiveis++;
       corrida += String.fromCharCode(b);
     } else {
-      if (corrida.length >= CORRIDA_MINIMA) trechos.push(corrida);
+      if (corrida.length >= corteEfetivo) trechos.push(corrida);
       if (corrida.length > maior.length) maior = corrida;
       corrida = "";
     }
   }
-  if (corrida.length >= CORRIDA_MINIMA) trechos.push(corrida);
+  if (corrida.length >= corteEfetivo) trechos.push(corrida);
   if (corrida.length > maior.length) maior = corrida;
 
   return {
@@ -138,6 +175,7 @@ export function extrairLsb(bytes: Uint8Array, opcoes: OpcoesLsb): ResultadoLsb {
     maiorCorrida: maior,
     trechos,
     fracaoImprimivel: montados.length ? imprimiveis / montados.length : 0,
+    corteUsado: corteEfetivo,
   };
 }
 
@@ -151,15 +189,26 @@ export function varrerLsb(
   bytes: Uint8Array,
   base: { bitsPorAmostra: number; canais: number; offset: number },
 ): ResultadoLsb[] {
-  const resultados: ResultadoLsb[] = [];
   const canaisPossiveis: (number | null)[] = base.canais > 1 ? [null, 0, 1] : [null];
+  const combinacoes: OpcoesLsb[] = [];
   for (const canal of canaisPossiveis) {
     for (const ordem of ["msb-primeiro", "lsb-primeiro"] as const) {
       for (const quantosBits of [1, 2]) {
-        resultados.push(extrairLsb(bytes, { ...base, canal, ordem, quantosBits }));
+        combinacoes.push({ ...base, canal, ordem, quantosBits });
       }
     }
   }
+
+  // O corte vale para a VARREDURA, não para cada extração isolada: testar 12
+  // interpretações multiplica por 12 a chance de topar com texto por acaso, e
+  // um corte por extração ignoraria justamente isso.
+  const amostras = Math.max(0, bytes.length - base.offset) / (base.bitsPorAmostra / 8);
+  const bytesExaminados = combinacoes.reduce(
+    (n, c) => n + (amostras * (c.canal === null ? base.canais : 1) * c.quantosBits) / 8,
+    0,
+  );
+  const corte = corteMinimo(bytesExaminados);
+  const resultados = combinacoes.map((c) => extrairLsb(bytes, c, corte));
   // Corrida legível é o sinal mais forte; a fração imprimível desempata.
   return resultados.sort(
     (a, b) =>
