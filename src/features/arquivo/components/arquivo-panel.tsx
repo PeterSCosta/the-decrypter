@@ -5,6 +5,7 @@ import { CopyButton } from "@/components/ui/copy-button";
 import { cn } from "@/lib/cn";
 import { ChevronRight, Download, FileSearch, Upload, Wand2 } from "lucide-react";
 import { type DragEvent, useCallback, useRef, useState } from "react";
+import { AudioPainel } from "../audio/components/audio-painel";
 import type { Recorte } from "../carve";
 import { type Achado, type NoDeArquivo, noDeRecorte, noRaiz } from "../no";
 import { Hexdump } from "./hexdump";
@@ -294,6 +295,11 @@ export function ArquivoPanel({
             ))}
           </ul>
         </Card>
+      ) : null}
+
+      {/* Painel do tipo — por enquanto, áudio. */}
+      {analise.identidade.familia === "audio" ? (
+        <AudioPainel bytes={atual.bytes} nome={atual.nome} onDecodificador={onDecodificador} />
       ) : null}
 
       {/* Entropia */}
