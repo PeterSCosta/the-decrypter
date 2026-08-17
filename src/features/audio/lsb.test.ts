@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { analisarContainer } from "./container";
+import { montarWavBytes } from "./decode";
 import { CORRIDA_MINIMA, detectarAnomaliaDeBit, extrairLsb, offsetDoPcm, varrerLsb } from "./lsb";
 
 /**
@@ -162,5 +164,35 @@ describe("anomalia estatística (o caso do dado cifrado)", () => {
   it("não inventa leitura quando há amostras de menos", () => {
     const curto = wavComSegredo({ nAmostras: 50, canais: 2 });
     expect(detectarAnomaliaDeBit(curto, BASE).leitura).toContain("de menos");
+  });
+});
+
+describe("montarWav — ida e volta", () => {
+  it("o WAV gerado é lido de volta pelo próprio analisador do repo", () => {
+    // Fecha o ciclo: se o escritor mentir no cabeçalho, o leitor acusa. É este
+    // ciclo que permite gerar fixture sintética para testar os detectores.
+    const esq = Float32Array.from({ length: 1000 }, (_, i) => Math.sin(i / 10));
+    const dir = Float32Array.from({ length: 1000 }, (_, i) => Math.cos(i / 10));
+    const bytes = montarWavBytes([esq, dir], 44100);
+    expect(bytes.length).toBe(44 + 1000 * 2 * 2);
+
+    const ficha = analisarContainer(bytes, "gerado.wav");
+    expect(ficha.formato).toBe("wav");
+    expect(ficha.taxaDeclarada).toBe(44100);
+    expect(ficha.canaisDeclarados).toBe(2);
+    expect(ficha.bitsPorAmostra).toBe(16);
+    expect(ficha.bytesDepoisDoFim).toBe(0);
+    expect(ficha.observacoes).toEqual([]);
+    expect(offsetDoPcm(bytes)).toBe(44);
+  });
+
+  it("satura em vez de dar a volta", () => {
+    // Um canal de diferença amplificado estoura o tempo todo; sem saturação o
+    // int16 dá a volta e +1,5 vira um estalo negativo — o oposto do esperado.
+    const bytes = montarWavBytes([Float32Array.from([1.5, -1.5, 0])], 8000);
+    const dv = new DataView(bytes.buffer, bytes.byteOffset);
+    expect(dv.getInt16(44, true)).toBe(0x7fff);
+    expect(dv.getInt16(46, true)).toBe(-0x8000);
+    expect(dv.getInt16(48, true)).toBe(0);
   });
 });

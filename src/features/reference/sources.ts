@@ -221,7 +221,7 @@ export const SOURCES: DataSourceRef[] = [
     url: "https://www.faber-castell.com.br",
     urlLabel: "faber-castell.com.br",
     status: "consulta-manual",
-    note: "A bancada só tem as 12 cores conferidas contra o gabarito. O catálogo completo sai em encarte impresso — ampliar é digitação manual, não raspagem. Pantone está fora: catálogo proprietário licenciado.",
+    note: "Tente o Decodificador PRIMEIRO: as 12 cores conferidas contra o gabarito já são resolvidas na bancada, sem sair daqui. O site é para o resto do catálogo, que só sai em encarte impresso — ampliar é digitação manual, não raspagem. Pantone está fora: catálogo proprietário licenciado.",
     anchors: ["GIA-39"],
   },
   {
