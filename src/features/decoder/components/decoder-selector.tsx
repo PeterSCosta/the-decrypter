@@ -1,5 +1,5 @@
 import { cn } from "@/lib/cn";
-import { Search } from "lucide-react";
+import { PanelRightClose, PanelRightOpen, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { decoders } from "../engine/registry";
 import { CATEGORY_LABELS, type DecoderCategory } from "../engine/types";
@@ -28,6 +28,7 @@ export function DecoderSelector({
   onSelect: (id: string | null) => void;
 }) {
   const [q, setQ] = useState("");
+  const [aberta, setAberta] = useState(true);
   const fq = fold(q.trim());
 
   const groups = useMemo(() => {
@@ -38,12 +39,43 @@ export function DecoderSelector({
     })).filter((g) => g.items.length > 0);
   }, [fq]);
 
+  // Recolhida, vira uma faixa estreita com o botão de reabrir. Não some por
+  // completo de propósito: um painel que desaparece sem deixar rastro é um
+  // painel que a pessoa não acha de novo.
+  if (!aberta) {
+    return (
+      <aside className="md:w-10 md:shrink-0">
+        <button
+          type="button"
+          onClick={() => setAberta(true)}
+          aria-label="Mostrar a lista de cifras"
+          title="Mostrar a lista de cifras"
+          className="flex h-9 w-full items-center justify-center rounded-[var(--radius-md)] text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)] hover:text-[var(--text-primary)] md:w-9"
+        >
+          <PanelRightOpen className="h-4 w-4" />
+        </button>
+      </aside>
+    );
+  }
+
   return (
-    // A lista vem DEPOIS da entrada no DOM (a ~375px ninguém quer rolar 74
-    // cifras para achar o campo — e isso vale igual para tabulação e leitor de
-    // tela, por isso a ordem é do DOM, não só visual). No desktop, `order` a
-    // devolve para a esquerda.
-    <aside className="md:order-1 md:w-56 md:shrink-0">
+    // A lista vem DEPOIS da entrada no DOM, e agora também DEPOIS visualmente:
+    // a ~375px ninguém quer rolar 74 cifras para achar o campo — e isso vale
+    // igual para tabulação e leitor de tela, por isso a ordem é do DOM. No
+    // desktop ela fica à DIREITA, porque a coluna da esquerda já é a navegação
+    // entre abas: dois menus do mesmo lado brigam pelo mesmo olhar.
+    <aside className="md:w-56 md:shrink-0">
+      <div className="mb-2 flex justify-end">
+        <button
+          type="button"
+          onClick={() => setAberta(false)}
+          aria-label="Recolher a lista de cifras"
+          title="Recolher a lista de cifras"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-muted)] hover:bg-[var(--surface-sunken)] hover:text-[var(--text-primary)]"
+        >
+          <PanelRightClose className="h-4 w-4" />
+        </button>
+      </div>
       <div className="relative mb-2">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-muted)]" />
         <input

@@ -20,20 +20,33 @@ const CHAVE_TOKEN = "decrypter-token";
  * `Bearer` dispensa qualquer mudança de CORS (o `AllowAnyHeader` da API já
  * libera o header; cookie exigiria `AllowCredentials` dos dois lados).
  */
+/**
+ * Guarda em memória, e ela não é enfeite.
+ *
+ * O `catch` do `localStorage` prometia no comentário que "a sessão vale só
+ * enquanto a aba estiver aberta" — e não valia nada: sem lugar nenhum para
+ * guardar, `getToken` devolvia null no instante seguinte ao login, e em modo
+ * privado a pessoa era deslogada sem entender por quê. A promessa agora tem
+ * quem a cumpra.
+ */
+let tokenEmMemoria: string | null = null;
+
 export function getToken(): string | null {
   try {
-    return localStorage.getItem(CHAVE_TOKEN);
+    return localStorage.getItem(CHAVE_TOKEN) ?? tokenEmMemoria;
   } catch {
-    return null; // modo privado / storage bloqueado
+    return tokenEmMemoria; // modo privado / storage bloqueado
   }
 }
 
 export function setToken(token: string | null): void {
+  tokenEmMemoria = token;
   try {
     if (token) localStorage.setItem(CHAVE_TOKEN, token);
     else localStorage.removeItem(CHAVE_TOKEN);
   } catch {
-    // storage indisponível: a sessão vale só enquanto a aba estiver aberta
+    // Storage indisponível: sobra a guarda em memória acima, e a sessão
+    // realmente dura enquanto a aba estiver aberta.
   }
 }
 
@@ -67,7 +80,14 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   const token = getToken();
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
-  if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  // `FormData` fica de fora: o navegador precisa escrever o `Content-Type` com o
+  // boundary do multipart, e defini-lo à mão aqui quebraria o upload EM
+  // SILÊNCIO — o servidor receberia um corpo que não sabe separar em campos, e
+  // devolveria "mande um arquivo" para quem mandou um.
+  const ehFormulario = init.body instanceof FormData;
+  if (init.body && !ehFormulario && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
 
   const res = await fetch(api(path), { ...init, headers });
 

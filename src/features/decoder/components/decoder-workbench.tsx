@@ -53,7 +53,7 @@ export function DecoderWorkbench({ entradaInicial }: { entradaInicial?: string }
 
   return (
     <div className="flex flex-col gap-5 md:flex-row md:gap-6">
-      <div className="flex min-w-0 flex-1 flex-col gap-5 md:order-2">
+      <div className="flex min-w-0 flex-1 flex-col gap-5">
         <TrailBar trail={trail} onGoTo={goToStep} onUndo={undoChain} onClear={clearTrail} />
 
         <div className="flex flex-col gap-3">

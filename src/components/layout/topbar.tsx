@@ -18,8 +18,10 @@ export function Topbar({
 }) {
   return (
     <header className="sticky top-0 z-20 border-b border-black/20 bg-[var(--surface-chrome)]">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-        <div className="flex items-center gap-2.5">
+      <div className="mx-auto flex h-14 max-w-[1600px] items-center justify-between px-4">
+        {/* No desktop a marca vive na coluna lateral; aqui ela só aparece
+            abaixo de lg, onde não há coluna. */}
+        <div className="flex items-center gap-2.5 lg:invisible">
           <span className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--brand)] text-[var(--brand-ink)]">
             <KeyRound className="h-4 w-4" />
           </span>

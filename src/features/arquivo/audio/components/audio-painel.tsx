@@ -6,6 +6,7 @@ import { side } from "@/features/audio/canais";
 import { montarWav } from "@/features/audio/decode";
 import { corteMinimo, offsetDoPcm, varrerLsb } from "@/features/audio/lsb";
 import { cn } from "@/lib/cn";
+import { AVISO_DE_ENVIO, type ResultadoMusica, identificarMusica } from "@/lib/musica";
 import { Download, Play, Square, Wand2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { type AchadoDtmf, type RecusaDtmf, ehDtmf, lerDtmf } from "../dtmf";
@@ -57,6 +58,9 @@ export function AudioPainel({
   const [notas, setNotas] = useState<Record<string, AchadoNotas | RecusaNotas> | null>(null);
   const [urlInvertido, setUrlInvertido] = useState<string | null>(null);
   const [canalDoRecorte, setCanalDoRecorte] = useState<"esquerdo" | "direito" | "ambos">("ambos");
+  const [musica, setMusica] = useState<ResultadoMusica | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  const [erroMusica, setErroMusica] = useState<string | null>(null);
   const refAudio = useRef<HTMLAudioElement>(null);
 
   // Ajusta o teto de frequência à taxa real assim que ela é conhecida.
@@ -366,7 +370,94 @@ export function AudioPainel({
             <Download className="h-4 w-4" />
             Baixar recorte (WAV)
           </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={enviando}
+            onClick={async () => {
+              const r = montarRecorte();
+              if (!r) return;
+              setErroMusica(null);
+              setEnviando(true);
+              try {
+                setMusica(await identificarMusica(r.blob, r.nome));
+              } catch (e) {
+                setErroMusica(e instanceof Error ? e.message : "não consegui consultar");
+              } finally {
+                setEnviando(false);
+              }
+            }}
+          >
+            <Wand2 className="h-4 w-4" />
+            {enviando ? "Consultando…" : "Identificar música"}
+          </Button>
         </div>
+
+        {/* O aviso vive ao lado do botão, não em letra miúda no rodapé: é a
+            ÚNICA coisa desta bancada que manda dado para fora. */}
+        <p className="mt-2 text-xs text-[var(--text-muted)]">{AVISO_DE_ENVIO}</p>
+
+        {erroMusica ? (
+          <p className="mt-2 text-sm text-[var(--color-pulse-600)]">{erroMusica}</p>
+        ) : null}
+
+        {musica ? (
+          musica.reconhecido ? (
+            <div className="mt-3 rounded-[var(--radius-md)] bg-[var(--surface-sunken)] p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge tone="brand">
+                  {canalDoRecorte === "ambos" ? "os dois canais" : canalDoRecorte}
+                  {selecao ? ` · ${selecao.de.toFixed(1)}–${selecao.ate.toFixed(1)} s` : ""}
+                </Badge>
+                <span className="font-display text-sm text-[var(--text-primary)]">
+                  {musica.musica.artista} — {musica.musica.titulo}
+                </span>
+                <CopyButton value={`${musica.musica.artista} — ${musica.musica.titulo}`} />
+                {onDecodificador ? (
+                  <button
+                    type="button"
+                    title="Mandar o título ao Decodificador"
+                    onClick={() => onDecodificador(musica.musica.titulo)}
+                    className="rounded p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  >
+                    <Wand2 className="h-3.5 w-3.5" />
+                  </button>
+                ) : null}
+              </div>
+              <p className="mt-1 font-mono text-[0.6875rem] text-[var(--text-muted)]">
+                {[
+                  musica.musica.album,
+                  musica.musica.lancamento,
+                  musica.musica.timecode ? `trecho a partir de ${musica.musica.timecode}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+              {musica.musica.timecode ? (
+                <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                  O “trecho a partir de” diz onde este pedaço cai DENTRO da faixa. Se dois recortes
+                  vizinhos devolverem o mesmo título com tempos crescentes, é a mesma música
+                  continuando — não duas execuções.
+                </p>
+              ) : null}
+            </div>
+          ) : musica.configurado === false ? (
+            <p className="mt-3 text-sm text-[var(--text-secondary)]">
+              {musica.message ?? "O reconhecimento de música não está configurado neste servidor."}{" "}
+              <span className="text-[var(--text-muted)]">
+                Recortar outro trecho não vai adiantar — falta a chave do serviço.
+              </span>
+            </p>
+          ) : (
+            <p className="mt-3 text-sm text-[var(--text-secondary)]">
+              Não reconheceu este trecho.{" "}
+              <span className="text-[var(--text-muted)]">
+                Vale tentar outro pedaço (10 a 15 s do refrão costuma funcionar melhor que a
+                introdução), e — se os canais tiverem músicas diferentes — um canal de cada vez.
+              </span>
+            </p>
+          )
+        ) : null}
         {metricas.estereo && metricas.correlacao < 0.3 ? (
           <p className="mt-2 text-xs text-[var(--text-primary)]">
             Os canais têm conteúdo bem diferente entre si — se houver uma música em cada faixa,

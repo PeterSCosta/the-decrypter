@@ -20,9 +20,12 @@ import {
   GitCompare,
   Grid3x3,
   Hash,
+  KeyRound,
   Library,
   Lightbulb,
   MapPinned,
+  PanelLeftClose,
+  PanelLeftOpen,
   Shuffle,
   Triangle,
   Type,
@@ -105,6 +108,14 @@ type View = "app" | "help" | "roadmap" | "admin";
 export function App() {
   const { usuario, carregando, sair } = useAuth();
   const [tab, setTab] = useState<TabId>("decoder");
+  /**
+   * Menu recolhido vira coluna de ÍCONES, não some.
+   *
+   * Sumir por completo devolveria o problema que a coluna resolveu: sem uma
+   * âncora visível, quem recolheu não acha de volta. Com 13 ícones e o rótulo
+   * no `title`, a navegação continua inteira em 3,5 rem.
+   */
+  const [menuAberto, setMenuAberto] = useState(true);
   const [view, setView] = useState<View>("app");
   const toggle = (v: Exclude<View, "app">) => setView((cur) => (cur === v ? "app" : v));
 
@@ -183,8 +194,48 @@ export function App() {
 
           {/* Coluna lateral: só a partir de lg. `sticky` para a navegação
               acompanhar a rolagem de um painel longo, como o de Arquivo. */}
-          <nav className="hidden w-52 shrink-0 lg:block" role="tablist" aria-label="Ferramentas">
+          <nav
+            className={cn("hidden shrink-0 lg:block", menuAberto ? "w-52" : "w-14")}
+            role="tablist"
+            aria-label="Ferramentas"
+          >
             <div className="sticky top-4 flex flex-col gap-0.5">
+              {/* A marca mora AQUI no desktop: a topbar ficou com os botões, e
+                  repetir o logo nos dois lugares gastaria o topo da coluna com
+                  algo que a pessoa já viu ao entrar. */}
+              <div
+                className={cn(
+                  "mb-2 flex items-center gap-2.5",
+                  menuAberto ? "px-3" : "justify-center",
+                )}
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--brand)] text-[var(--brand-ink)]">
+                  <KeyRound className="h-4 w-4" />
+                </span>
+                {menuAberto ? (
+                  <span className="font-display text-base text-[var(--text-primary)]">
+                    The<span className="text-[var(--brand)]">Decrypter</span>
+                  </span>
+                ) : null}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setMenuAberto((v) => !v)}
+                aria-label={menuAberto ? "Recolher o menu" : "Expandir o menu"}
+                title={menuAberto ? "Recolher o menu" : "Expandir o menu"}
+                className={cn(
+                  "mb-1 flex items-center rounded-[var(--radius-md)] py-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-sunken)] hover:text-[var(--text-primary)]",
+                  menuAberto ? "justify-end px-3" : "justify-center",
+                )}
+              >
+                {menuAberto ? (
+                  <PanelLeftClose className="h-4 w-4" />
+                ) : (
+                  <PanelLeftOpen className="h-4 w-4" />
+                )}
+              </button>
+
               {TABS.map((t) => {
                 const active = tab === t.id;
                 const Icon = t.icon;
@@ -195,15 +246,19 @@ export function App() {
                     role="tab"
                     aria-selected={active}
                     onClick={() => setTab(t.id)}
+                    // O rótulo vira `title` quando recolhido: sem ele, treze
+                    // ícones viram adivinhação.
+                    title={menuAberto ? undefined : t.label}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-[var(--radius-md)] px-3 py-2 text-left text-sm font-medium transition-colors",
+                      "flex items-center gap-2.5 rounded-[var(--radius-md)] py-2 text-left text-sm font-medium transition-colors",
+                      menuAberto ? "px-3" : "justify-center px-0",
                       active
                         ? "bg-[var(--brand)] text-[var(--brand-ink)]"
                         : "text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)] hover:text-[var(--text-primary)]",
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
-                    {t.label}
+                    {menuAberto ? t.label : null}
                   </button>
                 );
               })}
