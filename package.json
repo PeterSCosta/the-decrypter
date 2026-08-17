@@ -22,6 +22,7 @@
     "build:words": "tsx scripts/build-words.ts",
     "build:airports": "tsx scripts/build-airports.ts",
     "build:postes": "tsx scripts/build-postes.ts",
+    "enrich:postes": "tsx scripts/enrich-postes.ts",
     "build:bridges": "tsx scripts/build-bridges.ts"
   },
   "dependencies": {

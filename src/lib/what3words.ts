@@ -1,5 +1,5 @@
 import type { GeoPoint } from "@/features/location/formats";
-import { api } from "./api";
+import { ApiError, apiFetch } from "./api";
 
 export interface W3WResult extends GeoPoint {
   words: string;
@@ -12,21 +12,18 @@ export const hasW3WKey = () => true;
 
 /** Resolve um endereço de 3 palavras (ex.: "filled.count.soap") em coordenada. */
 export async function w3wToCoordinates(words: string): Promise<W3WResult> {
-  const res = await fetch(api(`/what3words/${encodeURIComponent(words)}`));
-  if (!res.ok) {
-    throw new Error(
-      res.status === 404
-        ? "what3words indisponível (sem chave no servidor ou endereço inválido)."
-        : `Falha na consulta what3words (HTTP ${res.status}).`,
-    );
-  }
-  const d = (await res.json()) as {
+  const d = await apiFetch<{
     words?: string;
     lat: number;
     lng: number;
     nearestPlace?: string;
     country?: string;
-  };
+  }>(`/what3words/${encodeURIComponent(words)}`).catch((e) => {
+    if (e instanceof ApiError && e.status === 404) {
+      throw new Error("what3words indisponível (sem chave no servidor ou endereço inválido).");
+    }
+    throw e;
+  });
   return {
     lat: d.lat,
     lng: d.lng,

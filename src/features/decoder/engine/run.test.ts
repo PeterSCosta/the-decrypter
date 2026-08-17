@@ -1,4 +1,3 @@
-import type { CepsData } from "@/features/cep/types";
 import type { StreetRow, StreetsData } from "@/features/street-guide/types";
 import { describe, expect, it } from "vitest";
 import { runDecoders } from "./run";
@@ -25,16 +24,25 @@ const streets: StreetsData = {
   ],
 };
 
-const ceps: CepsData = {
-  source: "test",
-  generatedAt: "2026-01-01",
-  count: 1,
-  municipios: ["Florianópolis"],
-  rows: [["88010500", "Rua Teste", "Centro", 0, -27.5, -48.5]],
+/**
+ * CEP saiu do navegador: chega pré-resolvido em `hits`. O `bairro` da API é o
+ * que o app chama de `localidade`, e o `localidade` da API é o município.
+ */
+const cepDaApi = {
+  code: "88010500",
+  logradouro: "Rua Teste",
+  bairro: "Centro",
+  localidade: "Florianópolis",
+  uf: "SC",
+  lat: -27.5,
+  lng: -48.5,
 };
 
-const ctx: DecodeContext = { key: "", streets, ceps };
+const ctx: DecodeContext = { key: "", streets };
 const noData: DecodeContext = { key: "", streets: null, ceps: null };
+/** Contexto com o acerto que a API teria devolvido para `q`. */
+const comHits = (q: string, hits: Partial<NonNullable<DecodeContext["hits"]>>): DecodeContext =>
+  ({ key: "", streets, hits: { q, ...hits } }) as DecodeContext;
 
 describe("runDecoders", () => {
   it("ranks readable Base64 output at the top", () => {
@@ -74,18 +82,25 @@ describe("runDecoders", () => {
   });
 
   it("resolves an exact CEP (with dash)", () => {
-    const { results } = runDecoders("88010-500", ctx);
+    const { results } = runDecoders("88010-500", comHits("88010-500", { cep: cepDaApi }));
     expect(results.some((r) => r.decoderId === "cep-exact")).toBe(true);
   });
 
   it("resolves CEPs by wildcard pattern", () => {
-    const hit = runDecoders("880105x0", ctx).results.find((r) => r.decoderId === "cep-wildcard");
+    const ctxCuringa = comHits("880105x0", { cepCuringa: { total: 1, hits: [cepDaApi] } });
+    const hit = runDecoders("880105x0", ctxCuringa).results.find(
+      (r) => r.decoderId === "cep-wildcard",
+    );
     expect(hit).toBeDefined();
     expect((hit?.data as { cep: string }[])[0].cep).toBe("88010500");
+    // O rótulo mostra o total REAL do banco, não o tamanho da lista trazida.
+    expect(hit?.label).toContain("1 CEP(s)");
     // sem curinga, o decoder de curinga não dispara (fica com o cep-exact)
-    expect(runDecoders("88010500", ctx).results.some((r) => r.decoderId === "cep-wildcard")).toBe(
-      false,
-    );
+    expect(
+      runDecoders("88010500", comHits("88010500", { cep: cepDaApi })).results.some(
+        (r) => r.decoderId === "cep-wildcard",
+      ),
+    ).toBe(false);
   });
 
   it("produces nothing for empty data lookups when datasets are absent", () => {

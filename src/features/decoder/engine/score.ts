@@ -1,4 +1,5 @@
 import { stripDiacritics } from "./util";
+import type { WordLookup } from "./words-packed";
 
 /**
  * Plausibility scoring (0..1): how much does `text` look like real
@@ -277,9 +278,14 @@ function bigramScore(folded: string): number {
  * Enquanto for `null`, o score é **bit-a-bit o de antes**: a bancada degrada
  * para o comportamento histórico enquanto as listas carregam.
  */
-let WORDS: Set<string> | null = null;
+let WORDS: WordLookup | null = null;
 
-export function setWordSet(set: Set<string> | null): void {
+/**
+ * Aceita qualquer coisa que responda `has` — o índice compactado em produção,
+ * um `Set` literal nos testes. `Set<string>` satisfaz `WordLookup`
+ * estruturalmente, então os testes que montam um conjunto à mão seguem valendo.
+ */
+export function setWordSet(set: WordLookup | null): void {
   WORDS = set;
 }
 
@@ -302,9 +308,14 @@ const GLUED_MAX = 64;
  * por acaso é palavra. Programação dinâmica: `dp[i]` = maior nº de letras
  * cobertas nos primeiros `i` caracteres.
  */
-function gluedCoverage(token: string, words: Set<string>): number {
-  const n = token.length;
-  if (n < GLUED_MIN || n > GLUED_MAX) return 0;
+function gluedCoverage(token: string, words: WordLookup): number {
+  if (token.length < GLUED_MIN) return 0;
+  // Acima do teto, analisa o começo em vez de desistir. Devolver 0 fazia uma
+  // resposta colada de 65 caracteres — um a mais que o teto — pontuar como
+  // lixo, enquanto a de 64 pontuava no topo: um degrau invisível bem no meio do
+  // formato que a bancada mais recebe. O teto continua protegendo o custo por
+  // tecla; o que muda é que ele passa a truncar, não a zerar.
+  const n = Math.min(token.length, GLUED_MAX);
   const dp = new Int32Array(n + 1);
   for (let i = 1; i <= n; i++) {
     dp[i] = dp[i - 1]; // pular este caractere (letra não coberta)

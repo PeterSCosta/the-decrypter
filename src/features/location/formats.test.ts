@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import {
   decodeGeohash,
   decodeMaidenhead,
@@ -13,7 +13,13 @@ import {
   parseGeoHexBlumenau,
   parseH3,
   parseUTM,
+  prepararDeteccao,
 } from "./formats";
+
+// O `h3-js` (87 KB gzip, um quarto do chunk de entrada) passou a entrar sob
+// demanda: `parseH3` devolve `null` até a lib chegar e dispara a carga. Em
+// produção quem observa `aoCarregarH3` refaz a rodada; aqui basta esperar.
+beforeAll(() => prepararDeteccao("89a835d5acbffff"));
 
 // Todos os vetores abaixo representam o MESMO ponto (screenshot do conversor):
 const LAT = -26.9906;

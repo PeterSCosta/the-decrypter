@@ -5,7 +5,16 @@ services:
     hostname: the-decrypter
     environment:
       - TZ=America/Sao_Paulo
-      # Senha de acesso (Basic Auth). Definidas no Dokploy; vazias = sem senha.
+      # Basic Auth do nginx — SUPERADO pelo login do app (e-mail + senha com
+      # aprovação manual do admin). Continua aqui só para não quebrar quem já
+      # tem as variáveis definidas, mas **deixe as duas vazias no Dokploy**:
+      # com elas preenchidas a pessoa leva dois prompts de senha seguidos, um do
+      # navegador e outro da tela de login.
+      #
+      # Vale lembrar por que ele não bastava: o Basic Auth é uma senha só,
+      # compartilhada, e protege apenas este domínio — a API em
+      # apiarromba.thelogiclab.com.br ficava aberta a quem soubesse a URL. Agora
+      # os endpoints de dados exigem token.
       - BASIC_AUTH_USER=${BASIC_AUTH_USER:-}
       - BASIC_AUTH_PASSWORD=${BASIC_AUTH_PASSWORD:-}
     restart: always

@@ -1,9 +1,12 @@
 import { defineDecoder } from "../define";
 
 /**
- * Código de município do IBGE → nome + UF. Aceita o código de 7 dígitos
- * (ex.: 4205407 → Florianópolis, SC) ou o de 6 dígitos (sem o dígito
- * verificador). Lê a base de municípios do contexto (carregada sob demanda).
+ * Código de município do IBGE → nome + UF. Aceita o de 7 dígitos
+ * (ex.: 4205407 → Florianópolis, SC) ou o de 6 (sem o dígito verificador).
+ *
+ * A resposta vem pré-resolvida em `ctx.hits` — antes o app baixava os 5.571
+ * municípios em toda sessão e fazia um `find` linear a cada tecla, para
+ * responder uma consulta por chave exata.
  */
 export const decoders = defineDecoder({
   id: "ibge-municipio",
@@ -11,21 +14,15 @@ export const decoders = defineDecoder({
   category: "lookup",
   decode(input, ctx) {
     const code = input.trim();
-    if (!ctx.municipios || !/^\d{6,7}$/.test(code)) return [];
-
-    const row =
-      code.length === 7
-        ? ctx.municipios.rows.find((r) => r[0] === code)
-        : ctx.municipios.rows.find((r) => r[0].slice(0, 6) === code);
-    if (!row) return [];
-
+    if (ctx.hits?.q !== code || !ctx.hits.municipio) return [];
+    const m = ctx.hits.municipio;
     return [
       {
         decoderId: "ibge-municipio",
         decoderName: "Município (IBGE)",
         category: "lookup",
         label: `código ${code}`,
-        output: `${row[1]} — ${row[2]} (IBGE ${row[0]})`,
+        output: `${m.nome} — ${m.uf} (IBGE ${m.codigoIbge})`,
         forcedScore: 0.95,
       },
     ];

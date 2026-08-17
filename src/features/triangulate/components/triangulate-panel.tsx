@@ -1,12 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Combobox } from "@/components/ui/combobox";
 import { CopyButton } from "@/components/ui/copy-button";
-import { Input } from "@/components/ui/input";
 import type { GeoPoint } from "@/features/location/formats";
 import { cn } from "@/lib/cn";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { Loader2, MapPin, Plus, Route, Sparkles, Trash2, X } from "lucide-react";
+import { useEffect, useMemo } from "react";
 import { formataArea, formataDistancia } from "../geometry";
 import { useTriangulate } from "../use-triangulate";
+import { type ItemVocabulario, prepararVocabulario, sugerir } from "../vocabulario";
 import { PointsMap } from "./points-map";
 
 const dd = (p: GeoPoint) => `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`;
@@ -53,6 +56,52 @@ function LinhaCentro({
   );
 }
 
+/**
+ * Uma caixa de ponto, com sugestões de lugar da base local.
+ *
+ * O autocomplete só aparece para NOME. Coordenada, CEP e endereço com número já
+ * se resolvem sozinhos pela escada do `resolvePonto`, e sugerir sobre eles seria
+ * ruído: ninguém precisa de ajuda para completar "-26.91, -49.06".
+ */
+function CampoDePonto({
+  valor,
+  aoMudar,
+  aoEscolher,
+  aoConfirmar,
+  placeholder,
+  rotulo,
+}: {
+  valor: string;
+  aoMudar: (v: string) => void;
+  aoEscolher: (item: ItemVocabulario) => void;
+  aoConfirmar: () => void;
+  placeholder: string;
+  rotulo: string;
+}) {
+  const debounced = useDebouncedValue(valor, 120);
+  const sugestoes = useMemo(() => {
+    const t = debounced.trim();
+    // Só letras interessam: dígito é coordenada, CEP ou número de porta.
+    if (!/[a-zà-ú]{2,}/i.test(t) || /^\s*-?\d/.test(t)) return [];
+    return sugerir(t);
+  }, [debounced]);
+
+  return (
+    <Combobox
+      value={valor}
+      onChange={aoMudar}
+      sugestoes={sugestoes}
+      onEscolher={(s) => {
+        const item = sugestoes.find((x) => x.id === s.id);
+        if (item) aoEscolher(item);
+      }}
+      onEnterSemSugestao={aoConfirmar}
+      placeholder={placeholder}
+      aria-label={rotulo}
+    />
+  );
+}
+
 export function TriangulatePanel() {
   const {
     entradas,
@@ -62,6 +111,9 @@ export function TriangulatePanel() {
     limpa,
     resolver,
     otimizar,
+    moverPonto,
+    adicionarNoMapa,
+    escolherSugestao,
     carregando,
     pontos,
     falhas,
@@ -75,6 +127,9 @@ export function TriangulatePanel() {
   } = useTriangulate();
 
   const preenchidas = entradas.filter((e) => e.trim()).length;
+  // As bases do autocomplete são locais; carregar cedo deixa a primeira
+  // sugestão instantânea em vez de aparecer meio segundo depois de digitar.
+  useEffect(prepararVocabulario, []);
 
   return (
     <div className="flex flex-col gap-5">
@@ -86,7 +141,9 @@ export function TriangulatePanel() {
           Um ponto por campo: <strong>coordenada</strong> em qualquer formato da bancada (DD, DMS,
           Plus Code, MGRS, geohash…), <strong>CEP</strong>, <strong>endereço com número</strong>,{" "}
           <strong>nome de rua</strong> ou <strong>nome de ponte</strong>. Com três pontos sai também
-          o equidistante e o triângulo; com qualquer quantidade, a rota na ordem digitada.
+          o equidistante e o triângulo; com qualquer quantidade, a rota na ordem digitada.{" "}
+          <strong>No mapa</strong>: clique para marcar um ponto novo e arraste os pinos para ajustar
+          — a coordenada volta para o campo sozinha.
         </p>
       </div>
 
@@ -99,10 +156,11 @@ export function TriangulatePanel() {
             <span className="w-6 shrink-0 text-center font-mono text-sm text-[var(--text-muted)]">
               {i + 1}
             </span>
-            <Input
-              value={valor}
-              onChange={(e) => troca(i, e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && resolver()}
+            <CampoDePonto
+              valor={valor}
+              aoMudar={(v) => troca(i, v)}
+              aoEscolher={(item) => escolherSugestao(i, item)}
+              aoConfirmar={resolver}
               placeholder={
                 i === 0
                   ? "-26.9194, -49.0661"
@@ -110,7 +168,7 @@ export function TriangulatePanel() {
                     ? "Rua XV de Novembro, 1200"
                     : "Ponte de Ferro"
               }
-              aria-label={`Ponto ${i + 1}`}
+              rotulo={`Ponto ${i + 1}`}
             />
             <button
               type="button"
@@ -191,6 +249,8 @@ export function TriangulatePanel() {
             rota={desenharRota}
             fechar={fechar}
             triangulo={pontos.length === 3}
+            aoMover={moverPonto}
+            aoAdicionar={adicionarNoMapa}
           />
 
           <Card className="overflow-hidden">

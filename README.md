@@ -13,7 +13,10 @@ It also folds in two datasets used for puzzles in **Blumenau, SC**:
   `88xxx500` (starts 88, ends 500), `x8300000` (wildcard anywhere), `88010-500`, partials, etc.
   `x`/`*`/`?`/`_` are single-digit wildcards; digits are fixed.
 
-Everything runs in the browser. No auth, no server.
+Ciphers, scoring and the local datasets run entirely in the browser. Lookups that
+need a key, a rate limit or a shared cache (CNPJ, CEP, ISBN, NCM, PIX, what3words,
+geocoding, fleet) go through **the-decrypter-api**. Access is gated by e-mail +
+password with **manual approval** — an admin releases each account.
 
 ## Stack
 

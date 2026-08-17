@@ -1,5 +1,4 @@
-import { searchCeps } from "@/features/cep/search";
-import { type CepHit, cepByCode, formatCep, toHit } from "@/features/cep/types";
+import { type CepHit, formatCep } from "@/features/cep/types";
 import { type StreetRow, type StreetsData, nomeCompleto } from "@/features/street-guide/types";
 import type { Decoder } from "./types";
 import { stripDiacritics } from "./util";
@@ -173,58 +172,78 @@ const streetName: Decoder = {
 };
 
 // ---- CEP com curinga → CEPs que casam -------------------------------------
+/**
+ * Linha de CEP da API → `CepHit`.
+ *
+ * ATENÇÃO AO CRUZAMENTO: o seeder gravou `bairro` a partir do que o app chama
+ * de `localidade`, e `localidade` a partir do NOME DO MUNICÍPIO. Trocar os dois
+ * aqui não quebraria nada visivelmente — o card imprime os dois lado a lado na
+ * mesma linha — e o erro passaria despercebido. Ver `Seeder.SeedCeps`.
+ */
+function daApi(c: {
+  code: string;
+  logradouro: string | null;
+  bairro: string | null;
+  localidade: string | null;
+  lat: number | null;
+  lng: number | null;
+}): CepHit {
+  return {
+    cep: c.code,
+    logradouro: c.logradouro ?? "",
+    localidade: c.bairro ?? "",
+    municipio: c.localidade ?? "",
+    lat: c.lat,
+    lng: c.lng,
+  };
+}
+
 const cepWildcard: Decoder = {
   id: "cep-wildcard",
   name: "CEP curinga (SC)",
   category: "lookup",
   decode(input, ctx) {
-    if (!ctx.ceps) return [];
     const q = input.trim();
+    if (ctx.hits?.q !== q || !ctx.hits.cepCuringa) return [];
     // só dispara com curinga explícito (ex.: 88xxx500); CEP exato é outro decoder
     if (!CEP_WILDCARD.test(q)) return [];
-    const res = searchCeps(ctx.ceps, q, 12);
-    if (!res.valid || res.total === 0) return [];
+    const { total, hits: brutos } = ctx.hits.cepCuringa;
+    if (!total) return [];
+    const hits = brutos.map(daApi);
     return [
       {
         decoderId: "cep-wildcard",
         decoderName: "CEP curinga (SC)",
         category: "lookup",
-        label: `${q} · ${res.total} CEP(s)`,
-        output: res.hits
+        // `total` é a contagem REAL do banco, não o tamanho da lista trazida —
+        // o rótulo mentiria assim que houvesse mais acertos que o teto.
+        label: `${q} · ${total} CEP(s)`,
+        output: hits
           .map((h) => `${formatCep(h.cep)} ${h.logradouro || h.localidade}, ${h.municipio}`)
           .join("; "),
         forcedScore: 0.7,
         render: "cep",
-        data: res.hits,
+        data: hits,
       },
     ];
   },
 };
 
-// ---- CEP de 6 dígitos sem o prefixo de região SC → tenta 88/89 ------------
-// Em SC os CEPs são 88xxx-xxx ou 89xxx-xxx. Se o usuário digitar só os 6 dígitos
-// finais (ex.: "305500"), tenta os dois prefixos (88305500 / 89305500) na base.
-const SC_PREFIXES = ["88", "89"];
 const cepScPrefix: Decoder = {
   id: "cep-sc-prefix",
   name: "CEP sem prefixo SC (88/89)",
   category: "lookup",
   decode(input, ctx) {
-    if (!ctx.ceps) return [];
-    const digits = input.replace(/\D/g, "");
-    if (digits.length !== 6) return [];
-    const idx = cepByCode(ctx.ceps);
-    const hits: CepHit[] = [];
-    for (const p of SC_PREFIXES) {
-      for (const row of idx.get(p + digits) ?? []) hits.push(toHit(row, ctx.ceps.municipios));
-    }
-    if (hits.length === 0) return [];
+    if (ctx.hits?.q !== input.trim()) return [];
+    const achados = (ctx.hits.cepsPrefixo ?? []).filter(Boolean);
+    if (!achados.length) return [];
+    const hits = achados.map((c) => daApi(c as NonNullable<typeof c>));
     return [
       {
         decoderId: "cep-sc-prefix",
         decoderName: "CEP sem prefixo SC (88/89)",
         category: "lookup",
-        label: `${digits} → ${hits.map((h) => formatCep(h.cep)).join(" / ")}`,
+        label: `${input.trim()} → ${hits.map((h) => formatCep(h.cep)).join(" / ")}`,
         output: hits
           .map((h) => `${formatCep(h.cep)} — ${h.logradouro || h.localidade}, ${h.municipio}`)
           .join("; "),
@@ -242,18 +261,14 @@ const cepLookup: Decoder = {
   name: "CEP (Santa Catarina)",
   category: "lookup",
   decode(input, ctx) {
-    if (!ctx.ceps) return [];
-    const digits = input.replace(/\D/g, "");
-    if (digits.length !== 8) return [];
-    const rows = cepByCode(ctx.ceps).get(digits) ?? [];
-    if (rows.length === 0) return [];
-    const hits: CepHit[] = rows.map((row) => toHit(row, ctx.ceps!.municipios));
+    if (ctx.hits?.q !== input.trim() || !ctx.hits.cep) return [];
+    const hits = [daApi(ctx.hits.cep)];
     return [
       {
         decoderId: "cep-exact",
         decoderName: "CEP (Santa Catarina)",
         category: "lookup",
-        label: formatCep(digits),
+        label: formatCep(hits[0].cep),
         output: hits.map((h) => `${h.logradouro || h.localidade}, ${h.municipio}`).join("; "),
         forcedScore: 0.95,
         render: "cep",

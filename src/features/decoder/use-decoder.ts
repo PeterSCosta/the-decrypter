@@ -1,21 +1,8 @@
-import type { AirportsData } from "@/features/airport/types";
-import { parseCepPattern } from "@/features/cep/cep-pattern";
-import type { CepsData } from "@/features/cep/types";
-import type { MunicipiosData } from "@/features/ibge/types";
+import { aoCarregarH3 } from "@/features/location/formats";
 import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
-import {
-  getAirports,
-  getCeps,
-  getMunicipios,
-  getPix,
-  getStreets,
-  loadAirports,
-  loadCeps,
-  loadMunicipios,
-  loadPix,
-  loadStreets,
-} from "@/lib/data";
+import { getPix, getStreets, loadPix, loadStreets } from "@/lib/data";
+import { type LookupHits, cancelarSuperadas, consultar, valeConsultar } from "@/lib/lookup-cache";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { decoders } from "./engine/registry";
@@ -23,7 +10,7 @@ import { partition, runDecoders } from "./engine/run";
 import { setWordSet } from "./engine/score";
 import { sniff } from "./engine/sniff";
 import { titleHints } from "./engine/title-hints";
-import { loadWordSet } from "./engine/words";
+import { loadWordLookup } from "./engine/words";
 import { type TrailStep, popStep, pushStep, truncateTo } from "./trail";
 
 /**
@@ -46,9 +33,6 @@ export function useDecoder(entradaInicial = "") {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [trail, setTrail] = useState<TrailStep[]>([]);
   const [streets, setStreets] = useState<StreetsData | null>(getStreets);
-  const [ceps, setCeps] = useState<CepsData | null>(getCeps);
-  const [municipios, setMunicipios] = useState<MunicipiosData | null>(getMunicipios);
-  const [airports, setAirports] = useState<AirportsData | null>(getAirports);
   const [pix, setPix] = useState<PixData | null>(getPix);
 
   const debInput = useDebouncedValue(input, 160);
@@ -56,16 +40,23 @@ export function useDecoder(entradaInicial = "") {
   const debAux = useDebouncedValue(aux, 160);
   const debTitle = useDebouncedValue(title, 250);
 
-  // Wordlist do realce de palavra real: carrega ociosa e alimenta o singleton
-  // do score. Até chegar, `setWordSet` nunca é chamado e o ranking é o de antes.
+  // O parser de H3 carrega a lib sob demanda e não pode esperar (o fan-out é
+  // síncrono): quando ela chega, refaz a rodada, senão a célula colada só
+  // resolveria na tecla seguinte.
+  const [h3Pronto, setH3Pronto] = useState(0);
+  useEffect(() => aoCarregarH3(() => setH3Pronto((v) => v + 1)), []);
+
+  // Vocabulário do realce de palavra real: carrega ocioso e alimenta o
+  // singleton do score. Até chegar, `setWordSet` nunca é chamado e o ranking é
+  // o de antes.
   const [wordsReady, setWordsReady] = useState(false);
   useEffect(() => {
     let alive = true;
     const start = () => {
-      loadWordSet()
-        .then((set) => {
+      loadWordLookup()
+        .then((lookup) => {
           if (!alive) return;
-          setWordSet(set);
+          setWordSet(lookup);
           setWordsReady(true);
         })
         .catch(() => {});
@@ -79,41 +70,33 @@ export function useDecoder(entradaInicial = "") {
     };
   }, []);
 
-  // Street + município data are small — load eagerly so número→lookup is instant.
+  /**
+   * Ruas: continuam LOCAIS, e agora preguiçosas.
+   *
+   * Não foram para a API junto com CEP e município por quatro razões medidas: a
+   * tabela `street` do banco não tem `bairroNum`, `atas`, `lat` nem `lng` (que o
+   * card e a Triangulação usam); a chave primária engole 415 das 4.426 linhas
+   * (uma rua em três bairros vira uma); `/api/streets/search` não distingue
+   * código de nº da lei, que são dois decoders com pontuações diferentes; e o
+   * ranking por posição do acerto teria de virar SQL. Mantendo-as aqui, as
+   * quatro consultas de rua seguem instantâneas e funcionam com a API fora.
+   *
+   * O que mudou é o "eager": 204 KB gzip saíram do caminho crítico de toda
+   * sessão e passam a chegar quando a entrada tem cara de rua.
+   */
+  const pareceRua = /[a-zà-ú]{4,}/i.test(debInput);
   useEffect(() => {
+    if (!pareceRua || streets) return;
     let alive = true;
     loadStreets()
       .then((d) => alive && setStreets(d))
       .catch(() => {});
-    loadMunicipios()
-      .then((d) => alive && setMunicipios(d))
-      .catch(() => {});
     return () => {
       alive = false;
     };
-  }, []);
+  }, [pareceRua, streets]);
 
-  // CEP dataset (pesado): busca quando a entrada é um CEP exato (8 dígitos) OU
-  // um padrão com curinga (ex.: 88xxx500), p/ a busca curinga rodar no decoder.
   const digits = debInput.replace(/\D/g, "");
-  const isCepWildcard = /[xX*_?]/.test(debInput) && parseCepPattern(debInput) !== null;
-  useEffect(() => {
-    if ((digits.length === 8 || isCepWildcard) && !ceps) {
-      loadCeps()
-        .then(setCeps)
-        .catch(() => {});
-    }
-  }, [digits, isCepWildcard, ceps]);
-
-  // Airports: only fetch when the input is a lone 3 (IATA) or 4 (ICAO) letters.
-  const isCode = /^[a-z]{3,4}$/i.test(debInput.trim());
-  useEffect(() => {
-    if (isCode && !airports) {
-      loadAirports()
-        .then(setAirports)
-        .catch(() => {});
-    }
-  }, [isCode, airports]);
 
   // Participantes PIX (BrasilAPI): buscar quando a entrada for um ISPB (8 dígitos).
   useEffect(() => {
@@ -124,6 +107,51 @@ export function useDecoder(entradaInicial = "") {
     }
   }, [digits, pix]);
 
+  /**
+   * Consulta as bases que moram na API **antes** do fan-out.
+   *
+   * Debounce próprio, mais folgado que os 160 ms do decode local: aquele é
+   * cálculo em memória, este é round-trip. E a resposta só entra se ainda for da
+   * entrada atual — comparar com o `q` de agora, e não só com um flag de vida,
+   * é o que evita um acerto de duas teclas atrás aparecer como se fosse deste.
+   */
+  const [hits, setHits] = useState<LookupHits | null>(null);
+  const [hitsCarregando, setHitsCarregando] = useState(false);
+  const [hitsErro, setHitsErro] = useState<string | null>(null);
+  const debLookup = useDebouncedValue(input, 300);
+
+  useEffect(() => {
+    const q = debLookup.trim();
+    if (!valeConsultar(q)) {
+      setHits(null);
+      setHitsCarregando(false);
+      setHitsErro(null);
+      return;
+    }
+    cancelarSuperadas(q);
+    let vivo = true;
+    setHitsCarregando(true);
+    consultar(q)
+      .then((r) => {
+        if (!vivo) return;
+        setHits(r);
+        setHitsErro(null);
+      })
+      .catch((e: Error) => {
+        if (!vivo || e.name === "AbortError") return;
+        setHits(null);
+        // Nunca devolver lista vazia calada: "não alcancei o servidor" tem de
+        // ser distinto de "não encontrei".
+        setHitsErro(e.message);
+      })
+      .finally(() => {
+        if (vivo) setHitsCarregando(false);
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [debLookup]);
+
   // Um único contexto para as duas travessias (decodificar e codificar). Montá-lo
   // duas vezes era como um campo novo sumia silenciosamente no modo codificar.
   const ctx = useMemo(
@@ -131,15 +159,22 @@ export function useDecoder(entradaInicial = "") {
       key: debKey,
       aux: debAux,
       only: selectedId ?? undefined,
+      hits,
+      hitsCarregando,
+      hitsErro,
       streets,
-      ceps,
-      municipios,
-      airports,
       pix,
     }),
-    [debKey, debAux, selectedId, streets, ceps, municipios, airports, pix],
+    [debKey, debAux, selectedId, hits, hitsCarregando, hitsErro, streets, pix],
   );
 
+  // `wordsReady` está nas dependências de propósito: o vocabulário do realce
+  // vive num singleton do score, fora do `ctx`. Sem ele, os scores calculados
+  // antes da carga ficavam congelados até a próxima tecla — o selo "palavra
+  // real" acendia no card e a barra de confiança não se mexia, que é exatamente
+  // o sintoma de um ranking mentindo. O Biome não enxerga a dependência porque
+  // ela passa por um módulo, não por um valor lido aqui.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: o vocabulário chega por singleton
   const run = useMemo(() => {
     if (!debInput.trim()) return { results: [], hitCount: 0 };
     // Decoder que exige o 2º campo fica fora da corrida enquanto ele está vazio.
@@ -148,7 +183,7 @@ export function useDecoder(entradaInicial = "") {
     const usable = (d: (typeof decoders)[number]) => !d.inputs?.aux?.required || !!ctx.aux?.trim();
     const list = selectedId ? decoders.filter((d) => d.id === selectedId) : decoders.filter(usable);
     return runDecoders(debInput, ctx, list);
-  }, [debInput, ctx, selectedId]);
+  }, [debInput, ctx, selectedId, wordsReady, h3Pronto]);
 
   const { likely, unlikely } = useMemo(() => partition(run.results), [run.results]);
 

@@ -1,7 +1,9 @@
 # The Decrypter — project notes for Claude
 
 Local, browser-only **puzzle workbench**: one input → fan out across ~25 ciphers/decoders → rank by
-plausibility. Plus two Blumenau/SC datasets (street guide + CEP wildcard search). No backend, no auth.
+plausibility. Plus two Blumenau/SC datasets (street guide + CEP wildcard search).
+Backed by **the-decrypter-api** (.NET, Postgres, Redis) for keyed/rate-limited
+lookups; login is e-mail + password with manual admin approval.
 Portuguese-first UI (pt-BR).
 
 ## Stack

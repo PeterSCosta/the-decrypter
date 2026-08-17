@@ -100,4 +100,18 @@ describe("regressão medida: lixo de 4 letras não pode roubar o topo", () => {
     setWordSet(LISTA);
     expect(scorePlaintext("geotude")).toBeGreaterThan(base);
   });
+
+  // O teto da segmentação (GLUED_MAX = 64) protege o custo por tecla, mas
+  // desistir acima dele criava um degrau invisível: 64 caracteres pontuavam no
+  // topo e 65 pontuavam como lixo. Agora ele trunca em vez de zerar.
+  it("não desiste do texto colado que passa do teto de 64", () => {
+    setWordSet(LISTA);
+    const noTeto = "PARACUMPRIRESSAPROVAVOCES".repeat(2).slice(0, 64);
+    const umAMais = "PARACUMPRIRESSAPROVAVOCES".repeat(3).slice(0, 65);
+    setWordSet(null);
+    const baseAcima = scorePlaintext(umAMais);
+    setWordSet(LISTA);
+    expect(scorePlaintext(noTeto)).toBeGreaterThan(0);
+    expect(scorePlaintext(umAMais)).toBeGreaterThan(baseAcima);
+  });
 });

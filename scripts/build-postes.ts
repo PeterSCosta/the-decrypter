@@ -56,17 +56,29 @@ const PASSO = 5e-5; // ~5,5 m — resolução do raster de cobertura
 const MARGEM = 0.98; // desconto no raio (empates cortados pelo LIMIT do backend)
 const CHECKPOINT_A_CADA = 50;
 
+/** Os 21 campos que `ConsultarPontosProximos` devolve. Guardamos todos. */
 type Ponto = {
   ID_PONTO_SERVICO: number;
   NUMERO_IDENTIFICACAO?: string;
   LATITUDE_TOTAL: string;
   LONGITUDE_TOTAL: string;
   DISTANCIA: string;
+  GEOMETRIA?: string;
+  PONTOS?: string;
+  TIPO_GEOMETRIA?: string;
   ENDERECO?: string;
   NOME_LOGRADOURO_COMPLETO?: string;
+  NOME_LOGRADOURO?: string;
+  DESC_TIPO_LOGRADOURO?: string;
+  ID_LOGRADOURO?: number | string;
   NUMERO_LOCAL_INICIAL?: number | string;
   DESC_STATUS_PONTO_SERVICO?: string;
   DESC_TIPO_PONTO_SERVICO?: string;
+  ID_TIPO_PONTO_SERVICO?: number | string;
+  ID_ESTRUTURA_PS?: number | string;
+  NOME_PARQUE_SERVICO?: string;
+  ALTURA?: string;
+  COR?: number | string;
 };
 
 /** Disco provado varrido: todo poste a até `r` graus de (lat,lng) já é conhecido. */
@@ -213,17 +225,41 @@ function carregarPostes(): Map<number, Ponto> {
   return mapa;
 }
 
+/**
+ * Exporta **todos** os campos que a API devolve, só renomeados e com os
+ * numéricos convertidos. O único descartado é `DISTANCIA`: ela mede a distância
+ * até o ponto de consulta que por acaso achou o poste, não é propriedade do
+ * poste — guardá-la seria guardar lixo com cara de dado.
+ *
+ * Sobre o endereço: `ENDERECO` só vem em 18% dos registros e
+ * `NOME_LOGRADOURO_COMPLETO` em 100%, então a rua sai do segundo; os campos
+ * separados (tipo/nome/id do logradouro, 82%) vão junto, que é o formato que
+ * casa com `streets.json`.
+ */
 function exportar(postes: Map<number, Ponto>, estado: Estado, completo: boolean): void {
+  const num = (v: unknown): number | null =>
+    v === undefined || v === null || v === "" ? null : Number(v);
+
   const rows = [...postes.values()]
     .map((p) => ({
       id: Number(p.ID_PONTO_SERVICO),
       plaqueta: p.NUMERO_IDENTIFICACAO ?? null,
       lat: Number(p.LATITUDE_TOTAL),
       lng: Number(p.LONGITUDE_TOTAL),
-      rua: p.ENDERECO ?? p.NOME_LOGRADOURO_COMPLETO ?? null,
-      numero: p.NUMERO_LOCAL_INICIAL ?? null,
+      rua: p.NOME_LOGRADOURO_COMPLETO ?? p.ENDERECO ?? null,
+      ruaTipo: p.DESC_TIPO_LOGRADOURO ?? null,
+      ruaNome: p.NOME_LOGRADOURO ?? null,
+      ruaId: num(p.ID_LOGRADOURO),
+      endereco: p.ENDERECO ?? null,
+      numero: num(p.NUMERO_LOCAL_INICIAL),
       tipo: p.DESC_TIPO_PONTO_SERVICO ?? null,
+      tipoId: num(p.ID_TIPO_PONTO_SERVICO),
       status: p.DESC_STATUS_PONTO_SERVICO ?? null,
+      estruturaId: num(p.ID_ESTRUTURA_PS),
+      altura: num(p.ALTURA),
+      cor: num(p.COR),
+      parque: p.NOME_PARQUE_SERVICO ?? null,
+      geometria: p.TIPO_GEOMETRIA ?? null,
     }))
     .sort((a, b) => (a.plaqueta ?? "").localeCompare(b.plaqueta ?? "", "pt-BR", { numeric: true }));
 
@@ -328,6 +364,34 @@ async function main(): Promise<void> {
       ? `API fora do ar (${interrompido}). ${parcial}`
       : parcial;
   console.log(`\n${postes.size} postes em ${estado.discos.length} consultas → ${OUT}\n${desfecho}`);
+  if (completo) avisarSeBordaCortada(postes, estado.bbox);
+}
+
+/**
+ * "Varredura completa da bbox" só vale o que a bbox vale. Poste encostado na
+ * borda é sinal de que a cidade continua do lado de fora e a bbox está cortando
+ * dado — foi o que aconteceu na primeira rodada, que parou em -26.69 enquanto o
+ * município vai até -26.61. Melhor o script gritar do que a gente descobrir
+ * depois conferindo na mão.
+ */
+function avisarSeBordaCortada(postes: Map<number, Ponto>, bbox: typeof BBOX_PADRAO): void {
+  const MARGEM_BORDA = 0.0018; // ~200 m
+  const perto = { norte: 0, sul: 0, leste: 0, oeste: 0 };
+  for (const p of postes.values()) {
+    const lat = Number(p.LATITUDE_TOTAL);
+    const lng = Number(p.LONGITUDE_TOTAL);
+    if (lat > bbox.latMax - MARGEM_BORDA) perto.norte++;
+    if (lat < bbox.latMin + MARGEM_BORDA) perto.sul++;
+    if (lng > bbox.lngMax - MARGEM_BORDA) perto.leste++;
+    if (lng < bbox.lngMin + MARGEM_BORDA) perto.oeste++;
+  }
+  const cortadas = Object.entries(perto).filter(([, n]) => n > 0);
+  if (!cortadas.length) return;
+  const lados = cortadas.map(([lado, n]) => `${lado} (${n})`).join(", ");
+  const recado =
+    "A cidade provavelmente continua além do recorte. Rode de novo com uma BBOX\n" +
+    "estendida desse lado (o postes-raw.jsonl acumula, nada é refeito à toa).";
+  console.warn(`\nATENÇÃO: postes encostados na borda da bbox — ${lados}.\n${recado}`);
 }
 
 main().catch((err) => {

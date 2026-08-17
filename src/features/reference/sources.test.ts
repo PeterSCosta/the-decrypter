@@ -134,11 +134,25 @@ describe("links oficiais conferidos na resolução da própria prova", () => {
 });
 
 describe("decisões registradas — não regredir", () => {
-  it("Cidade Iluminada fica bloqueada e a nota diz que não se burla captcha", () => {
+  /**
+   * ESTE CASO FOI REESCRITO, e a razão importa.
+   *
+   * A versão anterior travava o Cidade Iluminada como `bloqueada` porque a nota
+   * dizia "reCAPTCHA + login". A **política** que ela protege continua valendo
+   * inteira: não se burla captcha nem login de terceiro. O que mudou foi o
+   * fato — aquilo vale para abrir chamado no portal; a consulta do mapa é
+   * anônima, e a configuração de Blumenau servida pela própria Exati traz
+   * `USAR_CAPTCHA: 0`. Os 45.285 postes vieram do mesmo endereço público que o
+   * mapa do site usa, em ritmo educado.
+   *
+   * O teste passa a exigir que a nota **explique a correção**, para ninguém
+   * reler o histórico e concluir que a regra foi afrouxada.
+   */
+  it("Cidade Iluminada está aberta, e a nota explica por que a regra não mudou", () => {
     const s = get("cidade-iluminada");
-    expect(s.status).toBe("bloqueada");
-    expect(s.note).toMatch(/captcha/i);
-    expect(s.note).toMatch(/LAI|oficial/);
+    expect(s.status).toBe("aberta");
+    expect(s.note).toMatch(/USAR_CAPTCHA|anônima/i);
+    expect(s.note).toMatch(/não houve bypass|não burlar|continua valendo/i);
   });
 
   it("SIATU fica adiada, com o motivo técnico e o caminho de dados abertos", () => {
@@ -160,8 +174,10 @@ describe("decisões registradas — não regredir", () => {
     expect(s.note).toMatch(/12 cores/);
   });
 
+  // `cidade-iluminada` saiu desta lista porque a barreira não existe (ver
+  // acima); as demais continuam guardadas.
   it("nenhuma base com gate aparece como aberta", () => {
-    for (const id of ["cidade-iluminada", "siatu-vm", "tse", "correios-rastreio", "fipe"]) {
+    for (const id of ["siatu-vm", "tse", "correios-rastreio", "fipe"]) {
       expect(get(id).status, id).not.toBe("aberta");
     }
   });
@@ -175,6 +191,10 @@ describe("decisões registradas — não regredir", () => {
       "aeroportos",
       "pix-ispb",
       "gs1",
+      // A bancada passou a responder plaqueta de poste (aba Postes, 45.285
+      // pontos pela API). A ordem aqui é a do arquivo, e o Cidade Iluminada
+      // ficou no bloco que era o das bloqueadas.
+      "cidade-iluminada",
     ]);
   });
 

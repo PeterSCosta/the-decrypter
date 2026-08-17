@@ -1,19 +1,12 @@
-import type { MunicipiosData } from "@/features/ibge/types";
 import { describe, expect, it } from "vitest";
 import { decoders } from "./registry";
 import type { DecodeContext } from "./types";
 
 const ctx: DecodeContext = { key: "", streets: null, ceps: null };
 
-const municipios: MunicipiosData = {
-  source: "test",
-  generatedAt: "2026-01-01",
-  count: 2,
-  rows: [
-    ["4205407", "Florianópolis", "SC"],
-    ["3550308", "São Paulo", "SP"],
-  ],
-};
+/** O município chega pré-resolvido da API, não de um dataset no navegador. */
+const municipio = { codigoIbge: 4205407, nome: "Florianópolis", uf: "SC" };
+const comMunicipio = (q: string) => ({ ...ctx, hits: { q, municipio } }) as typeof ctx;
 
 describe("decoder registry", () => {
   it("has no duplicate ids", () => {
@@ -37,14 +30,15 @@ describe("decoder registry", () => {
 
   it("resolves an IBGE municipality code (7- and 6-digit)", () => {
     const ibge = decoders.find((d) => d.id === "ibge-municipio")!;
-    expect(ibge.decode("4205407", { ...ctx, municipios }).map((c) => c.output)[0]).toContain(
+    expect(ibge.decode("4205407", comMunicipio("4205407")).map((c) => c.output)[0]).toContain(
       "Florianópolis — SC",
     );
     // 6-digit (sem dígito verificador)
-    expect(ibge.decode("420540", { ...ctx, municipios }).map((c) => c.output)[0]).toContain(
+    expect(ibge.decode("420540", comMunicipio("420540")).map((c) => c.output)[0]).toContain(
       "Florianópolis",
     );
-    expect(ibge.decode("9999999", { ...ctx, municipios })).toHaveLength(0);
+    // Sem acerto do servidor não há o que formatar.
+    expect(ibge.decode("9999999", ctx)).toHaveLength(0);
   });
 
   it("the example Polybius decoder works end-to-end", () => {

@@ -1,6 +1,17 @@
 /**
- * build-words.ts — gera listas de palavras (pt + en) para o resolvedor de
- * anagramas. Saída: public/data/words-pt.txt e words-en.txt (uma por linha).
+ * build-words.ts — gera o vocabulário do app. Duas saídas, para dois usos que
+ * não são o mesmo:
+ *
+ *  - `public/data/words-{pt,en}.txt` — as listas cruas, **com acento**, uma
+ *    palavra por linha. A aba Anagramas precisa iterar tudo e mostrar a grafia
+ *    original, então não há como compactá-las.
+ *  - `public/data/words-index.bin` — o índice compactado que o **score** usa. Só
+ *    pertinência, então guarda a forma já dobrada (sem acento, ≥4 letras) e nem
+ *    é parseado no navegador: consulta por bissecção direto nos bytes.
+ *
+ * O índice sai de `buildVocabulary`, a mesma função que o runtime usava para
+ * montar o `Set` — é isso que garante que a dobra do build e a do score não
+ * divirjam em silêncio.
  *
  *  - pt: https://github.com/pythonprobr/palavras  (override: $WORDS_PT)
  *  - en: /usr/share/dict/words                    (override: $WORDS_EN)
@@ -10,6 +21,8 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { PUZZLE_WORDS, buildVocabulary } from "../src/features/decoder/engine/word-rules";
+import { encodeWordIndex } from "../src/features/decoder/engine/words-packed";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const fold = (s: string) =>
@@ -66,12 +79,28 @@ function getEn(): string[] {
   return clean(readFileSync(path, "utf8").split(/\r?\n/), true);
 }
 
+/** Lê a lista já versionada — o índice precisa dela mesmo quando o build a pula. */
+function readVersionada(nome: string): string[] {
+  const path = resolve(ROOT, `public/data/${nome}`);
+  if (!existsSync(path)) return [];
+  return readFileSync(path, "utf8").split("\n").filter(Boolean);
+}
+
 async function main() {
   const pt = await getPt();
   writeFileSync(resolve(ROOT, "public/data/words-pt.txt"), pt.join("\n"));
   const en = getEn();
   if (en.length) writeFileSync(resolve(ROOT, "public/data/words-en.txt"), en.join("\n"));
-  console.log(`words: pt ${pt.length}, en ${en.length || "(mantido)"}`);
+
+  // Sem o dicionário local o `en` vem vazio e a lista versionada é mantida —
+  // então o índice tem de ler do disco, senão sairia só com o português.
+  const enFinal = en.length ? en : readVersionada("words-en.txt");
+  const vocab = buildVocabulary([pt, enFinal, PUZZLE_WORDS]);
+  const index = encodeWordIndex(vocab);
+  writeFileSync(resolve(ROOT, "public/data/words-index.bin"), index);
+
+  console.log(`words: pt ${pt.length}, en ${en.length || `${enFinal.length} (mantido)`}`);
+  console.log(`índice: ${vocab.length} palavras, ${(index.length / 1024 / 1024).toFixed(2)} MB`);
 }
 
 main();

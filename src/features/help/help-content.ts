@@ -538,6 +538,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         desc: "CEP exato ou curinga (88xxx500) → logradouro e mapa; com só os 6 dígitos finais, testa os dois prefixos de SC (88 e 89).",
         example: { in: "010000", out: "88010-000 Florianópolis · 89010-000 Blumenau" },
       },
+      {
+        name: "Poste (Cidade Iluminada)",
+        desc: "Número da plaqueta → o poste: rua, número, bairro, luminária e coordenada. Só aparece quando existe um poste com aquela plaqueta — não é palpite pela forma do número, e por isso plaqueta curta pontua menos que longa.",
+        example: { in: "65299", out: "Rua XV de Novembro, 920 · Centro" },
+      },
     ],
   },
   {
@@ -614,15 +619,28 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Triangulação",
-        desc: "Vários pontos digitados em qualquer forma — coordenada (todos os formatos da bancada), CEP, endereço com número, nome de rua ou nome de ponte, inclusive pelo apelido — viram mapa. Com três, dá os quatro centros que não são a mesma coisa: o CENTROIDE (média das posições), o EQUIDISTANTE (circuncentro — à mesma distância dos três, que é o que “triangular” costuma querer dizer), o INCENTRO (equidistante dos lados) e a MENOR SOMA (mediana geométrica: o encontro mais curto para todos, e o único que não é arrastado por um ponto muito distante), mais os lados, ângulos e área do triângulo. Com qualquer quantidade, desenha a rota na ordem digitada, com distância e rumo de cada perna, e reordena pelo trajeto mais curto sem mexer no ponto de partida. Distâncias em linha reta, não pela malha viária.",
+        desc: "Vários pontos digitados em qualquer forma — coordenada (todos os formatos da bancada), CEP, endereço com número, nome de rua ou nome de ponte, inclusive pelo apelido — viram mapa. Com três, dá os quatro centros que não são a mesma coisa: o CENTROIDE (média das posições), o EQUIDISTANTE (circuncentro — à mesma distância dos três, que é o que “triangular” costuma querer dizer), o INCENTRO (equidistante dos lados) e a MENOR SOMA (mediana geométrica: o encontro mais curto para todos, e o único que não é arrastado por um ponto muito distante), mais os lados, ângulos e área do triângulo. Com qualquer quantidade, desenha a rota na ordem digitada, com distância e rumo de cada perna, e reordena pelo trajeto mais curto sem mexer no ponto de partida. Distâncias em linha reta, não pela malha viária. No mapa dá para clicar para marcar um ponto novo e arrastar os pinos para ajustar — a coordenada volta sozinha para o campo. Digitando um nome, ele sugere ruas e pontes da base local, sem consultar nada na rede.",
         example: {
           in: "Ponte dos Arcos · Ponte de Ferro · Ponte do Salto",
           out: "equidistante −26.876451, −49.060724 · rota 5,89 km",
         },
       },
       {
+        name: "Postes",
+        desc: "Os 45.285 pontos de iluminação pública de Blumenau, com plaqueta, coordenada, rua, bairro e luminária. Busque pelo número da plaqueta, por rua ou por bairro — ou navegue no mapa, que carrega conforme você arrasta. Clicando num poste sai a ficha e o botão de compartilhar, que no celular abre direto o WhatsApp.",
+        example: { in: "Itoupava Central", out: "postes do bairro, no mapa e na lista" },
+      },
+      {
+        name: "Biblioteca",
+        desc: "Tudo que a bancada conhece, com o tamanho real de cada base (a contagem vem do banco, não de um número escrito à mão), e embaixo as bases públicas que ainda se consultam à mão, com o link oficial. Cada base abre para navegar; a de postes abre no mapa.",
+      },
+      {
         name: "Frota",
         desc: "Mapa ao vivo dos celulares da equipe (Traccar): posição, status, bateria e quem está mais perto — o mesmo cálculo que aparece no cartão de localização.",
+      },
+      {
+        name: "Entrar e aprovar acesso",
+        desc: "A bancada pede login. Quem se cadastra entra como “aguardando aprovação” e só usa depois que um administrador liberar — não há confirmação por e-mail, a porta é a aprovação. Quem é admin tem o botão de usuários no topo, para aprovar, bloquear, criar e remover contas.",
       },
     ],
   },
@@ -634,8 +652,8 @@ export const HELP_SECTIONS: HelpSection[] = [
     entries: [
       {
         name: "Backend (the-decrypter-api)",
-        desc: "Porta de entrada de toda consulta externa: /cnpj, /cep, /isbn, /ncm, /registrobr, /pix, /produto, /what3words, /geocode e /fleet.",
-        example: { in: "/api/…", out: "cache + rate-limit; chaves ficam no servidor" },
+        desc: "Porta de entrada das consultas externas (/cnpj, /isbn, /ncm, /registrobr, /pix, /produto, /what3words, /geocode, /fleet) e, agora, das bases grandes: CEP, municípios, aeroportos e postes vêm dele em vez de serem baixados pelo navegador. Toda chamada leva o token da sessão.",
+        example: { in: "/api/lookup?q=…", out: "uma resposta só, com o que a entrada podia ser" },
       },
       {
         name: "BrasilAPI (via backend)",

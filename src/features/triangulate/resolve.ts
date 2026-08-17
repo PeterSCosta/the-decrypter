@@ -1,9 +1,8 @@
 import type { BridgeRow } from "@/features/bridge/types";
-import type { CepHit } from "@/features/cep/types";
-import { toHit } from "@/features/cep/types";
-import { type GeoPoint, detectLocation } from "@/features/location/formats";
+import { type GeoPoint, detectLocation, prepararDeteccao } from "@/features/location/formats";
 import type { StreetRow } from "@/features/street-guide/types";
-import { loadBridges, loadCeps, loadStreets } from "@/lib/data";
+import { fetchCep } from "@/lib/brasilapi";
+import { loadBridges, loadStreets } from "@/lib/data";
 import { geocode } from "@/lib/geocode";
 
 /**
@@ -15,6 +14,15 @@ import { geocode } from "@/lib/geocode";
 export type Origem = "coordenada" | "cep" | "ponte" | "rua" | "endereço";
 
 export interface PontoResolvido extends GeoPoint {
+  /**
+   * Posição na lista de caixas de texto.
+   *
+   * Sem ela, o índice de um marcador no mapa NÃO correspondia ao da caixa: os
+   * vazios eram descartados antes de resolver e as falhas somem de `pontos`.
+   * Arrastar o terceiro marcador escreveria na terceira caixa — que podia ser
+   * outra. Agora a resolução preserva as posições e cada ponto sabe de onde veio.
+   */
+  indice: number;
   /** O que a pessoa digitou. */
   entrada: string;
   /** Nome legível do que foi encontrado. */
@@ -25,6 +33,7 @@ export interface PontoResolvido extends GeoPoint {
 }
 
 export interface FalhaResolucao {
+  indice: number;
   entrada: string;
   motivo: string;
 }
@@ -57,32 +66,50 @@ function achaPonte(alvo: string, rows: BridgeRow[]): BridgeRow | null {
   return candidatos.sort((a, b) => a.nome.length - b.nome.length)[0];
 }
 
-function achaCep(digitos: string, rows: CepHit[]): CepHit | null {
-  return rows.find((r) => r.cep === digitos && r.lat !== null && r.lng !== null) ?? null;
+/**
+ * Índice de nomes de rua já normalizados, por dataset.
+ *
+ * `normaliza` faz NFD + quatro `replace` de regex; sem cache, achar uma rua
+ * custava até 8.852 execuções dela (dois `find` sobre 4.426 linhas), todas
+ * recalculando exatamente os mesmos nomes. É o mesmo `WeakMap` que
+ * `engine/lookups.ts` já usa para o índice dobrado.
+ */
+const ruasNormalizadas = new WeakMap<StreetRow[], { row: StreetRow; nome: string }[]>();
+
+function comGeoNormalizado(rows: StreetRow[]): { row: StreetRow; nome: string }[] {
+  let idx = ruasNormalizadas.get(rows);
+  if (!idx) {
+    idx = rows
+      .filter((r) => r.lat != null && r.lng != null)
+      .map((row) => ({ row, nome: normaliza(row.nome) }));
+    ruasNormalizadas.set(rows, idx);
+  }
+  return idx;
 }
 
 function achaRua(alvo: string, rows: StreetRow[]): StreetRow | null {
   const q = normaliza(alvo).replace(/^(RUA|R|AVENIDA|AV|TRAVESSA|TV|ESTRADA|RODOVIA|ALAMEDA) /, "");
   if (q.length < 4) return null;
-  const comGeo = rows.filter((r) => r.lat != null && r.lng != null);
+  const comGeo = comGeoNormalizado(rows);
   return (
-    comGeo.find((r) => normaliza(r.nome) === q) ??
-    comGeo.find((r) => normaliza(r.nome).includes(q)) ??
-    null
+    comGeo.find((e) => e.nome === q)?.row ?? comGeo.find((e) => e.nome.includes(q))?.row ?? null
   );
 }
 
 /** Tem número de porta? Então só o geocodificador resolve — o rol de ruas não. */
 const TEM_NUMERO = /,\s*n?º?\s*\d+|\s\d{1,5}\s*$/i;
 
-export async function resolvePonto(entrada: string): Promise<Resultado> {
+export async function resolvePonto(entrada: string, indice = 0): Promise<Resultado> {
   const texto = entrada.trim();
-  if (!texto) return { entrada, motivo: "vazio" };
+  if (!texto) return { indice, entrada, motivo: "vazio" };
 
-  // 1. Coordenada em qualquer dos formatos que a bancada já conhece.
+  // 1. Coordenada em qualquer dos formatos que a bancada já conhece. Aqui dá
+  // para esperar a lib sob demanda (H3), ao contrário do fan-out síncrono.
+  await prepararDeteccao(texto);
   const coord = detectLocation(texto);
   if (coord) {
     return {
+      indice,
       entrada,
       lat: coord.lat,
       lng: coord.lng,
@@ -95,19 +122,16 @@ export async function resolvePonto(entrada: string): Promise<Resultado> {
   // 2. CEP — 8 dígitos, base local.
   const digitos = texto.replace(/\D/g, "");
   if (digitos.length === 8 && /^\d{5}-?\d{3}$/.test(texto.replace(/\s/g, ""))) {
-    const base = await loadCeps().catch(() => null);
-    const hit =
-      base &&
-      achaCep(
-        digitos,
-        base.rows.map((r) => toHit(r, base.municipios)),
-      );
+    // Pela API: os 40.445 CEPs deixaram de ser baixados pelo navegador. Aqui
+    // dá para esperar — a Triangulação já resolve em `async`.
+    const hit = await fetchCep(digitos).catch(() => null);
     if (hit?.lat != null && hit.lng != null) {
       return {
+        indice,
         entrada,
         lat: hit.lat,
         lng: hit.lng,
-        rotulo: `${hit.logradouro || hit.cep} — ${hit.municipio}`,
+        rotulo: `${hit.logradouro || hit.cep} — ${hit.localidade ?? ""}`,
         origem: "cep",
         detalhe: `CEP ${hit.cep}`,
       };
@@ -120,6 +144,7 @@ export async function resolvePonto(entrada: string): Promise<Resultado> {
     const p = base && achaPonte(texto, base.rows);
     if (p?.lat != null && p.lng != null) {
       return {
+        indice,
         entrada,
         lat: p.lat,
         lng: p.lng,
@@ -136,7 +161,7 @@ export async function resolvePonto(entrada: string): Promise<Resultado> {
     const q = /blumenau|itaja|,\s*sc\b/i.test(texto) ? texto : `${texto}, ${CIDADE_PADRAO}`;
     const g = await geocode(q).catch(() => null);
     if (g) {
-      return { entrada, ...g, rotulo: texto, origem: "endereço", detalhe: "Nominatim/OSM" };
+      return { indice, entrada, ...g, rotulo: texto, origem: "endereço", detalhe: "Nominatim/OSM" };
     }
   }
 
@@ -145,6 +170,7 @@ export async function resolvePonto(entrada: string): Promise<Resultado> {
   const rua = ruas && achaRua(texto, ruas.rows);
   if (rua?.lat != null && rua.lng != null) {
     return {
+      indice,
       entrada,
       lat: rua.lat,
       lng: rua.lng,
@@ -158,12 +184,17 @@ export async function resolvePonto(entrada: string): Promise<Resultado> {
   const g = await geocode(
     /blumenau|itaja|,\s*sc\b/i.test(texto) ? texto : `${texto}, ${CIDADE_PADRAO}`,
   ).catch(() => null);
-  if (g) return { entrada, ...g, rotulo: texto, origem: "endereço", detalhe: "Nominatim/OSM" };
+  if (g)
+    return { indice, entrada, ...g, rotulo: texto, origem: "endereço", detalhe: "Nominatim/OSM" };
 
-  return { entrada, motivo: "não foi possível localizar" };
+  return { indice, entrada, motivo: "não foi possível localizar" };
 }
 
-/** Resolve a lista toda, preservando a ordem digitada. */
+/**
+ * Resolve a lista toda **sem descartar as vazias**, para que o índice de cada
+ * resultado seja o índice da caixa de texto que o originou. Quem consome filtra
+ * depois; quem escreve de volta (o arraste no mapa) depende dessa correspondência.
+ */
 export function resolveTodos(entradas: string[]): Promise<Resultado[]> {
-  return Promise.all(entradas.map(resolvePonto));
+  return Promise.all(entradas.map((e, i) => resolvePonto(e, i)));
 }

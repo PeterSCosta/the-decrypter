@@ -206,9 +206,17 @@ export function DecoderWorkbench({ entradaInicial }: { entradaInicial?: string }
             </p>
           ) : (
             <div className="flex flex-col gap-3">
+              {/*
+                A chave é o `output`, não a posição. `runDecoders` deduplica por
+                saída exata, então ela é única na lista — e estável quando a
+                ordem muda. Com o índice na chave, toda reordenação (que
+                acontece a cada tecla e a cada dataset que chega) **remontava**
+                os cards, e os que buscam na rede no `useEffect` — mapa, CNPJ,
+                ISBN, código de barras — refaziam a requisição à toa.
+              */}
               {results.map((c, i) => (
                 <ResultCard
-                  key={`${c.decoderId}-${c.label ?? ""}-${i}`}
+                  key={`${c.decoderId}::${c.output}`}
                   c={c}
                   rank={i + 1}
                   onChain={chainTo}
@@ -221,7 +229,7 @@ export function DecoderWorkbench({ entradaInicial }: { entradaInicial?: string }
             <div className="flex flex-col gap-3">
               {likely.map((c, i) => (
                 <ResultCard
-                  key={`${c.decoderId}-${c.label ?? ""}-${i}`}
+                  key={`${c.decoderId}::${c.output}`}
                   c={c}
                   rank={i + 1}
                   onChain={chainTo}
@@ -244,7 +252,7 @@ export function DecoderWorkbench({ entradaInicial }: { entradaInicial?: string }
                 {showUnlikely &&
                   unlikely.map((c, i) => (
                     <ResultCard
-                      key={`${c.decoderId}-${c.label ?? ""}-${i}`}
+                      key={`${c.decoderId}::${c.output}`}
                       c={c}
                       rank={likely.length + i + 1}
                       onChain={chainTo}

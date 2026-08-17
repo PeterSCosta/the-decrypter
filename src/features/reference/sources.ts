@@ -14,10 +14,19 @@
  * Cola. O Roadmap é sobre o que a bancada vai fazer; isto é sobre o que a
  * equipe faz agora, à mão, quando a bancada não pode fazer por ela.
  *
- * REGRA QUE ESTA LISTA REGISTRA: nada aqui vira raspagem. Base com captcha ou
- * login de terceiro (Cidade Iluminada/Exati) fica `bloqueada`; base sem CORS
- * (SIATU) fica `adiada` até virar dado aberto por pedido oficial (LAI) — o
- * mesmo caminho que ruas e CEP já percorreram.
+ * REGRA QUE ESTA LISTA REGISTRA: base com captcha ou login de terceiro fica
+ * `bloqueada` — não se burla nem um nem outro. Base sem CORS (SIATU) fica
+ * `adiada` até virar dado aberto por pedido oficial (LAI) — o mesmo caminho que
+ * ruas e CEP já percorreram.
+ *
+ * CORREÇÃO DE FATO (agosto/2026): o Cidade Iluminada estava aqui como
+ * `bloqueada` por "reCAPTCHA + login". A anotação estava errada. Aquilo vale
+ * para abrir chamado; a consulta do mapa é anônima e a configuração de Blumenau
+ * traz `USAR_CAPTCHA: 0`. A coleta dos 45.285 postes usou o mesmo endereço
+ * público que o mapa do site usa, em ritmo educado — nenhuma proteção foi
+ * contornada, porque não havia proteção a contornar. A regra não mudou; o fato
+ * é que mudou. Os termos do portal falam em uso pessoal e não comercial, o que
+ * cobre a bancada; publicar a base pediria o caminho oficial.
  *
  * Âncoras: acervo em `the-logic-lab/scripts/import-historico/acervo`
  * (`GIA-2026.md`, `RESOLUCOES.md`). Os links marcados como conferidos saíram
@@ -256,7 +265,6 @@ export const SOURCES: DataSourceRef[] = [
     note: "~500 KB de dataset para zero prova resolvida no acervo. Sob demanda.",
   },
 
-  // ── Bloqueada: captcha/login de terceiro ───────────────────────────────────
   {
     id: "cidade-iluminada",
     name: "Cidade Iluminada (postes, Exati)",
@@ -264,8 +272,8 @@ export const SOURCES: DataSourceRef[] = [
     use: "Plaqueta → local → nome oficial da placa de trânsito → índice de letra.",
     url: "https://novo.cidadeiluminada.com.br/#/address",
     urlLabel: "novo.cidadeiluminada.com.br",
-    status: "bloqueada",
-    note: "reCAPTCHA Enterprise + login, e sem consulta em lote. Não burlamos captcha de terceiro: a busca é uma plaqueta por vez, à mão. Caminho para destravar: pedido oficial (LAI à Prefeitura ou à concessionária da iluminação).",
+    status: "aberta",
+    note: "A bancada já responde: 45.285 postes na aba Postes. A anotação anterior dizia 'reCAPTCHA + login' — isso vale para abrir chamado, não para a consulta do mapa, que é anônima e tem `USAR_CAPTCHA: 0` na configuração de Blumenau. Não houve bypass de nada: a coleta usou o mesmo endereço público que o mapa do site usa, num ritmo educado. A regra de não burlar captcha nem login continua valendo — o que mudou foi o fato.",
     anchors: ["GIA-25"],
   },
 

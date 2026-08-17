@@ -1,11 +1,14 @@
-import type { AirportRow } from "@/features/airport/types";
 import { defineDecoder } from "../define";
 import type { LocationData } from "./location";
 
 /**
  * Código de aeroporto → aeroporto no mapa. IATA (3 letras, ex.: GRU) ou ICAO
- * (4 letras, ex.: SBGR). Lê a base de aeroportos do contexto (OpenFlights,
- * carregada sob demanda quando a entrada é 3–4 letras).
+ * (4 letras, ex.: SBGR).
+ *
+ * A resposta vem pré-resolvida em `ctx.hits`. Antes o app baixava os 7.599
+ * aeroportos (230 KB gzip) e fazia um `find` linear a cada tecla, para responder
+ * uma consulta por chave exata — a base inteira no navegador para achar uma
+ * linha.
  */
 export const decoders = defineDecoder({
   id: "airport",
@@ -13,31 +16,21 @@ export const decoders = defineDecoder({
   category: "lookup",
   decode(input, ctx) {
     const code = input.trim().toUpperCase();
-    if (!ctx.airports) return [];
+    if (ctx.hits?.q !== input.trim() || !ctx.hits.aeroporto) return [];
+    const a = ctx.hits.aeroporto;
+    if (a.lat == null || a.lng == null) return [];
 
-    let row: AirportRow | undefined;
-    let kind: string;
-    let score: number;
-    if (/^[A-Z]{3}$/.test(code)) {
-      row = ctx.airports.rows.find((r) => r[0] === code);
-      kind = "Aeroporto IATA";
-      score = 0.5;
-    } else if (/^[A-Z]{4}$/.test(code)) {
-      row = ctx.airports.rows.find((r) => r[1] === code);
-      kind = "Aeroporto ICAO";
-      score = 0.62;
-    } else {
-      return [];
-    }
-    if (!row) return [];
+    // ICAO discrimina mais que IATA: 4 letras erram menos por acaso que 3.
+    const ehIcao = code.length === 4;
+    const kind = ehIcao ? "Aeroporto ICAO" : "Aeroporto IATA";
+    const score = ehIcao ? 0.62 : 0.5;
 
-    const [iata, icao, name, city, country, lat, lng] = row;
-    const codes = [iata, icao].filter(Boolean).join(" / ");
-    const place = [city, country].filter(Boolean).join(", ");
+    const codes = [a.iata, a.icao].filter(Boolean).join(" / ");
+    const place = [a.cidade, a.pais].filter(Boolean).join(", ");
     const data: LocationData = {
-      lat,
-      lng,
-      label: `${name} (${codes})`,
+      lat: a.lat,
+      lng: a.lng,
+      label: `${a.nome} (${codes})`,
       detail: place,
       format: kind,
     };
@@ -47,7 +40,7 @@ export const decoders = defineDecoder({
         decoderName: kind,
         category: "lookup",
         label: codes,
-        output: `${name} — ${place}`,
+        output: `${a.nome} — ${place}`,
         forcedScore: score,
         render: "map",
         data,

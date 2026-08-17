@@ -36,12 +36,6 @@ export const ROADMAP: RoadGroup[] = [
     title: "A fazer — integrações de Blumenau",
     items: [
       {
-        title: "Cidade Iluminada (postes)",
-        status: "blocked",
-        desc: "Buscar a placa de um poste de iluminação → localização.",
-        note: "A API (Exati) tem reCAPTCHA + login e não deixa baixar em massa. Caminho certo: pedir o cadastro de postes por dados abertos / LAI à Prefeitura ou à concessionária e ligar como dataset.",
-      },
-      {
         title: "Consulta de imóvel (SIATU)",
         status: "blocked",
         desc: "Nº de cadastro ou inscrição cadastral → dados do imóvel (IPTU).",
@@ -147,7 +141,7 @@ export const ROADMAP: RoadGroup[] = [
         title: "Catálogo Faber-Castell completo",
         status: "blocked",
         desc: "Hoje a bancada só conhece as 12 cores conferidas no gabarito; código de 3 dígitos fora dessa lista responde “não catalogado”.",
-        note: "A tabela da fabricante só existe em encarte impresso e em digitalizações hospedadas por terceiros — mesma regra do SIATU e da Cidade Iluminada: não raspar. Caminho: ampliar por digitação manual a partir do encarte oficial.",
+        note: "A tabela da fabricante só existe em encarte impresso e em digitalizações hospedadas por terceiros — mesma regra do SIATU: não raspar. Caminho: ampliar por digitação manual a partir do encarte oficial.",
       },
     ],
   },

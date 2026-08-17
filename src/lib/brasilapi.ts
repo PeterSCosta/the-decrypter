@@ -3,16 +3,16 @@
  * BrasilAPI. O backend normaliza as respostas (camelCase) e cacheia. As interfaces
  * abaixo refletem os DTOs do backend.
  */
-import { api } from "./api";
+import { ApiError, apiFetch } from "./api";
 
 async function getJson<T>(path: string, notFound: string): Promise<T> {
-  const res = await fetch(api(path));
-  if (!res.ok) {
-    throw new Error(res.status === 404 ? notFound : `Falha na consulta (HTTP ${res.status}).`);
-  }
   try {
-    return (await res.json()) as T;
-  } catch {
+    return await apiFetch<T>(path);
+  } catch (e) {
+    // O 404 aqui é "não achei esse CNPJ/CEP/ISBN", que merece a frase do
+    // chamador em vez da mensagem genérica da API.
+    if (e instanceof ApiError && e.status === 404) throw new Error(notFound);
+    if (e instanceof ApiError) throw new Error(e.message);
     // Sem backend configurado, o servidor de dev responde o index.html com
     // status 200 — e o erro de parse vazava cru para o card ("Unexpected token
     // '<'"). Quem está numa gincana precisa saber que é a consulta que está

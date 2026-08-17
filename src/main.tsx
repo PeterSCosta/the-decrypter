@@ -1,3 +1,4 @@
+import { AuthProvider } from "@/features/auth/use-auth";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.tsx";
@@ -8,6 +9,8 @@ if (!root) throw new Error("Elemento #root não encontrado");
 
 createRoot(root).render(
   <StrictMode>
-    <App />
+    <AuthProvider>
+      <App />
+    </AuthProvider>
   </StrictMode>,
 );

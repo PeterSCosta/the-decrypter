@@ -5,6 +5,8 @@ import { CopyButton } from "@/components/ui/copy-button";
 import { CepCard } from "@/features/cep/components/cep-card";
 import type { CepHit } from "@/features/cep/types";
 import type { MathReport } from "@/features/math/arith";
+import { PosteCard } from "@/features/poste/components/poste-card";
+import type { Poste } from "@/features/poste/types";
 import type { CodeHit } from "@/features/reference/phone-codes";
 import { StreetCard } from "@/features/street-guide/components/street-card";
 import type { StreetRow } from "@/features/street-guide/types";
@@ -105,6 +107,8 @@ export function ResultCard({
           </div>
         ) : c.render === "documento" ? (
           <DocumentCard doc={c.data as DocResult} />
+        ) : c.render === "poste" ? (
+          <PosteCard poste={c.data as Poste} />
         ) : c.render === "map" ? (
           <MapCard data={c.data as LocationData} />
         ) : c.render === "isbn" ? (

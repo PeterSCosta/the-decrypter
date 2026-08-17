@@ -54,5 +54,35 @@ generated JSON in `public/data/` is committed. Regenerate with `pnpm build:data`
 - `pnpm build:postes` — resumable (`postes-state.json` holds the certified discs); `DELAY_MS`,
   `MAX_QUERIES` and `BBOX` tune it. The upstream instance drops out with 503/404 fairly often
   (across unrelated Exati tenants, not just this one); just run it again.
+- **Mind the bbox.** "Complete sweep" is only ever complete *for the bbox given*. The first run
+  stopped at lat −26.69 and clipped the north of the município (the city config from
+  `central.exati.com.br` declares −26.6127); a second run over `BBOX=-26.6910,-26.5900,-49.32,-48.95`
+  picked up the missing 726 poles. The script now counts poles within ~200 m of each edge when a
+  sweep finishes and warns per side — extend the bbox that way and rerun; the JSONL accumulates, so
+  nothing already collected is refetched.
+- **Verified:** 45,285 poles, no pole within 200 m of any edge, and 25 independent probe queries
+  (500 returned neighbours) found nothing missing from the dataset.
 - **Terms:** the portal's terms grant personal, non-commercial use only. Fine for a local lookup;
   for anything public, request the dataset from the Prefeitura via LAI/dados abertos instead.
+
+## `postes-fichas.jsonl` — full record per pole
+
+- **Origin:** same instance, command `ConsultarEtiquetaPontoServico` (lookup by plaqueta). It returns
+  **55 fields** against the sweep's 21 — notably `NOME_BAIRRO`, `DESC_ESTRUTURA_PS` (the actual
+  fixture: arm, luminaire, lamp), `DATA_HORA_INSTALACAO` and `PONTOS_LUMINOSOS`.
+- **Collector:** [`scripts/enrich-postes.ts`](../scripts/enrich-postes.ts), `pnpm enrich:postes`.
+  One request per pole — `ID_ESTRUTURA_PS` is nearly unique per pole (16k distinct values across 24k
+  poles), so it is not a catalogue key and no local join can stand in for the call. Resumable: it
+  skips plaquetas already in the JSONL. Run it after `build:postes`.
+- The lookup is fuzzy, so the collector keeps a record only when the returned `ID_PONTO_SERVICO`
+  equals the one it asked for.
+- **Upstream bug — 54 poles can never be enriched.** The plaqueta search eats a repeated digit:
+  asking for `12222` returns the pole numbered `1222`, `22222` returns `2222`, `1118` returns
+  `11118`. Every failing plaqueta has repeated digits, and the command takes no `ID_PONTO_SERVICO`
+  as an alternative key, so there is no way around it. Those ids are parked in
+  `postes-sem-ficha.json` and skipped on later runs (delete the file to retry them).
+- **Result:** 45,285 poles, **45,186 (99.78%) with the full record**. The 99 without are 45 poles
+  that carry no plaqueta at all plus the 54 above; they still have coordinates, street, type and
+  status from the sweep. Field coverage in `postes.json`: `bairro`/`instalacao` 99.8%,
+  `pontosLuminosos` 93.9%, `ruaNome` 82.1%, `estrutura` 29.5% and `numero` 24.9% — those last two
+  are simply blank upstream for most poles, not something the collector lost.

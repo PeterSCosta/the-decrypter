@@ -28,4 +28,4 @@ pnpm-debug.log*
 data-sources/*.csv
 data-sources/*.pdf
 data-sources/*.jsonl
-data-sources/postes-state.json
+data-sources/postes-state*.json

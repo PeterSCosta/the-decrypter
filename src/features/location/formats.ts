@@ -4,7 +4,6 @@
  * e devolve o primeiro que casar, com o nome do formato.
  */
 import { getCellByCode, getCellByLocation } from "geohex";
-import { cellToLatLng, isValidCell } from "h3-js";
 import { ANCHORS, VALE_BBOX, inBBox, scopeLabel } from "./anchors";
 import { cartaScaleLabel, decodeCartaIbge } from "./carta-ibge";
 import { decodeGars, garsCellLabel } from "./gars";
@@ -192,13 +191,66 @@ export function decodeQuadkey(raw: string): GeoPoint | null {
 }
 
 // ---- H3 (índice hexagonal da Uber) — "8928308280fffff" -------------------
+
+/**
+ * O `h3-js` é uma compilação Emscripten da libh3: **87 KB gzip**, mais de um
+ * quarto do chunk de entrada — carregado por toda sessão para atender um formato
+ * que quase ninguém cola. Fica sob demanda.
+ *
+ * `detectLocation` é síncrono (os decoders exigem isso), então o parser não pode
+ * esperar: quando a entrada tem cara de H3 e a lib ainda não chegou, ele dispara
+ * a carga e devolve `null`. Quem observa `aoCarregarH3` refaz a rodada — é o
+ * mesmo trato que os datasets já têm com o fan-out.
+ */
+type H3Api = { cellToLatLng: (h: string) => number[]; isValidCell: (h: string) => boolean };
+let h3: H3Api | null = null;
+let h3Carregando: Promise<void> | null = null;
+const ouvintesH3 = new Set<() => void>();
+
+/** Formato bruto de um índice H3 — pré-filtro barato antes de tocar na lib. */
+const FORMA_H3 = /^[0-9a-f]{15,16}$/;
+
+function carregarH3(): Promise<void> {
+  if (h3) return Promise.resolve();
+  if (!h3Carregando) {
+    h3Carregando = import("h3-js")
+      .then((m) => {
+        h3 = { cellToLatLng: m.cellToLatLng, isValidCell: m.isValidCell };
+        for (const cb of ouvintesH3) cb();
+      })
+      .catch(() => {
+        h3Carregando = null; // não memoiza falha: a próxima entrada tenta de novo
+      });
+  }
+  return h3Carregando;
+}
+
+/** Avisa quando a lib do H3 chega, para quem precisa refazer a detecção. */
+export function aoCarregarH3(cb: () => void): () => void {
+  ouvintesH3.add(cb);
+  return () => {
+    ouvintesH3.delete(cb);
+  };
+}
+
+/**
+ * Garante as libs sob demanda que `raw` vai precisar. Para quem **pode** esperar
+ * (a Triangulação resolve em `async`), evita perder o H3 na primeira tentativa.
+ */
+export async function prepararDeteccao(raw: string): Promise<void> {
+  if (FORMA_H3.test(raw.trim().toLowerCase())) await carregarH3();
+}
+
 export function parseH3(raw: string): GeoPoint | null {
   const h = raw.trim().toLowerCase();
-  // índice de célula H3: 15–16 dígitos hex. `isValidCell` faz a checagem real,
-  // a regex só é um pré-filtro barato (evita rodar a lib em strings quaisquer).
-  if (!/^[0-9a-f]{15,16}$/.test(h) || !isValidCell(h)) return null;
+  if (!FORMA_H3.test(h)) return null;
+  if (!h3) {
+    carregarH3(); // chega no próximo passe
+    return null;
+  }
+  if (!h3.isValidCell(h)) return null;
   try {
-    const [lat, lng] = cellToLatLng(h);
+    const [lat, lng] = h3.cellToLatLng(h);
     return valid(lat, lng);
   } catch {
     return null;

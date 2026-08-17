@@ -1,10 +1,19 @@
 import { ShareLocationButton } from "@/features/location/components/share-location-button";
 import { fetchFleet } from "@/lib/fleet";
 import { Car, ExternalLink, MapPin, Phone } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { formatAge, formatDistance, nearestDevice } from "../nearest";
 import type { FleetDevice } from "../types";
-import { LocationFleetMap } from "./location-fleet-map";
+/**
+ * O mapa entra sob demanda porque ele arrasta o Leaflet + react-leaflet, e daqui
+ * a dependência alcançava o **decodificador**: `MapCard` e `StreetCard` usam
+ * esta view, então o Leaflet estava no chunk de entrada de toda sessão, mesmo de
+ * quem só cola um Base64. Carregado assim, ele só chega quando existe um ponto
+ * para desenhar — que é exatamente quando este componente renderiza.
+ */
+const LocationFleetMap = lazy(() =>
+  import("./location-fleet-map").then((m) => ({ default: m.LocationFleetMap })),
+);
 
 /**
  * Dado um ponto resolvido, mostra o membro da frota mais próximo (com os dados do
@@ -86,12 +95,18 @@ export function FleetLocationView({
         </div>
       ) : null}
 
-      <LocationFleetMap
-        point={point}
-        pointLabel={label}
-        devices={fleet}
-        nearestId={near?.device.id}
-      />
+      <Suspense
+        fallback={
+          <div className="h-[280px] w-full animate-pulse rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--surface-sunken)]" />
+        }
+      >
+        <LocationFleetMap
+          point={point}
+          pointLabel={label}
+          devices={fleet}
+          nearestId={near?.device.id}
+        />
+      </Suspense>
     </div>
   );
 }

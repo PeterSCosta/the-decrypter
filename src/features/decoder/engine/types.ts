@@ -3,6 +3,7 @@ import type { CepsData } from "@/features/cep/types";
 import type { MunicipiosData } from "@/features/ibge/types";
 import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
+import type { LookupHits } from "@/lib/lookup-cache";
 
 export type DecoderCategory = "encoding" | "classical" | "transform" | "lookup";
 
@@ -33,10 +34,30 @@ export interface DecodeContext {
   aux?: string;
   /** Id do decoder quando a bancada roda no modo "uma cifra só". */
   only?: string;
+  /**
+   * Consultas já resolvidas para ESTA entrada, vindas de `/api/lookup`.
+   *
+   * O fan-out é síncrono, então o decoder não pode ir à rede: quem consulta é o
+   * hook, antes de rodar a corrida, e os decoders só formatam o que chegou.
+   * `q` vem junto para o decoder recusar um acerto que é de uma tecla atrás.
+   */
+  hits?: LookupHits | null;
+  /** Consulta em voo: o card mostra esqueleto em vez de "nada encontrado". */
+  hitsCarregando?: boolean;
+  /** Consultas online indisponíveis — distinto de "não encontrei". */
+  hitsErro?: string | null;
   /** Loaded datasets for lookup decoders (null until fetched). */
   streets: StreetsData | null;
-  ceps: CepsData | null;
+  /**
+   * CEP e município saíram do navegador: quem responde é `hits`, pré-resolvido
+   * pela API. Os campos ficam **opcionais** em vez de sumir para os testes do
+   * motor, que montam o contexto à mão, seguirem compilando sem alteração —
+   * o que quebraria neles seria a checagem de excesso de propriedade do
+   * TypeScript, não a lógica.
+   */
+  ceps?: CepsData | null;
   municipios?: MunicipiosData | null;
+  /** Idem CEP/município: agora vem por `hits`. Mantido opcional pelos testes. */
   airports?: AirportsData | null;
   pix?: PixData | null;
 }
@@ -72,7 +93,8 @@ export interface DecodeCandidate {
     | "barcode"
     | "registrobr"
     | "math"
-    | "wheel";
+    | "wheel"
+    | "poste";
   /** Structured payload for custom renderers. */
   data?: unknown;
 }
