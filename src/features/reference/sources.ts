@@ -161,8 +161,8 @@ export const SOURCES: DataSourceRef[] = [
     use: "Número de 4-5 dígitos → candidato → índice de letra no nome dele.",
     url: "https://sig.tse.jus.br/ords/dwapr/r/seai/sig-eleicao-resultados/home",
     urlLabel: "sig.tse.jus.br",
-    status: "aberta",
-    note: "A nota anterior dizia “sem JSON aberto amigável”, e estava errada: os resultados oficiais SÃO JSON estático, com CORS liberado, consultáveis direto do navegador — `resultados.tse.jus.br/oficial/ele2024/619/dados/sc/sc80470-c0011-e000619-u.json` (verificado: HTTP 200, `Access-Control-Allow-Origin: *`). Repare no `dados/` e no sufixo `-u`: o caminho `dados-simplificados/…-r` só traz agregado nacional e dá 404 por município — foi o que despistou. Cobre o ciclo corrente; anteriores só em ZIP nacional dos dados abertos. Votação repetida entre candidatos é comum: mostre todos os empates, não finja resposta única.",
+    status: "consulta-manual",
+    note: "AINDA é você quem busca — mas o caminho para automatizar está aberto e verificado. A nota anterior dizia “sem JSON aberto amigável”, e estava errada: os resultados oficiais SÃO JSON estático, com CORS liberado, consultáveis direto do navegador — `resultados.tse.jus.br/oficial/ele2024/619/dados/sc/sc80470-c0011-e000619-u.json` (verificado: HTTP 200, `Access-Control-Allow-Origin: *`). Repare no `dados/` e no sufixo `-u`: o caminho `dados-simplificados/…-r` só traz agregado nacional e dá 404 por município — foi o que despistou. Cobre o ciclo corrente; anteriores só em ZIP nacional dos dados abertos. Votação repetida entre candidatos é comum: quando virar consulta, mostre todos os empates em vez de fingir resposta única.",
     anchors: ["GIA-34"],
   },
   {
@@ -248,8 +248,8 @@ export const SOURCES: DataSourceRef[] = [
     use: "Código → modelo → nome do carro.",
     url: "https://veiculos.fipe.org.br",
     urlLabel: "veiculos.fipe.org.br",
-    status: "aberta",
-    note: "Consultada AO VIVO, do navegador. A nota anterior argumentava contra EMBARCAR o dataset (e nisso continua certa: muda todo mês e nasceria velho dentro da imagem), mas isso nunca foi argumento contra consultar. Caminho verificado: `ConsultarTabelaDeReferencia` dá o mês vigente, e `ConsultarValorComTodosParametros` com `modeloCodigoExterno=001267-0` + `tipoConsulta=codigo` devolve marca, modelo e preço. Armadilha que me custou meia hora: `ConsultarAnoModeloPeloCodigoFipe` recusa o mesmo código com “Parâmetros inválidos” — o endpoint da busca reversa é o outro. Mande form-urlencoded (com JSON o preflight barra) e varra os tipos 1/2/3, porque o tipo não está no código. Do NAVEGADOR, nunca do backend: o WAF da FIPE bloqueia IP de datacenter (foi o que derrubou a BrasilAPI, cujo `/api/fipe/preco` dá 500 permanente), e forjar cabeçalho para escapar dele seria driblar barreira posta de propósito. É API interna e sem contrato: se mudarem o site, trate como fonte fora do ar.",
+    status: "consulta-manual",
+    note: "AINDA é você quem busca no site; o que segue é o caminho já verificado para a bancada passar a consultar sozinha. A nota anterior argumentava contra EMBARCAR o dataset (e nisso continua certa: muda todo mês e nasceria velho dentro da imagem), mas isso nunca foi argumento contra consultar. Caminho verificado: `ConsultarTabelaDeReferencia` dá o mês vigente, e `ConsultarValorComTodosParametros` com `modeloCodigoExterno=001267-0` + `tipoConsulta=codigo` devolve marca, modelo e preço. Armadilha que me custou meia hora: `ConsultarAnoModeloPeloCodigoFipe` recusa o mesmo código com “Parâmetros inválidos” — o endpoint da busca reversa é o outro. Mande form-urlencoded (com JSON o preflight barra) e varra os tipos 1/2/3, porque o tipo não está no código. Do NAVEGADOR, nunca do backend: o WAF da FIPE bloqueia IP de datacenter (foi o que derrubou a BrasilAPI, cujo `/api/fipe/preco` dá 500 permanente), e forjar cabeçalho para escapar dele seria driblar barreira posta de propósito. É API interna e sem contrato: se mudarem o site, trate como fonte fora do ar.",
   },
   {
     id: "cnae",
@@ -258,8 +258,8 @@ export const SOURCES: DataSourceRef[] = [
     use: "Número com aquela pontuação típica → texto da atividade.",
     url: "https://concla.ibge.gov.br/busca-online-cnae.html",
     urlLabel: "concla.ibge.gov.br",
-    status: "aberta",
-    note: "Resolvida pela API do IBGE — `servicodados.ibge.gov.br/api/v2/cnae/subclasses/6201501` — sem chave e direto do navegador (verificado: HTTP 200 com a hierarquia inteira, subclasse → classe → grupo → divisão → seção). Vários códigos numa chamada só, separados por `|`; é o mesmo host que a bancada já usa para municípios. Duas armadilhas: `00.00-0/00` é SUBCLASSE, de 7 dígitos, e mandar isso em `/classes` (que é de 5) devolve `[]` em silêncio; e código inexistente devolve HTTP 200 com `[]`, não 404. Só resolve código → atividade: busca por texto exige o dataset embarcado.",
+    status: "consulta-manual",
+    note: "AINDA é você quem busca; a via automática está verificada e é curta. Resolve pela API do IBGE — `servicodados.ibge.gov.br/api/v2/cnae/subclasses/6201501` — sem chave e direto do navegador (verificado: HTTP 200 com a hierarquia inteira, subclasse → classe → grupo → divisão → seção). Vários códigos numa chamada só, separados por `|`; é o mesmo host que a bancada já usa para municípios. Duas armadilhas: `00.00-0/00` é SUBCLASSE, de 7 dígitos, e mandar isso em `/classes` (que é de 5) devolve `[]` em silêncio; e código inexistente devolve HTTP 200 com `[]`, não 404. Só resolve código → atividade: busca por texto exige o dataset embarcado.",
   },
   {
     id: "cid10",

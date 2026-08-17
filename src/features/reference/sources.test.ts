@@ -197,11 +197,27 @@ describe("decisões registradas — não regredir", () => {
    * O que despistava era o caminho: `dados-simplificados/…-r.json` dá 404 por
    * município. O certo é `dados/…-u.json`.
    */
-  it("TSE está aberto porque o TSE publica JSON com CORS — não porque afrouxamos a regra", () => {
-    const s = get("tse");
-    expect(s.status).toBe("aberta");
-    expect(s.note).toMatch(/CORS|Access-Control/i);
-    expect(s.note).toMatch(/dados-simplificados|-u\.json/);
+  /**
+   * CORRIGIDO NO MESMO DIA, e a lição vale mais que o teste: eu marquei TSE,
+   * FIPE e CNAE como `aberta` porque os endpoints existem — mas `aberta` aqui
+   * significa "A BANCADA já consulta por você", e nenhum decoder chama nenhum
+   * dos três. O selo passou a mentir na cara de quem lê.
+   *
+   * O selo descreve o que a bancada FAZ, não o que a fonte PERMITE. As duas
+   * coisas divergem, e é justamente essa divergência que vira item de roadmap.
+   */
+  it("fonte consultável mas não implementada NÃO é aberta — o selo é sobre nós", () => {
+    for (const id of ["tse", "fipe", "cnae"]) {
+      const s = get(id);
+      expect(s.status, id).toBe("consulta-manual");
+      // ...e a nota tem de deixar claro que a via automática já foi verificada,
+      // senão a próxima investigação refaz o mesmo trabalho.
+      expect(s.note, id).toMatch(/AINDA é você/);
+    }
+    // A descoberta não se perde: o caminho verificado fica escrito.
+    expect(get("tse").note).toMatch(/CORS|Access-Control/i);
+    expect(get("cnae").note).toMatch(/servicodados/);
+    expect(get("fipe").note).toMatch(/tipoConsulta=codigo/);
   });
 
   /** CID-10 tomou o lugar do SIATU como o caso legítimo de `adiada`. */
@@ -250,13 +266,6 @@ describe("decisões registradas — não regredir", () => {
       // A bancada passou a responder plaqueta de poste (aba Postes, 45.285
       // pontos pela API). A ordem aqui é a do arquivo, e o Cidade Iluminada
       // ficou no bloco que era o das bloqueadas.
-      // As três abaixo consultam a fonte DIRETO DO NAVEGADOR, sem backend e sem
-      // dado embarcado — um terceiro modo de "aberta", que a legenda passou a
-      // mencionar. Ficam aqui porque a ordem é a do arquivo, e elas nasceram no
-      // bloco que era o das consulta-manual.
-      "tse",
-      "fipe",
-      "cnae",
       "cidade-iluminada",
       // Achado colateral da investigação do SIATU: o COD_LOG, que é o "número
       // por rua" que se procurava lá, e este é público e consultável.
