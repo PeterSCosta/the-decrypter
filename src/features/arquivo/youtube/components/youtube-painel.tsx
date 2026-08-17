@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { comoTempo, listaDeInstantes } from "../../video/quadros";
 import {
   QUADROS_PUBLICADOS,
   type VideoDoYoutube,
@@ -60,7 +61,18 @@ export function YoutubePainel({
     aoAnalisarQuadro?.(b, `${video.id}-${chave}.jpg`);
   };
 
-  const seg = Number(segundo.replace(",", ".")) || 0;
+  /**
+   * Uma LISTA de marcas, não um instante só: `14, 60, 72, 90`.
+   *
+   * Aqui elas viram BOTÕES de pular, e não quadros extraídos — e a diferença é
+   * de regra, não de esforço. O YouTube publica quatro miniaturas fixas e mais
+   * nada; o quadro do segundo 72 só existe dentro do player, e tirá-lo de lá
+   * seria baixar o vídeo, que os termos de uso proíbem. Com as marcas na tela, o
+   * caminho honesto (pular, pausar, olhar) fica a um clique de cada instante.
+   */
+  const marcas = useMemo(() => listaDeInstantes(segundo) ?? [], [segundo]);
+  const [marcaAtiva, setMarcaAtiva] = useState(0);
+  const seg = marcas.length === 1 ? marcas[0] : marcaAtiva;
 
   return (
     <Card className="p-4">
@@ -101,10 +113,29 @@ export function YoutubePainel({
                 type="text"
                 value={segundo}
                 onChange={(e) => setSegundo(e.target.value)}
-                placeholder="0"
-                className="h-7 w-20 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-card)] px-2 font-mono text-xs text-[var(--text-primary)]"
+                placeholder="14, 60, 72, 90"
+                aria-label="Segundos a marcar no player"
+                className="h-7 w-44 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-card)] px-2 font-mono text-xs text-[var(--text-primary)]"
               />
             </div>
+            {marcas.length > 1 ? (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {marcas.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMarcaAtiva(m)}
+                    className={
+                      m === seg
+                        ? "rounded-[var(--radius-sm)] bg-[var(--brand)] px-2 py-1 font-mono text-xs text-[var(--brand-ink)]"
+                        : "rounded-[var(--radius-sm)] border border-[var(--border-subtle)] px-2 py-1 font-mono text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                    }
+                  >
+                    {comoTempo(m)}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             <iframe
               key={`${video.id}-${seg}`}
               title={video.titulo || "Vídeo do YouTube"}
@@ -119,8 +150,9 @@ export function YoutubePainel({
               Quadros que o YouTube publica
             </h4>
             <p className="mt-1 text-xs text-[var(--text-muted)]">
-              São QUATRO posições fixas — não dá para pedir um segundo arbitrário. Servem para OLHAR
-              (texto na tela, placa, rosto). <strong>Não rode análise de bits neles</strong>: são
+              São QUATRO posições fixas — não dá para pedir um segundo arbitrário, e é por isso que
+              a lista acima vira marca no player em vez de quadro extraído. Servem para OLHAR (texto
+              na tela, placa, rosto). <strong>Não rode análise de bits neles</strong>: são
               recomprimidos pelo Google a partir de vídeo já com perdas, e qualquer detector de LSB
               devolve ruído com cara de sinal.
             </p>

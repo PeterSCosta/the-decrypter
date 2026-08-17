@@ -28,6 +28,21 @@ export interface LookupHits {
   } | null;
   poste?: Poste | null;
   postes?: Poste[] | null;
+  /** CID-10 por código exato; `cids` é a busca pelo nome da doença. */
+  cid?: Cid | null;
+  cids?: Cid[] | null;
+}
+
+/** Um código da CID-10, como a API o devolve. `codigo` vem sem o ponto. */
+export interface Cid {
+  codigo: string;
+  descricao: string;
+  capitulo: number;
+  capituloDesc: string;
+  grupoDesc: string | null;
+  classif: string | null;
+  sexo: string | null;
+  naoObito: boolean;
 }
 
 const MAX = 200;

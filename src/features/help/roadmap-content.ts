@@ -29,7 +29,7 @@ export const STATUS_LABEL: Record<RoadStatus, string> = {
 };
 
 export const ROADMAP_INTRO =
-  "O que queremos melhorar no The Decrypter e as ideias que já conversamos mas ainda não entraram. “Em estudo” = depende de algo externo (dado oficial, chave de API, backend). Saíram desta lista porque já estão na bancada: as cores como decoder (nome ↔ HEX/RGB/HSL, faixas de resistor, catálogo Faber-Castell), a barra de Cadeia (“usar como entrada”), o campo de título, a faixa de dicas, o selo de “palavra real”, o detector de placa de carro (antiga ↔ Mercosul, com a UF pela faixa de letras) e o número por extenso.";
+  "O que queremos melhorar no The Decrypter e as ideias que já conversamos mas ainda não entraram. “Em estudo” = depende de algo externo (dado oficial, chave de API, backend). Saíram desta lista porque já estão na bancada: as cores como decoder (nome ↔ HEX/RGB/HSL, faixas de resistor, catálogo Faber-Castell), a barra de Cadeia (“usar como entrada”), o campo de título, a faixa de dicas, o selo de “palavra real”, o detector de placa de carro (antiga ↔ Mercosul, com a UF pela faixa de letras), o número por extenso, a CID-10 inteira (14.233 códigos, nos dois sentidos), a aba de Geolocalização e o reconhecimento de vídeo do YouTube pelo ID.";
 
 export const ROADMAP: RoadGroup[] = [
   {
@@ -117,7 +117,7 @@ export const ROADMAP: RoadGroup[] = [
         title: "Bases grandes por consulta (CNAE, FIPE, TSE)",
         status: "todo",
         desc: "Código de atividade econômica, de veículo ou uma votação → o nome correspondente.",
-        note: "Saiu de “ideia” para “a fazer”: a objeção era o peso de EMBARCAR centenas de KB, e a investigação de agosto/2026 mostrou que as três se resolvem por CONSULTA, sem embarcar nada. Endpoints verificados na mão: CNAE pela API do IBGE (mesmo host dos municípios), FIPE pela API do próprio site (do navegador, nunca do backend — o WAF de lá bloqueia IP de datacenter), TSE por JSON estático com CORS liberado. Os três caminhos estão escritos na Cola, com as armadilhas. O CID-10 saiu desta linha: só existe em ZIP do DATASUS, e por isso ficou como base adiada.",
+        note: "Saiu de “ideia” para “a fazer”: a objeção era o peso de EMBARCAR centenas de KB, e a investigação de agosto/2026 mostrou que as três se resolvem por CONSULTA, sem embarcar nada. Endpoints verificados na mão: CNAE pela API do IBGE (mesmo host dos municípios), FIPE pela API do próprio site (do navegador, nunca do backend — o WAF de lá bloqueia IP de datacenter), TSE por JSON estático com CORS liberado. Os três caminhos estão escritos na Cola, com as armadilhas. O CID-10 saiu desta linha por outro motivo: sem API, o ZIP do DATASUS era o único caminho — e ele virou acervo, com os 14.233 códigos respondendo dentro da bancada.",
       },
       {
         title: "Aba Arquivo — imagem, documento, vídeo",

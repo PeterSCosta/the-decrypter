@@ -9,6 +9,7 @@ import { cn } from "@/lib/cn";
 import { AVISO_DE_ENVIO, type ResultadoMusica, identificarMusica } from "@/lib/musica";
 import { Download, Play, Square, Wand2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { paraSegundos } from "../../video/quadros";
 import { type AchadoDtmf, type RecusaDtmf, ehDtmf, lerDtmf } from "../dtmf";
 import { type AchadoMorse, type RecusaMorse, ehAchado, lerMorse } from "../morse";
 import { type AchadoNotas, type RecusaNotas, ehNotas, lerNotas } from "../notas";
@@ -58,6 +59,15 @@ export function AudioPainel({
   const [notas, setNotas] = useState<Record<string, AchadoNotas | RecusaNotas> | null>(null);
   const [urlInvertido, setUrlInvertido] = useState<string | null>(null);
   const [canalDoRecorte, setCanalDoRecorte] = useState<"esquerdo" | "direito" | "ambos">("ambos");
+  /**
+   * O texto das caixas de "de/até" vive à parte da seleção.
+   *
+   * Se elas lessem `selecao` direto, apagar um dígito para digitar outro
+   * reescreveria a seleção no meio da digitação — e o campo saltaria embaixo do
+   * dedo. Aqui o texto é livre; só vira seleção quando dá para ler.
+   */
+  const [deTexto, setDeTexto] = useState("");
+  const [ateTexto, setAteTexto] = useState("");
   const [musica, setMusica] = useState<ResultadoMusica | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [erroMusica, setErroMusica] = useState<string | null>(null);
@@ -84,6 +94,18 @@ export function AudioPainel({
     a.preservesPitch = mantemTom;
   }, [velocidade, mantemTom]);
 
+  // Arrastar no espectrograma também escreve nas caixas: as duas formas de
+  // escolher o trecho mostram sempre o mesmo trecho.
+  useEffect(() => {
+    if (selecao) {
+      setDeTexto(selecao.de.toFixed(2));
+      setAteTexto(selecao.ate.toFixed(2));
+    } else {
+      setDeTexto("");
+      setAteTexto("");
+    }
+  }, [selecao]);
+
   const lsb = useMemo(() => {
     if (!analise) return null;
     const off = offsetDoPcm(bytes);
@@ -92,6 +114,29 @@ export function AudioPainel({
     const resultados = varrerLsb(bytes, { bitsPorAmostra: 16, canais, offset: off });
     return { resultados, corte: resultados[0]?.corteUsado ?? corteMinimo(bytes.length) };
   }, [analise, bytes]);
+
+  /**
+   * A seleção digitada — "do segundo 8 ao 16".
+   *
+   * Arrastar no espectrograma continua sendo o caminho principal, porque ali se
+   * VÊ a fronteira. Mas quando a resposta já vem escrita ("o trecho entre 8 e
+   * 16 s"), reproduzir isso com o mouse é trabalho de precisão para nada — e
+   * uma seleção arrastada de 8,03 a 15,87 não é o mesmo recorte.
+   *
+   * Aceita `8`, `8,5` e `1:23` (o mesmo leitor do painel de vídeo), e prende à
+   * duração do arquivo: pedir até o segundo 300 num áudio de 12 s devolvia um
+   * recorte vazio e um erro sem explicação.
+   */
+  const carregadoDuracao = analise?.carregado.duracao ?? 0;
+  const aplicarDigitado = (de0: string, ate0: string) => {
+    const de = paraSegundos(de0);
+    const ate = paraSegundos(ate0);
+    if (de === null || ate === null) return;
+    const fim = Math.min(ate, carregadoDuracao);
+    const inicio = Math.max(0, Math.min(de, fim));
+    if (!(fim > inicio)) return;
+    setSelecao({ de: inicio, ate: fim });
+  };
 
   /**
    * Recorta o que está selecionado, no canal escolhido, e devolve o WAV.
@@ -326,7 +371,8 @@ export function AudioPainel({
       <Card className="p-4">
         <h3 className="font-display text-sm text-[var(--text-primary)]">Recortar um trecho</h3>
         <p className="mt-1 text-xs text-[var(--text-muted)]">
-          Arraste no espectrograma para escolher o trecho. É manual de propósito: detectar sozinho
+          Arraste no espectrograma ou escreva os segundos — “faixa direita, do 8 ao 16” sai das duas
+          formas, e as duas ficam em dia uma com a outra. É manual de propósito: detectar sozinho
           onde uma faixa acaba e outra começa erra justo nos casos difíceis — transição sem
           silêncio, fade cruzado, mixagem contínua —, e você está VENDO a fronteira ali em cima.
         </p>
@@ -352,10 +398,35 @@ export function AudioPainel({
             </div>
           ) : null}
 
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-[var(--text-muted)]">do segundo</span>
+            <input
+              type="text"
+              value={deTexto}
+              onChange={(e) => setDeTexto(e.target.value)}
+              onBlur={() => aplicarDigitado(deTexto, ateTexto)}
+              onKeyDown={(e) => e.key === "Enter" && aplicarDigitado(deTexto, ateTexto)}
+              placeholder="8"
+              aria-label="Início do trecho, em segundos"
+              className="h-7 w-16 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-card)] px-2 font-mono text-xs text-[var(--text-primary)]"
+            />
+            <span className="text-xs text-[var(--text-muted)]">ao</span>
+            <input
+              type="text"
+              value={ateTexto}
+              onChange={(e) => setAteTexto(e.target.value)}
+              onBlur={() => aplicarDigitado(deTexto, ateTexto)}
+              onKeyDown={(e) => e.key === "Enter" && aplicarDigitado(deTexto, ateTexto)}
+              placeholder="16"
+              aria-label="Fim do trecho, em segundos"
+              className="h-7 w-16 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-card)] px-2 font-mono text-xs text-[var(--text-primary)]"
+            />
+          </div>
+
           <span className="font-mono text-xs text-[var(--text-secondary)]">
             {selecao
               ? `${selecao.de.toFixed(2)} – ${selecao.ate.toFixed(2)} s (${(selecao.ate - selecao.de).toFixed(2)} s)`
-              : "arquivo inteiro"}
+              : `arquivo inteiro (${carregadoDuracao.toFixed(1)} s)`}
           </span>
 
           {selecao ? (

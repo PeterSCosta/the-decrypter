@@ -103,7 +103,9 @@ export interface DecodeCandidate {
     | "math"
     | "wheel"
     | "poste"
-    | "ponte";
+    | "ponte"
+    | "cid"
+    | "youtube";
   /** Structured payload for custom renderers. */
   data?: unknown;
 }

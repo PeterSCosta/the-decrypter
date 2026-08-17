@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { comoTempo, instantesDaTira, paraSegundos } from "./quadros";
+import {
+  MAX_INSTANTES,
+  comoTempo,
+  instantesDaTira,
+  listaDeInstantes,
+  paraSegundos,
+} from "./quadros";
 
 describe("tempo", () => {
   it("formata como uma prova cita um instante", () => {
@@ -45,5 +51,41 @@ describe("tira de miniaturas", () => {
   it("duração inválida não inventa instante", () => {
     expect(instantesDaTira(0)).toEqual([]);
     expect(instantesDaTira(-1)).toEqual([]);
+  });
+});
+
+describe("lista de instantes", () => {
+  it("aceita a lista que se digita de verdade", () => {
+    expect(listaDeInstantes("14, 60, 72, 90")).toEqual([14, 60, 72, 90]);
+    expect(listaDeInstantes("14 60 72 90")).toEqual([14, 60, 72, 90]);
+    expect(listaDeInstantes("14;60;72")).toEqual([14, 60, 72]);
+    expect(listaDeInstantes("1:23, 2:00")).toEqual([83, 120]);
+  });
+
+  it("um instante só continua sendo um instante", () => {
+    expect(listaDeInstantes("37")).toEqual([37]);
+    expect(listaDeInstantes("1:23,4")).toEqual([83.4]);
+  });
+
+  it("a vírgula colada: decimal com dois pedaços, separador com três", () => {
+    // Esta é A ambiguidade do pt-BR nesta caixa, e a regra precisa ser estável:
+    // ninguém escreve um decimal com três vírgulas.
+    expect(listaDeInstantes("37,5")).toEqual([37.5]);
+    expect(listaDeInstantes("14,60,72,90")).toEqual([14, 60, 72, 90]);
+  });
+
+  it("ordena e tira repetido — dois seeks ao mesmo lugar dão a mesma imagem", () => {
+    expect(listaDeInstantes("90, 14, 90, 60")).toEqual([14, 60, 90]);
+  });
+
+  it("recusa em bloco o que não entende, em vez de extrair pela metade", () => {
+    expect(listaDeInstantes("14, abacaxi, 60")).toBeNull();
+    expect(listaDeInstantes("")).toBeNull();
+    expect(listaDeInstantes("   ")).toBeNull();
+  });
+
+  it("tem teto: cada quadro é um seek", () => {
+    const muitos = Array.from({ length: 40 }, (_, i) => i + 1).join(", ");
+    expect(listaDeInstantes(muitos)).toHaveLength(MAX_INSTANTES);
   });
 });

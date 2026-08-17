@@ -176,8 +176,8 @@ describe("decisões registradas — não regredir", () => {
    * só existe no Anexo II da LC 632/2007, em PDF.
    *
    * A política não mudou: continua valendo que dado em arquivo vira consulta
-   * quando dá (é por isso que o `cid10` FOI para `adiada` no mesmo commit). O
-   * que mudou é o fato sobre esta base.
+   * quando dá — e o `cid10` é a prova disso, tendo percorrido o caminho inteiro
+   * de `adiada` a acervo. O que mudou é o fato sobre esta base.
    */
   it("SIATU é consulta manual, e a nota explica por que não é só pedir", () => {
     const s = get("siatu-vm");
@@ -220,10 +220,20 @@ describe("decisões registradas — não regredir", () => {
     expect(get("fipe").note).toMatch(/tipoConsulta=codigo/);
   });
 
-  /** CID-10 tomou o lugar do SIATU como o caso legítimo de `adiada`. */
-  it("CID-10 é adiada: existe só em arquivo, e a nota diz qual", () => {
+  /**
+   * O CID-10 ERA o caso legítimo de `adiada` — "dado aberto em arquivo, pequeno
+   * o bastante para embarcar no dia em que uma prova pedir". Esse dia chegou
+   * por pedido direto, e os 14.233 códigos entraram no acervo.
+   *
+   * O caso continua aqui, invertido, porque o que ele guarda não é o selo: é a
+   * REGRA de que arquivo aberto vira consulta quando alguém precisa. A nota
+   * segue obrigada a dizer que não existe API — é isso que explica por que a
+   * base é acervo e não chamada externa.
+   */
+  it("CID-10 virou acervo: aberta, com a contagem e o porquê de não ser API", () => {
     const s = get("cid10");
-    expect(s.status).toBe("adiada");
+    expect(s.status).toBe("aberta");
+    expect(s.note).toMatch(/14\.233/);
     expect(s.note).toMatch(/ZIP|DATASUS/);
     expect(s.note).toMatch(/404|gov\.br/);
   });
@@ -260,6 +270,7 @@ describe("decisões registradas — não regredir", () => {
       "ruas-blumenau",
       "ceps-sc",
       "municipios-ibge",
+      "cid10",
       "aeroportos",
       "pix-ispb",
       "gs1",
@@ -271,6 +282,9 @@ describe("decisões registradas — não regredir", () => {
       // por rua" que se procurava lá, e este é público e consultável.
       "cod-log-blumenau",
     ]);
+    // O CID-10 entra no meio da lista, e não no fim: a ordem aqui é a do
+    // arquivo, e ele foi para junto das outras bases embarcadas.
+    expect(abertas.indexOf("cid10")).toBe(3);
   });
 
   it("as ressalvas honestas dos datasets embarcados continuam escritas", () => {

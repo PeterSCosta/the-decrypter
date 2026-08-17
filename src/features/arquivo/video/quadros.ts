@@ -46,6 +46,51 @@ export function paraSegundos(texto: string): number | null {
   return Number.isFinite(s) ? s : null;
 }
 
+/** Teto de uma tacada só: cada quadro é um seek, e um seek não é instantâneo. */
+export const MAX_INSTANTES = 24;
+
+/**
+ * Uma LISTA de instantes: `14, 60, 72, 90`.
+ *
+ * ── A VÍRGULA É AS DUAS COISAS, E ISSO PRECISA DE REGRA ─────────────────────
+ * Em pt-BR a vírgula separa itens (`14, 60`) e também é a casa decimal
+ * (`37,5`). Não dá para escolher uma: as duas aparecem de verdade nesta caixa.
+ * A regra, em ordem:
+ *
+ *  • vírgula seguida de espaço, ponto-e-vírgula, espaço e quebra de linha
+ *    SEMPRE separam — é o que se digita quando se quer uma lista;
+ *  • vírgula colada só separa quando há TRÊS ou mais pedaços (`14,60,72,90`):
+ *    ninguém escreve um decimal com três vírgulas;
+ *  • com dois pedaços colados (`37,5`), continua sendo decimal.
+ *
+ * O caso ambíguo de verdade — `14,60` querendo dizer dois quadros — resolve-se
+ * do lado de fora: o botão diz quantos quadros vai pegar antes do clique.
+ */
+export function listaDeInstantes(texto: string): number[] | null {
+  const bruto = texto.trim();
+  if (!bruto) return null;
+
+  const pedacos = bruto
+    .split(/[;\n]+|,\s+|\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .flatMap((p) => {
+      // Vírgula colada: só vira separador com três ou mais números.
+      const partes = p.split(",");
+      return partes.length >= 3 && /^\d+(,\d+)+$/.test(p) ? partes : [p];
+    });
+
+  const segundos: number[] = [];
+  for (const p of pedacos) {
+    const s = paraSegundos(p);
+    if (s === null) return null;
+    segundos.push(s);
+  }
+  // Ordenado e sem repetido: os seeks andam para a frente, e pedir o mesmo
+  // instante duas vezes só devolve a mesma imagem duas vezes.
+  return [...new Set(segundos)].sort((a, b) => a - b).slice(0, MAX_INSTANTES);
+}
+
 /**
  * Os instantes de uma tira de miniaturas.
  *

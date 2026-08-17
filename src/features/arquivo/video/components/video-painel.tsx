@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Download, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { type Quadro, comoTempo, instantesDaTira, paraSegundos } from "../quadros";
+import { type Quadro, comoTempo, instantesDaTira, listaDeInstantes } from "../quadros";
 
 /**
  * O painel de vídeo.
@@ -70,14 +70,26 @@ export function VideoPainel({
       v.currentTime = Math.min(segundo, Math.max(0, v.duration - 0.05));
     });
 
+  // Quantos quadros o texto pede — calculado antes do clique de propósito: é o
+  // que desfaz a ambiguidade da vírgula ("14,60" é um instante ou dois?) sem
+  // obrigar ninguém a decorar a regra.
+  const pedidos = useMemo(() => listaDeInstantes(instante), [instante]);
+
   const extrair = async () => {
-    const s = paraSegundos(instante);
-    if (s === null) return setErro("Não entendi o instante. Use 37, 37,5 ou 1:23,4.");
+    if (!pedidos?.length) {
+      return setErro(
+        "Não entendi o instante. Use 37, 37,5, 1:23,4 — ou uma lista: 14, 60, 72, 90.",
+      );
+    }
     setErro(null);
     setOcupado(true);
     try {
-      const q = await pegarQuadro(s);
-      setQuadros((lista) => [q, ...lista].slice(0, 8));
+      const novos: Quadro[] = [];
+      // Sequencial: um elemento de vídeo não está em dois instantes ao mesmo
+      // tempo, e seeks em paralelo devolvem o mesmo quadro repetido.
+      for (const s of pedidos) novos.push(await pegarQuadro(s));
+      // Os mais novos no topo, na ordem em que foram pedidos.
+      setQuadros((lista) => [...novos.reverse(), ...lista].slice(0, 24));
     } catch (e) {
       setErro(e instanceof Error ? e.message : "não consegui extrair o quadro");
     } finally {
@@ -143,16 +155,23 @@ export function VideoPainel({
           value={instante}
           onChange={(e) => setInstante(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && void extrair()}
-          placeholder="37,5 ou 1:23,4"
-          className="h-8 w-32 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-card)] px-2 font-mono text-xs text-[var(--text-primary)]"
+          placeholder="14, 60, 72, 90"
+          aria-label="Instantes a extrair"
+          className="h-8 w-56 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-card)] px-2 font-mono text-xs text-[var(--text-primary)]"
         />
         <Button size="sm" variant="secondary" disabled={!pronto || ocupado} onClick={extrair}>
-          Pegar quadro
+          {pedidos && pedidos.length > 1 ? `Pegar ${pedidos.length} quadros` : "Pegar quadro"}
         </Button>
         <Button size="sm" variant="ghost" disabled={!pronto || ocupado} onClick={gerarTira}>
           Tira de miniaturas
         </Button>
       </div>
+
+      {pedidos && pedidos.length > 1 ? (
+        <p className="mt-2 font-mono text-xs text-[var(--text-muted)]">
+          {pedidos.map((s) => comoTempo(s)).join(" · ")}
+        </p>
+      ) : null}
 
       {erro ? <p className="mt-2 text-sm text-[var(--color-pulse-600)]">{erro}</p> : null}
 

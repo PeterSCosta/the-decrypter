@@ -6,12 +6,14 @@ import { PonteCard } from "@/features/bridge/components/ponte-card";
 import type { BridgeRow } from "@/features/bridge/types";
 import { CepCard } from "@/features/cep/components/cep-card";
 import type { CepHit } from "@/features/cep/types";
+import { CidCard } from "@/features/cid/components/cid-card";
 import type { MathReport } from "@/features/math/arith";
 import { PosteCard } from "@/features/poste/components/poste-card";
 import type { Poste } from "@/features/poste/types";
 import type { CodeHit } from "@/features/reference/phone-codes";
 import { StreetCard } from "@/features/street-guide/components/street-card";
 import type { StreetRow } from "@/features/street-guide/types";
+import type { Cid } from "@/lib/lookup-cache";
 import { CornerDownRight } from "lucide-react";
 import type { BarcodeHint } from "../engine/decoders/barcode";
 import type { CaesarShiftRow } from "../engine/decoders/caesar-bruteforce";
@@ -22,6 +24,7 @@ import type { LocationData } from "../engine/decoders/location";
 import type { NcmHint } from "../engine/decoders/ncm";
 import type { ElementInfo } from "../engine/decoders/periodic-table";
 import type { RegistroBrHint } from "../engine/decoders/registrobr";
+import type { YoutubeHint } from "../engine/decoders/youtube";
 import { realWords } from "../engine/score";
 import type { DecoderCategory, ScoredCandidate } from "../engine/types";
 import { chainValueOf } from "../trail";
@@ -36,6 +39,7 @@ import { MathCard } from "./math-card";
 import { NcmCard } from "./ncm-card";
 import { RegistroBrCard } from "./registrobr-card";
 import { WheelCard } from "./wheel-card";
+import { YoutubeCard } from "./youtube-card";
 
 const TONE: Record<DecoderCategory, BadgeProps["tone"]> = {
   encoding: "info",
@@ -111,6 +115,10 @@ export function ResultCard({
           <DocumentCard doc={c.data as DocResult} />
         ) : c.render === "poste" ? (
           <PosteCard poste={c.data as Poste} />
+        ) : c.render === "youtube" ? (
+          <YoutubeCard hint={c.data as YoutubeHint} />
+        ) : c.render === "cid" ? (
+          <CidCard dado={c.data as Cid | Cid[]} />
         ) : c.render === "ponte" ? (
           <PonteCard ponte={c.data as BridgeRow} />
         ) : c.render === "map" ? (

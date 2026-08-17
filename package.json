@@ -14,7 +14,7 @@
     "format": "biome check --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:data": "pnpm build:streets && pnpm build:ceps && pnpm build:streets-geo && pnpm build:municipios && pnpm build:words && pnpm build:airports && pnpm build:bridges",
+    "build:data": "pnpm build:streets && pnpm build:ceps && pnpm build:streets-geo && pnpm build:municipios && pnpm build:words && pnpm build:airports && pnpm build:bridges && pnpm build:cid10",
     "build:streets": "tsx scripts/build-streets.ts",
     "build:ceps": "tsx scripts/build-ceps.ts",
     "build:streets-geo": "tsx scripts/geocode-streets.ts",
@@ -23,7 +23,8 @@
     "build:airports": "tsx scripts/build-airports.ts",
     "build:postes": "tsx scripts/build-postes.ts",
     "enrich:postes": "tsx scripts/enrich-postes.ts",
-    "build:bridges": "tsx scripts/build-bridges.ts"
+    "build:bridges": "tsx scripts/build-bridges.ts",
+    "build:cid10": "tsx scripts/build-cid10.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

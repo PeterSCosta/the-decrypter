@@ -15,6 +15,7 @@ import { TextExtractPanel } from "@/features/text-extract/components/text-extrac
 import { cn } from "@/lib/cn";
 import {
   BookOpen,
+  Compass,
   Eye,
   FileSearch,
   GitCompare,
@@ -50,6 +51,9 @@ const PostesPanel = lazy(() =>
 const ArquivoPanel = lazy(() =>
   import("@/features/arquivo/components/arquivo-panel").then((m) => ({ default: m.ArquivoPanel })),
 );
+const GeoPanel = lazy(() =>
+  import("@/features/geo/components/geo-panel").then((m) => ({ default: m.GeoPanel })),
+);
 const TriangulatePanel = lazy(() =>
   import("@/features/triangulate/components/triangulate-panel").then((m) => ({
     default: m.TriangulatePanel,
@@ -76,6 +80,7 @@ type TabId =
   | "anagram"
   | "fonts"
   | "reference"
+  | "geo"
   | "triangulate"
   | "postes"
   | "library"
@@ -94,6 +99,10 @@ const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string
   { id: "anagram", label: "Anagramas", icon: Shuffle },
   { id: "fonts", label: "Fontes", icon: Eye },
   { id: "reference", label: "Cola", icon: BookOpen },
+  // Antes da Triangulação: ela é a porta do assunto (o que é cada formato, o
+  // que fazer com um código pela metade), e a Triangulação é uma ferramenta
+  // específica de dentro dele.
+  { id: "geo", label: "Geolocalização", icon: Compass },
   { id: "triangulate", label: "Triangulação", icon: Triangle },
   { id: "postes", label: "Postes", icon: Lightbulb },
   { id: "library", label: "Biblioteca", icon: Library },
@@ -278,6 +287,9 @@ export function App() {
             {tab === "reference" && <ReferencePanel />}
             <Suspense fallback={<PainelCarregando />}>
               {tab === "arquivo" && <ArquivoPanel onDecodificador={mandarParaDecodificador} />}
+              {tab === "geo" && (
+                <GeoPanel aoDecodificar={mandarParaDecodificador} aoAbrirAba={setTab} />
+              )}
               {tab === "triangulate" && <TriangulatePanel />}
               {tab === "postes" && <PostesPanel />}
               {tab === "library" && <LibraryPanel aoAbrirPostes={() => setTab("postes")} />}

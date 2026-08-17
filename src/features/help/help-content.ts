@@ -398,6 +398,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "///palavra.palavra.palavra", out: "ponto no mapa" },
       },
       {
+        name: "Vídeo do YouTube",
+        desc: "Link ou o ID solto de 11 caracteres → título, canal e formato do vídeo, confirmados no oEmbed. Um ID passa despercebido numa prova: parece token ou sobra de URL. Palavra de 11 letras não dispara, e ID inexistente é dito na cara.",
+        example: { in: "b62kBXlBlyQ", out: "título e canal do vídeo" },
+      },
+      {
         name: "Aeroporto (IATA/ICAO)",
         desc: "Código de aeroporto → nome, cidade, país e mapa (base mundial OpenFlights).",
         example: { in: "GRU", out: "Guarulhos · São Paulo, Brasil" },
@@ -423,6 +428,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         name: "NCM",
         desc: "Código de mercadoria → descrição oficial.",
         example: { in: "22030000", out: "Cervejas de malte" },
+      },
+      {
+        name: "CID-10",
+        desc: "Código de doença → descrição, capítulo e grupo. Aceita A00.0 e A000 (a grafia das bases do SUS), e também acha o código pelo nome da doença. O capítulo costuma ser a pista: numa prova, o que liga os códigos é o agrupamento, não o diagnóstico.",
+        example: { in: "F41.1", out: "Ansiedade generalizada · Capítulo 5" },
       },
       {
         name: "Código de barras (EAN-13/8, UPC-A)",

@@ -22,8 +22,14 @@
  * O exemplo que este cabeçalho dava — "base sem CORS (SIATU) fica adiada" —
  * saiu, porque ele descrevia mal os dois lados: o SIATU manda header de CORS, e
  * o que trava ali não é rede, é o VM não estar publicado em lugar nenhum além
- * de um PDF. Ele agora é `consulta-manual`, e o `cid10` tomou o lugar como o
- * caso legítimo de `adiada`.
+ * de um PDF. Ele agora é `consulta-manual`.
+ *
+ * CORREÇÃO DE FATO (agosto/2026): o `cid10` era, aqui, O exemplo de `adiada` —
+ * "dado aberto em arquivo, pequeno o bastante para embarcar no dia em que uma
+ * prova pedir". Esse dia chegou por pedido direto: os 14.233 códigos do ZIP do
+ * DATASUS estão no acervo e respondem nos dois sentidos. A regra não mudou; o
+ * exemplo é que deixou de ser este, e no momento a lista não tem nenhum
+ * `adiada` — o selo continua valendo para a próxima base que só exista em ZIP.
  *
  * CORREÇÃO DE FATO (agosto/2026): o Cidade Iluminada estava aqui como
  * `bloqueada` por "reCAPTCHA + login". A anotação estava errada. Aquilo vale
@@ -120,6 +126,16 @@ export const SOURCES: DataSourceRef[] = [
     urlLabel: "cidades.ibge.gov.br",
     status: "aberta",
     note: "Sem coordenada: o cadastro do IBGE não devolve lat/lng, então coordenada → cidade não sai por aqui.",
+  },
+  {
+    id: "cid10",
+    name: "CID-10 (doenças)",
+    indexes: "Código A00.0 → doença, capítulo e grupo — e o nome da doença → código.",
+    use: "Letra + 2 ou 3 dígitos vira nome de doença (e daí letras, iniciais, contagem). Numa prova, o CAPÍTULO costuma ser a pista: o que liga os códigos é o agrupamento, não o diagnóstico.",
+    url: "http://www2.datasus.gov.br/cid10/V2008/cid10.htm",
+    urlLabel: "datasus.gov.br",
+    status: "aberta",
+    note: "14.233 códigos na bancada (2.045 categorias + 12.188 subcategorias), do CID10CSV.zip do DATASUS (V2008). Continua sem API — o `cid10.ia.br/api/*` devolve 404 e o portal de dados abertos exige conta no gov.br —, e foi por isso que a base virou acervo em vez de consulta: o ZIP oficial é o caminho que existe.",
   },
   {
     id: "aeroportos",
@@ -261,17 +277,6 @@ export const SOURCES: DataSourceRef[] = [
     status: "consulta-manual",
     note: "AINDA é você quem busca; a via automática está verificada e é curta. Resolve pela API do IBGE — `servicodados.ibge.gov.br/api/v2/cnae/subclasses/6201501` — sem chave e direto do navegador (verificado: HTTP 200 com a hierarquia inteira, subclasse → classe → grupo → divisão → seção). Vários códigos numa chamada só, separados por `|`; é o mesmo host que a bancada já usa para municípios. Duas armadilhas: `00.00-0/00` é SUBCLASSE, de 7 dígitos, e mandar isso em `/classes` (que é de 5) devolve `[]` em silêncio; e código inexistente devolve HTTP 200 com `[]`, não 404. Só resolve código → atividade: busca por texto exige o dataset embarcado.",
   },
-  {
-    id: "cid10",
-    name: "CID-10 (doenças)",
-    indexes: "Código A00.0 → doença ou diagnóstico.",
-    use: "Letra + 3 dígitos → nome da doença (e daí letras, iniciais, contagem).",
-    url: "http://www2.datasus.gov.br/cid10/V2008/cid10.htm",
-    urlLabel: "datasus.gov.br",
-    status: "adiada",
-    note: "Não existe API: o `cid10.ia.br/api/*` devolve 404 (o site é só HTML) e o portal de dados abertos exige conta no gov.br. O que existe é ZIP do DATASUS, ou seja, dado aberto em arquivo — que é exatamente a definição de `adiada` aqui, e não de consulta manual. São ~14 mil linhas, pequenas o bastante para embarcar no dia em que uma prova pedir; até lá, zero prova resolvida no acervo não justifica o peso.",
-  },
-
   {
     id: "cidade-iluminada",
     name: "Cidade Iluminada (postes, Exati)",
