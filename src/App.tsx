@@ -137,9 +137,24 @@ export function App() {
       ) : view === "admin" ? (
         <AdminPage onClose={() => setView("app")} />
       ) : (
-        <main className="mx-auto max-w-5xl px-4 py-6">
+        /**
+         * Duas navegações, uma por largura — e a razão é aritmética.
+         *
+         * São 13 abas. Numa barra horizontal elas não cabem nem em 2000 px: o
+         * print do dono mostrava "Cola" cortado no meio, e o resto atrás de
+         * rolagem lateral que ninguém descobre. Ao mesmo tempo, o conteúdo
+         * estava preso em `max-w-5xl` (1024 px) — num monitor largo, metade da
+         * tela era margem.
+         *
+         * A partir de `lg` (1024 px) a navegação vira COLUNA fixa e o conteúdo
+         * ocupa o resto, até 1600 px. Abaixo disso, continua exatamente a barra
+         * horizontal de antes — é regra do projeto que nada regrida no celular,
+         * e a 375 px uma coluna lateral comeria metade da largura útil.
+         */
+        <main className="mx-auto max-w-[1600px] px-4 py-6 lg:flex lg:gap-6">
+          {/* Barra horizontal: só abaixo de lg. */}
           <nav
-            className="mb-6 flex gap-1 overflow-x-auto border-b border-[var(--border-subtle)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="mb-6 flex gap-1 overflow-x-auto border-b border-[var(--border-subtle)] lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             role="tablist"
           >
             {TABS.map((t) => {
@@ -166,25 +181,58 @@ export function App() {
             })}
           </nav>
 
-          {tab === "decoder" && <DecoderWorkbench entradaInicial={semente} />}
-          {tab === "text" && <TextExtractPanel />}
-          {tab === "positions" && <PositionsPanel />}
-          {tab === "matrix" && <MatrixPanel onDecodificador={mandarParaDecodificador} />}
-          {tab === "diff" && <DiffPanel />}
-          {tab === "fonts" && <FontsPanel />}
-          {tab === "anagram" && <AnagramPanel />}
-          {tab === "reference" && <ReferencePanel />}
-          <Suspense fallback={<PainelCarregando />}>
-            {tab === "arquivo" && <ArquivoPanel onDecodificador={mandarParaDecodificador} />}
-            {tab === "triangulate" && <TriangulatePanel />}
-            {tab === "postes" && <PostesPanel />}
-            {tab === "library" && <LibraryPanel aoAbrirPostes={() => setTab("postes")} />}
-            {tab === "fleet" && <FleetPanel />}
-          </Suspense>
+          {/* Coluna lateral: só a partir de lg. `sticky` para a navegação
+              acompanhar a rolagem de um painel longo, como o de Arquivo. */}
+          <nav className="hidden w-52 shrink-0 lg:block" role="tablist" aria-label="Ferramentas">
+            <div className="sticky top-4 flex flex-col gap-0.5">
+              {TABS.map((t) => {
+                const active = tab === t.id;
+                const Icon = t.icon;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setTab(t.id)}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-[var(--radius-md)] px-3 py-2 text-left text-sm font-medium transition-colors",
+                      active
+                        ? "bg-[var(--brand)] text-[var(--brand-ink)]"
+                        : "text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)] hover:text-[var(--text-primary)]",
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+
+          {/* `min-w-0` é obrigatório: sem ele um filho largo (hexdump,
+              espectrograma) estica o flex e empurra a coluna para fora. */}
+          <div className="min-w-0 flex-1">
+            {tab === "decoder" && <DecoderWorkbench entradaInicial={semente} />}
+            {tab === "text" && <TextExtractPanel />}
+            {tab === "positions" && <PositionsPanel />}
+            {tab === "matrix" && <MatrixPanel onDecodificador={mandarParaDecodificador} />}
+            {tab === "diff" && <DiffPanel />}
+            {tab === "fonts" && <FontsPanel />}
+            {tab === "anagram" && <AnagramPanel />}
+            {tab === "reference" && <ReferencePanel />}
+            <Suspense fallback={<PainelCarregando />}>
+              {tab === "arquivo" && <ArquivoPanel onDecodificador={mandarParaDecodificador} />}
+              {tab === "triangulate" && <TriangulatePanel />}
+              {tab === "postes" && <PostesPanel />}
+              {tab === "library" && <LibraryPanel aoAbrirPostes={() => setTab("postes")} />}
+              {tab === "fleet" && <FleetPanel />}
+            </Suspense>
+          </div>
         </main>
       )}
 
-      <footer className="mx-auto max-w-5xl px-4 pb-10 pt-4 text-xs text-[var(--text-muted)]">
+      <footer className="mx-auto max-w-[1600px] px-4 pb-10 pt-4 text-xs text-[var(--text-muted)]">
         The Decrypter · oficina de cifras · dados: Blumenau (Rol de Ruas) + CEPs de Santa Catarina
       </footer>
     </div>

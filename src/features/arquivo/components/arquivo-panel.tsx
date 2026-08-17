@@ -7,6 +7,7 @@ import { ChevronRight, Download, FileSearch, Upload, Wand2 } from "lucide-react"
 import { type DragEvent, useCallback, useMemo, useRef, useState } from "react";
 import { AudioPainel } from "../audio/components/audio-painel";
 import type { Recorte } from "../carve";
+import { DocumentoPainel } from "../documento/components/documento-painel";
 import { type Ficha, calcularHashes, montarFicha } from "../ficha";
 import { ImagemPainel } from "../imagem/components/imagem-painel";
 import { type Achado, type NoDeArquivo, noDeRecorte, noRaiz } from "../no";
@@ -309,7 +310,12 @@ export function ArquivoPanel({
         <ImagemPainel bytes={atual.bytes} nome={atual.nome} onDecodificador={onDecodificador} />
       ) : null}
 
-      {/* Painel do tipo — por enquanto, áudio. */}
+      {/* Compactado ou documento do Office: os dois são ZIP. */}
+      {analise.identidade.familia === "arquivo-comprimido" || analise.identidade.tipo === "ZIP" ? (
+        <DocumentoPainel bytes={atual.bytes} onDecodificador={onDecodificador} />
+      ) : null}
+
+      {/* Painel do tipo. */}
       {analise.identidade.familia === "audio" ? (
         <AudioPainel bytes={atual.bytes} nome={atual.nome} onDecodificador={onDecodificador} />
       ) : null}
