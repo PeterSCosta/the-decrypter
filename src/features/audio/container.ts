@@ -37,6 +37,22 @@ export interface AchadoEmbutido {
   offset: number;
   /** Um arquivo inteiro colado no fim pesa diferente de 4 bytes por acaso. */
   bytesAteOFim: number;
+  /**
+   * Quão sério é o achado — e esta distinção é a diferença entre a ferramenta
+   * ser útil e ser um gerador de ruído.
+   *
+   * `depois-do-fim` é evidência forte: a assinatura está no espaço que o próprio
+   * cabeçalho declara não pertencer ao áudio. É onde cai o arquivo colado com
+   * `cat foto.jpg >> musica.wav`.
+   *
+   * `dentro-do-dado` é fraco por natureza. Uma assinatura de 3 ou 4 bytes casa
+   * por acaso dentro de qualquer massa de dados — e casou de verdade: na
+   * primeira versão deste módulo, um WAV de 1 s com uma foto no fim fazia o
+   * detector apontar um "JPEG" no offset 46.592, dentro das amostras, em vez do
+   * arquivo real em 176.444. Marcar em vez de esconder: o achado fraco continua
+   * visível para quem quiser cavar, mas não se disfarça de descoberta.
+   */
+  forca: "depois-do-fim" | "dentro-do-dado";
 }
 
 export interface FichaDoArquivo {
@@ -260,8 +276,18 @@ export function analisarContainer(bytes: Uint8Array, nomeDoArquivo = ""): FichaD
     ficha.bytesDepoisDoFim = bytes.length - ficha.fimDeclarado;
   }
 
-  // Varredura de assinatura. Começa em 4 para não acusar o próprio cabeçalho.
+  // Varredura de assinatura.
+  //
+  // Duas ocorrências por tipo, no máximo: a PRIMEIRA depois do fim declarado
+  // (que é o achado que interessa) e a primeira dentro do dado (que fica
+  // marcada como fraca). Parar na primeira ocorrência qualquer, como a versão
+  // anterior fazia, escondia o arquivo colado no fim atrás de um casamento por
+  // acaso lá no meio das amostras.
+  const fim = ficha.fimDeclarado;
   for (const a of ASSINATURAS) {
+    let dentro: AchadoEmbutido | null = null;
+    let depois: AchadoEmbutido | null = null;
+
     for (let i = 4; i <= bytes.length - a.bytes.length; i++) {
       let bate = true;
       for (let j = 0; j < a.bytes.length; j++) {
@@ -270,11 +296,25 @@ export function analisarContainer(bytes: Uint8Array, nomeDoArquivo = ""): FichaD
           break;
         }
       }
-      if (bate) {
-        ficha.embutidos.push({ tipo: a.tipo, offset: i, bytesAteOFim: bytes.length - i });
-        break; // uma ocorrência por tipo basta para levantar a mão
+      if (!bate) continue;
+
+      const eDepois = fim != null && i >= fim;
+      const achado: AchadoEmbutido = {
+        tipo: a.tipo,
+        offset: i,
+        bytesAteOFim: bytes.length - i,
+        forca: eDepois ? "depois-do-fim" : "dentro-do-dado",
+      };
+      if (eDepois) {
+        depois = achado;
+        break; // o forte encerra a busca deste tipo
       }
+      dentro ??= achado;
     }
+
+    // O forte primeiro; o fraco só aparece quando não houve forte.
+    if (depois) ficha.embutidos.push(depois);
+    else if (dentro) ficha.embutidos.push(dentro);
   }
 
   if (!ficha.extensaoBate) {

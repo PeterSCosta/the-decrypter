@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { correlacao, medirCanais, mid, side } from "./canais";
 import { analisarContainer } from "./container";
+import { montarWavBytes } from "./decode";
 import { goertzel, hann, magnitudes } from "./fft";
 import { acharCorteDoCodec, calcularStft, energiaPorFaixa } from "./stft";
 
@@ -158,7 +159,8 @@ describe("contêiner (bytes crus)", () => {
     const zip = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 1, 2, 3, 4, 5, 6, 7, 8]);
     const f = analisarContainer(wav(100, zip), "prova.wav");
     expect(f.bytesDepoisDoFim).toBe(12);
-    expect(f.embutidos.some((x) => x.tipo === "ZIP")).toBe(true);
+    const achadoZip = f.embutidos.find((x) => x.tipo === "ZIP");
+    expect(achadoZip?.forca).toBe("depois-do-fim");
     expect(f.observacoes.join(" ")).toContain("depois do fim declarado");
   });
 
@@ -276,5 +278,45 @@ describe("STFT e espectro", () => {
     }
     const esp = calcularStft(x, taxa, { n: 1024, salto: 512, pisoDb: -120 });
     expect(acharCorteDoCodec(esp)).toBeNull();
+  });
+});
+
+describe("força do achado — a defesa contra o falso positivo", () => {
+  /**
+   * O caso REAL que motivou a distinção: um WAV de 1 s com uma foto colada no
+   * fim fazia o detector apontar um "JPEG" no offset 46.592 — dentro das
+   * amostras — em vez do arquivo de verdade, lá no fim. Assinatura de 3 bytes
+   * (`FF D8 FF`) casa por acaso em qualquer massa de dados.
+   */
+  it("acha a foto colada no FIM, e não o casamento por acaso no meio do áudio", () => {
+    const canal = Float32Array.from({ length: 44100 }, (_, i) => Math.sin(i / 20) * 0.5);
+    const wav = montarWavBytes([canal, canal], 44100);
+
+    const jpeg = new Uint8Array(5000);
+    jpeg.set([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46], 0);
+    for (let i = 10; i < jpeg.length - 2; i++) jpeg[i] = (i * 7) & 0xff;
+    jpeg.set([0xff, 0xd9], jpeg.length - 2);
+
+    const juntos = new Uint8Array(wav.length + jpeg.length);
+    juntos.set(wav, 0);
+    juntos.set(jpeg, wav.length);
+
+    const f = analisarContainer(juntos, "prova.wav");
+    const achado = f.embutidos.find((x) => x.tipo === "JPEG");
+    expect(achado).toBeDefined();
+    // O offset tem de ser o do arquivo REAL, não o do acaso.
+    expect(achado?.offset).toBe(wav.length);
+    expect(achado?.forca).toBe("depois-do-fim");
+    expect(f.bytesDepoisDoFim).toBe(5000);
+  });
+
+  it("num arquivo sem nada colado, o que sobra é marcado como fraco", () => {
+    // Não esconder o achado fraco: mostrá-lo COMO fraco. Quem quiser cavar,
+    // cava; quem está com pressa não é enganado.
+    const canal = Float32Array.from({ length: 44100 }, (_, i) => Math.sin(i / 20) * 0.5);
+    const limpo = montarWavBytes([canal, canal], 44100);
+    const f = analisarContainer(limpo, "limpo.wav");
+    expect(f.bytesDepoisDoFim).toBe(0);
+    for (const e of f.embutidos) expect(e.forca).toBe("dentro-do-dado");
   });
 });

@@ -10,7 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { decoders } from "./engine/registry";
 import { partition, runDecoders } from "./engine/run";
 import { setWordSet } from "./engine/score";
-import { sniff } from "./engine/sniff";
+import { type Hint, sniff } from "./engine/sniff";
 import { titleHints } from "./engine/title-hints";
 import { loadWordLookup } from "./engine/words";
 import { type TrailStep, popStep, pushStep, truncateTo } from "./trail";
@@ -254,11 +254,35 @@ export function useDecoder(entradaInicial = "") {
   const hints = useMemo(() => {
     const fromInput = debInput.trim() ? sniff(debInput, ctx) : [];
     const fromTitle = debTitle.trim() ? titleHints(debTitle) : [];
+    /**
+     * Consulta online fora do ar vira CHIP, não silêncio.
+     *
+     * O estado já era calculado e passado no contexto — e nenhum componente o
+     * lia. Na prática, com a API fora, com o token vencido ou no 429, os cards
+     * de CEP, poste, município e aeroporto simplesmente não apareciam, sem
+     * distinguir "não encontrei" de "não consegui perguntar". É o que o plano
+     * chamava de devolver `[]` calado, e é a mesma regra que o outro repo
+     * escreve como "nunca mascarar falha de backend como estado vazio".
+     *
+     * O aviso diz também o que CONTINUA funcionando, porque quase tudo
+     * continua: as ~100 cifras, o realce de palavra real e os anagramas são
+     * todos locais.
+     */
+    const daRede: Hint[] = hitsErro
+      ? [
+          {
+            id: "consulta-fora",
+            label: "Consultas online indisponíveis",
+            detail: `${hitsErro} — cifras, transformações e anagramas seguem funcionando; só CEP, município, aeroporto e poste dependem da rede.`,
+            tone: "warn" as const,
+          },
+        ]
+      : [];
     // O título pode repetir o que a entrada já disse por caminho independente
     // ("Ask Me" e "84 79 80 79" apontam ambos para ASCII) — uma dica só.
     const seen = new Set(fromInput.map((h) => h.id));
-    return [...fromInput, ...fromTitle.filter((h) => !seen.has(h.id))];
-  }, [debInput, debTitle, ctx]);
+    return [...daRede, ...fromInput, ...fromTitle.filter((h) => !seen.has(h.id))];
+  }, [debInput, debTitle, ctx, hitsErro]);
 
   return {
     input,
