@@ -50,6 +50,8 @@ export function AudioPainel({
   const [mantemTom, setMantemTom] = useState(true);
   const [tocando, setTocando] = useState(false);
   const [morse, setMorse] = useState<Record<string, AchadoMorse | RecusaMorse> | null>(null);
+  const [selecao, setSelecao] = useState<{ de: number; ate: number } | null>(null);
+  const [canalDoRecorte, setCanalDoRecorte] = useState<"esquerdo" | "direito" | "ambos">("ambos");
   const refAudio = useRef<HTMLAudioElement>(null);
 
   // Ajusta o teto de frequência à taxa real assim que ela é conhecida.
@@ -81,6 +83,43 @@ export function AudioPainel({
     const resultados = varrerLsb(bytes, { bitsPorAmostra: 16, canais, offset: off });
     return { resultados, corte: resultados[0]?.corteUsado ?? corteMinimo(bytes.length) };
   }, [analise, bytes]);
+
+  /**
+   * Recorta o que está selecionado, no canal escolhido, e devolve o WAV.
+   *
+   * Separado do download porque é exatamente isto que um serviço de
+   * reconhecimento de música vai receber: o trecho, de UM canal. Misturar os
+   * dois canais é o erro que impede identificar duas músicas simultâneas —
+   * a soma não casa com nenhuma delas.
+   */
+  const montarRecorte = (): { blob: Blob; nome: string } | null => {
+    if (!analise) return null;
+    const { canais, taxa } = analise.carregado;
+    const i0 = selecao ? Math.floor(selecao.de * taxa) : 0;
+    const i1 = selecao ? Math.ceil(selecao.ate * taxa) : canais[0].length;
+    const fatiar = (c: Float32Array) => c.slice(i0, Math.min(i1, c.length));
+
+    const escolhidos =
+      canalDoRecorte === "ambos" || canais.length < 2
+        ? canais.map(fatiar)
+        : [fatiar(canais[canalDoRecorte === "esquerdo" ? 0 : 1])];
+    if (!escolhidos[0]?.length) return null;
+
+    const faixa = selecao ? `-${selecao.de.toFixed(1)}s-${selecao.ate.toFixed(1)}s` : "";
+    const qual = canais.length > 1 && canalDoRecorte !== "ambos" ? `-${canalDoRecorte}` : "";
+    return { blob: montarWav(escolhidos, taxa), nome: `${nome}${qual}${faixa}.wav` };
+  };
+
+  const baixarRecorte = () => {
+    const r = montarRecorte();
+    if (!r) return;
+    const url = URL.createObjectURL(r.blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = r.nome;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const baixarCanal = (indice: number | "diferenca") => {
     if (!analise) return;
@@ -199,7 +238,12 @@ export function AudioPainel({
         </div>
 
         {espectroAtual ? (
-          <EspectrogramaCanvas espectro={espectroAtual} opcoes={opcoes} />
+          <EspectrogramaCanvas
+            espectro={espectroAtual}
+            opcoes={opcoes}
+            selecao={selecao}
+            aoSelecionar={setSelecao}
+          />
         ) : (
           <p className="text-sm text-[var(--text-secondary)]">Sem espectro para esta vista.</p>
         )}
@@ -234,6 +278,64 @@ export function AudioPainel({
           eixo é linear de propósito: a escala logarítmica espreme os agudos, que é onde as
           ferramentas de “imagem para som” escrevem.
         </p>
+      </Card>
+
+      {/* Recorte — a resposta ao caso de duas músicas, uma em cada canal. */}
+      <Card className="p-4">
+        <h3 className="font-display text-sm text-[var(--text-primary)]">Recortar um trecho</h3>
+        <p className="mt-1 text-xs text-[var(--text-muted)]">
+          Arraste no espectrograma para escolher o trecho. É manual de propósito: detectar sozinho
+          onde uma faixa acaba e outra começa erra justo nos casos difíceis — transição sem
+          silêncio, fade cruzado, mixagem contínua —, e você está VENDO a fronteira ali em cima.
+        </p>
+
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          {metricas.estereo ? (
+            <div className="flex gap-1">
+              {(["esquerdo", "direito", "ambos"] as const).map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCanalDoRecorte(c)}
+                  className={cn(
+                    "rounded-[var(--radius-sm)] px-2 py-1 text-xs capitalize",
+                    canalDoRecorte === c
+                      ? "bg-[var(--brand)] text-[var(--brand-ink)]"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)]",
+                  )}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          <span className="font-mono text-xs text-[var(--text-secondary)]">
+            {selecao
+              ? `${selecao.de.toFixed(2)} – ${selecao.ate.toFixed(2)} s (${(selecao.ate - selecao.de).toFixed(2)} s)`
+              : "arquivo inteiro"}
+          </span>
+
+          {selecao ? (
+            <Button size="sm" variant="ghost" onClick={() => setSelecao(null)}>
+              limpar
+            </Button>
+          ) : null}
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button size="sm" variant="secondary" onClick={() => baixarRecorte()}>
+            <Download className="h-4 w-4" />
+            Baixar recorte (WAV)
+          </Button>
+        </div>
+        {metricas.estereo && metricas.correlacao < 0.3 ? (
+          <p className="mt-2 text-xs text-[var(--text-primary)]">
+            Os canais têm conteúdo bem diferente entre si — se houver uma música em cada faixa,
+            recorte <strong>um canal de cada vez</strong>. Misturados, o reconhecimento não casa com
+            nenhuma das duas.
+          </p>
+        ) : null}
       </Card>
 
       {/* Ouvir */}
