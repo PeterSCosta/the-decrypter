@@ -42,6 +42,16 @@ export const HELP_SECTIONS: HelpSection[] = [
         desc: "Bases compactas (Base45 de QR, Base58 de cripto, Ascii85).",
         example: { in: "9xa^", out: "bytes" },
       },
+      {
+        name: "Base91 (basE91)",
+        desc: "Binário→texto mais denso que o Base64 (~23% de inchaço contra 33%), com 91 dos 94 ASCII imprimíveis. Lê aos pares, e cada par carrega 13 ou 14 bits conforme o próprio valor.",
+        example: { in: "si;ge,EI6U", out: "Blumenau" },
+      },
+      {
+        name: "Base36 (número)",
+        desc: "Um NÚMERO escrito com 0-9 e A-Z — não é binário→texto como as outras bases. Contas em BigInt: acima de 11 caracteres o número comum arredondaria e devolveria outro valor.",
+        example: { in: "zik0zj", out: "2147483647" },
+      },
       { name: "Hexadecimal", desc: "Bytes em hex.", example: { in: "48 69", out: "Hi" } },
       {
         name: "Binário / Octal / Decimal (ASCII)",
