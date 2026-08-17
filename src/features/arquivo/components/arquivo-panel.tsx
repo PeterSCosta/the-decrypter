@@ -4,11 +4,13 @@ import { Card } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
 import { cn } from "@/lib/cn";
 import { ChevronRight, Download, FileSearch, Upload, Wand2 } from "lucide-react";
-import { type DragEvent, useCallback, useRef, useState } from "react";
+import { type DragEvent, useCallback, useMemo, useRef, useState } from "react";
 import { AudioPainel } from "../audio/components/audio-painel";
 import type { Recorte } from "../carve";
+import { type Ficha, calcularHashes, montarFicha } from "../ficha";
 import { type Achado, type NoDeArquivo, noDeRecorte, noRaiz } from "../no";
 import { Hexdump } from "./hexdump";
+import { PreviaDeImagem } from "./previa";
 
 const tamanho = (n: number) =>
   n >= 1024 * 1024
@@ -44,6 +46,8 @@ export function ArquivoPanel({
   const [ancora, setAncora] = useState<number | undefined>(undefined);
   const [arrastando, setArrastando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [modificadoEm, setModificadoEm] = useState<number | null>(null);
+  const [hashes, setHashes] = useState<{ sha1: string; sha256: string } | null>(null);
   const refInput = useRef<HTMLInputElement>(null);
 
   const atual = trilha[trilha.length - 1] ?? null;
@@ -52,6 +56,7 @@ export function ArquivoPanel({
     setErro(null);
     try {
       const bytes = new Uint8Array(await arquivo.arrayBuffer());
+      setModificadoEm(arquivo.lastModified || null);
       setTrilha([noRaiz(bytes, arquivo.name, arquivo.type || null)]);
       setAncora(undefined);
     } catch (e) {
@@ -72,6 +77,8 @@ export function ArquivoPanel({
     if (!novo) return;
     setTrilha((t) => [...t, novo]);
     setAncora(undefined);
+    // Os hashes são do nó anterior; deixá-los seria mentir sobre o recorte.
+    setHashes(null);
   };
 
   const baixar = (bytes: Uint8Array, nome: string) => {
@@ -297,6 +304,11 @@ export function ArquivoPanel({
         </Card>
       ) : null}
 
+      {/* Se é imagem, MOSTRA a imagem — metade das provas se resolve olhando. */}
+      {analise.identidade.familia === "imagem" ? (
+        <PreviaDeImagem bytes={atual.bytes} nome={atual.nome} />
+      ) : null}
+
       {/* Painel do tipo — por enquanto, áudio. */}
       {analise.identidade.familia === "audio" ? (
         <AudioPainel bytes={atual.bytes} nome={atual.nome} onDecodificador={onDecodificador} />
@@ -324,6 +336,19 @@ export function ArquivoPanel({
         </p>
       </Card>
 
+      {/* Ficha — os metadados e os detalhes do formato. */}
+      <FichaCard
+        bytes={atual.bytes}
+        nome={atual.nome}
+        identidade={analise.identidade}
+        modificadoEm={atual.profundidade === 0 ? modificadoEm : null}
+        hashes={hashes}
+        aoPedirHashes={() => {
+          void calcularHashes(atual.bytes).then(setHashes);
+        }}
+        onDecodificador={onDecodificador}
+      />
+
       {/* Bytes */}
       <Card className="p-4">
         <h3 className="font-display text-sm text-[var(--text-primary)]">Bytes</h3>
@@ -333,5 +358,119 @@ export function ArquivoPanel({
         <Hexdump bytes={atual.bytes} ancora={ancora} />
       </Card>
     </div>
+  );
+}
+
+/**
+ * A ficha do arquivo — o que ele É, em detalhe.
+ *
+ * Fica no fim da página de propósito: a "primeira olhada" responde "tem algo
+ * estranho aqui?", e esta responde "o que exatamente é isto?". Quem chega com
+ * pressa lê a primeira; quem já sabe que achou alguma coisa desce até aqui.
+ */
+function FichaCard({
+  bytes,
+  nome,
+  identidade,
+  modificadoEm,
+  hashes,
+  aoPedirHashes,
+  onDecodificador,
+}: {
+  bytes: Uint8Array;
+  nome: string;
+  identidade: Parameters<typeof montarFicha>[2];
+  modificadoEm: number | null;
+  hashes: { sha1: string; sha256: string } | null;
+  aoPedirHashes: () => void;
+  onDecodificador?: (texto: string) => void;
+}) {
+  const ficha: Ficha = useMemo(
+    () => montarFicha(bytes, nome, identidade, modificadoEm),
+    [bytes, nome, identidade, modificadoEm],
+  );
+
+  return (
+    <Card className="p-4">
+      <h3 className="font-display text-sm text-[var(--text-primary)]">Ficha do arquivo</h3>
+
+      {ficha.grupos.map((g) => (
+        <div key={g.titulo} className="mt-3">
+          <h4 className="text-[0.6875rem] uppercase tracking-wide text-[var(--text-muted)]">
+            {g.titulo}
+          </h4>
+          <dl className="mt-1 grid gap-x-4 gap-y-1 sm:grid-cols-2">
+            {g.campos.map((c) => (
+              <div key={`${g.titulo}-${c.rotulo}`} className="flex flex-wrap items-baseline gap-2">
+                <dt className="font-mono text-xs text-[var(--text-muted)]">{c.rotulo}</dt>
+                <dd className="font-mono text-xs text-[var(--text-primary)]">{c.valor}</dd>
+                {c.atencao ? <Badge tone="pulse">{c.atencao}</Badge> : null}
+              </div>
+            ))}
+          </dl>
+        </div>
+      ))}
+
+      {ficha.tags.length ? (
+        <div className="mt-4">
+          <h4 className="text-[0.6875rem] uppercase tracking-wide text-[var(--text-muted)]">
+            Tags e metadados
+          </h4>
+          <ul className="mt-1 space-y-1">
+            {ficha.tags.map((t) => (
+              <li key={`${t.fonte}-${t.texto}`} className="flex items-start gap-2">
+                <span className="shrink-0 font-mono text-[0.6875rem] text-[var(--text-muted)]">
+                  {t.fonte}
+                </span>
+                <code className="min-w-0 flex-1 break-all font-mono text-xs text-[var(--text-primary)]">
+                  {t.texto}
+                </code>
+                <CopyButton value={t.texto} />
+                {onDecodificador ? (
+                  <button
+                    type="button"
+                    title="Mandar ao Decodificador"
+                    onClick={() => onDecodificador(t.texto)}
+                    className="rounded p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  >
+                    <Wand2 className="h-3.5 w-3.5" />
+                  </button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <div className="mt-4">
+        <h4 className="text-[0.6875rem] uppercase tracking-wide text-[var(--text-muted)]">
+          Impressão digital
+        </h4>
+        {hashes ? (
+          <dl className="mt-1 space-y-1">
+            {(["sha1", "sha256"] as const).map((k) => (
+              <div key={k} className="flex flex-wrap items-baseline gap-2">
+                <dt className="font-mono text-xs text-[var(--text-muted)]">
+                  {k === "sha1" ? "SHA-1" : "SHA-256"}
+                </dt>
+                <dd className="min-w-0 flex-1 break-all font-mono text-[0.6875rem] text-[var(--text-primary)]">
+                  {hashes[k]}
+                </dd>
+                <CopyButton value={hashes[k]} />
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <div className="mt-1">
+            <Button size="sm" variant="secondary" onClick={aoPedirHashes}>
+              Calcular SHA-1 e SHA-256
+            </Button>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              Serve para comparar com outro arquivo, ou para procurar o original na internet.
+            </p>
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }

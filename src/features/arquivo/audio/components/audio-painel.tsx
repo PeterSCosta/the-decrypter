@@ -8,6 +8,7 @@ import { corteMinimo, offsetDoPcm, varrerLsb } from "@/features/audio/lsb";
 import { cn } from "@/lib/cn";
 import { Download, Play, Square, Wand2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { type AchadoMorse, type RecusaMorse, ehAchado, lerMorse } from "../morse";
 import { type OpcoesDeRender, RENDER_PADRAO } from "../render";
 import { type Vista, useAudioAnalise } from "../use-audio-analise";
 import { EspectrogramaCanvas } from "./espectrograma-canvas";
@@ -48,6 +49,7 @@ export function AudioPainel({
   const [velocidade, setVelocidade] = useState(1);
   const [mantemTom, setMantemTom] = useState(true);
   const [tocando, setTocando] = useState(false);
+  const [morse, setMorse] = useState<Record<string, AchadoMorse | RecusaMorse> | null>(null);
   const refAudio = useRef<HTMLAudioElement>(null);
 
   // Ajusta o teto de frequência à taxa real assim que ela é conhecida.
@@ -286,6 +288,75 @@ export function AudioPainel({
             modo fita (muda o tom junto)
           </label>
         </div>
+      </Card>
+
+      {/* Morse por tom */}
+      <Card className="p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-display text-sm text-[var(--text-primary)]">Morse por tom</h3>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              // Cada canal em separado: o truque mais comum é pôr a mensagem
+              // num só, e a mistura dos dois destruiria a portadora.
+              const r: Record<string, AchadoMorse | RecusaMorse> = {};
+              const [e, d] = carregado.canais;
+              r[metricas.estereo ? "Esquerdo" : "Mono"] = lerMorse(e, carregado.taxa);
+              if (d) r.Direito = lerMorse(d, carregado.taxa);
+              if (metricas.estereo && metricas.maiorDiferenca > 0) {
+                r.Diferença = lerMorse(side(e, d), carregado.taxa);
+              }
+              setMorse(r);
+            }}
+          >
+            Procurar Morse
+          </Button>
+        </div>
+        {morse ? (
+          <ul className="mt-3 space-y-2">
+            {Object.entries(morse).map(([canal, r]) => (
+              <li key={canal} className="rounded-[var(--radius-md)] bg-[var(--surface-sunken)] p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone={ehAchado(r) ? "brand" : "neutral"}>{canal}</Badge>
+                  {ehAchado(r) ? (
+                    <>
+                      <code className="font-mono text-sm text-[var(--text-primary)]">
+                        {r.texto}
+                      </code>
+                      <CopyButton value={r.texto} />
+                      {onDecodificador ? (
+                        <button
+                          type="button"
+                          title="Mandar ao Decodificador"
+                          onClick={() => onDecodificador(r.texto)}
+                          className="rounded p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                        >
+                          <Wand2 className="h-3.5 w-3.5" />
+                        </button>
+                      ) : null}
+                    </>
+                  ) : (
+                    <span className="text-sm text-[var(--text-secondary)]">{r.motivo}</span>
+                  )}
+                </div>
+                {ehAchado(r) ? (
+                  <p className="mt-1 font-mono text-[0.6875rem] text-[var(--text-muted)]">
+                    {r.simbolos.slice(0, 90)}
+                    {r.simbolos.length > 90 ? "…" : ""} · portadora {Math.round(r.portadoraHz)} Hz ·{" "}
+                    {r.wpm} WPM · {r.de.toFixed(1)}–{r.ate.toFixed(1)} s
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-xs text-[var(--text-muted)]">
+            Procura um tom puro que liga e desliga, e o traduz. Passa por seis barreiras antes de
+            afirmar qualquer coisa — sem elas, qualquer batida de 120 BPM vira “EEEEE”. Quando
+            recusa, diz por quê.
+          </p>
+        )}
       </Card>
 
       {/* LSB */}
