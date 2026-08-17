@@ -4,6 +4,7 @@ import { procurarEmbutidos } from "./carve";
 import { mapearEntropia, quiQuadradoUniforme } from "./entropia";
 import { fimDeclarado, sobra } from "./fim";
 import { identificar } from "./identidade";
+import { noDeRecorte, noRaiz } from "./no";
 import { acharBase64, acharTextos, corteDeTexto } from "./strings";
 
 /** xorshift32: bits baixos honestos, ao contrário de um LCG em `double`. */
@@ -261,5 +262,32 @@ describe("entropia", () => {
     expect(quiQuadradoUniforme(uniforme, 0, 100_000)).toBeLessThan(
       quiQuadradoUniforme(estruturado, 0, 100_000),
     );
+  });
+});
+
+describe("nome do recorte — o falso positivo que ele criava", () => {
+  it("o nó recortado carrega extensão do próprio tipo", () => {
+    // Sem ponto no nome, `split(".").pop()` devolve o nome inteiro como
+    // extensão, e a primeira olhada anunciava «a extensão diz
+    // ".jpeg-em-176444", os bytes dizem JPEG» — um achado FORTE e falso, no
+    // topo da lista. Um recorte nasce do tipo detectado: a extensão dele nunca
+    // pode divergir do conteúdo.
+    const wav = wavDe(0.2);
+    const foto = jpegFalso(3000);
+    const juntos = new Uint8Array(wav.length + foto.length);
+    juntos.set(wav, 0);
+    juntos.set(foto, wav.length);
+
+    const pai = noRaiz(juntos, "prova.wav", "audio/wav");
+    const recorte = pai.analise.embutidos.find((e) => e.forca === "confirmado" && e.bytes);
+    expect(recorte).toBeDefined();
+    if (!recorte) return;
+
+    const filho = noDeRecorte(pai, recorte);
+    expect(filho?.nome).toMatch(/\.jpg$/);
+    expect(filho?.analise.identidade.extensaoBate).toBe(true);
+    // E nenhum achado forte reclamando de extensão.
+    const falso = filho?.analise.achados.find((a) => a.titulo.includes("A extensão diz"));
+    expect(falso).toBeUndefined();
   });
 });

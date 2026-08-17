@@ -213,10 +213,41 @@ export function noRaiz(bytes: Uint8Array, nome: string, mime: string | null): No
   return { nome, bytes, origem: "", profundidade: 0, analise: analisar(bytes, nome, mime) };
 }
 
+/**
+ * Extensão convencional de cada tipo recortado.
+ *
+ * Existe porque o nome do nó SEM ponto criava um achado falso e forte: sem
+ * extensão, `nome.split(".").pop()` devolve o nome inteiro, e a primeira olhada
+ * anunciava «a extensão diz ".jpeg-em-176444", os bytes dizem JPEG» no topo da
+ * lista. Um recorte nasce do próprio tipo detectado — a extensão dele nunca
+ * pode divergir do conteúdo.
+ */
+const EXTENSAO_DO_TIPO: Record<string, string> = {
+  JPEG: "jpg",
+  PNG: "png",
+  GIF: "gif",
+  BMP: "bmp",
+  WEBP: "webp",
+  PDF: "pdf",
+  ZIP: "zip",
+  RAR: "rar",
+  "7z": "7z",
+  GZIP: "gz",
+  BZIP2: "bz2",
+  XZ: "xz",
+  WAV: "wav",
+  MP3: "mp3",
+  FLAC: "flac",
+  OGG: "ogg",
+  SQLite: "db",
+};
+
 /** Um recorte vira nó novo, um nível abaixo. */
 export function noDeRecorte(pai: NoDeArquivo, r: Recorte): NoDeArquivo | null {
   if (!r.bytes || pai.profundidade + 1 >= PROFUNDIDADE_MAXIMA) return null;
-  const nome = `${r.tipo.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-em-${r.inicio}`;
+  const base = r.tipo.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const ext = EXTENSAO_DO_TIPO[r.tipo];
+  const nome = `${base}-em-${r.inicio}${ext ? `.${ext}` : ""}`;
   return {
     nome,
     bytes: r.bytes,

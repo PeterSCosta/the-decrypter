@@ -29,3 +29,4 @@ data-sources/*.csv
 data-sources/*.pdf
 data-sources/*.jsonl
 data-sources/postes-state*.json
+public/_dev/
