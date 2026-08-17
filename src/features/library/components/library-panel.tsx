@@ -21,6 +21,25 @@ interface BaseDoAcervo {
   navegavel: boolean;
 }
 
+/**
+ * Bases que vivem NO NAVEGADOR e por isso não aparecem no catálogo da API.
+ *
+ * Sem elas a Biblioteca mentiria por omissão: o vocabulário do realce de
+ * palavra real é a maior base do app em número de registros, e o rol de ruas é
+ * consultado localmente pelos decoders — o da API é a mesma coisa, servida para
+ * quem quiser navegar.
+ */
+const LOCAIS: BaseDoAcervo[] = [
+  {
+    id: "vocabulario",
+    nome: "Vocabulário (pt + en)",
+    indexa: "palavra dobrada sem acento → existe ou não (realce de palavra real)",
+    origem: "pythonprobr/palavras + /usr/share/dict/words · embarcada no app",
+    registros: 451016,
+    navegavel: false,
+  },
+];
+
 const TOM: Record<SourceStatus, "success" | "info" | "pulse" | "neutral"> = {
   aberta: "success",
   "consulta-manual": "info",
@@ -43,8 +62,12 @@ export function LibraryPanel({ aoAbrirPostes }: { aoAbrirPostes: () => void }) {
 
   useEffect(() => {
     apiFetch<{ hits: BaseDoAcervo[] }>("/library")
-      .then((r) => setBases(r.hits))
-      .catch((e) => setErro((e as Error).message));
+      .then((r) => setBases([...r.hits, ...LOCAIS]))
+      // Mesmo sem a API, as bases locais existem e devem aparecer.
+      .catch((e) => {
+        setBases(LOCAIS);
+        setErro((e as Error).message);
+      });
   }, []);
 
   if (aberta) return <Navegador base={aberta} aoVoltar={() => setAberta(null)} />;
@@ -90,7 +113,11 @@ export function LibraryPanel({ aoAbrirPostes }: { aoAbrirPostes: () => void }) {
               {/* Os postes abrem no mapa, não numa tabela: 45 mil pontos
                   geolocalizados se leem espacialmente, e o mapa já carrega por
                   viewport com teto no servidor. */}
-              {b.id === "poste" ? (
+              {!b.navegavel ? (
+                <span className="rounded-[var(--radius-sm)] px-2 py-1 text-xs text-[var(--text-muted)]">
+                  no navegador
+                </span>
+              ) : b.id === "poste" ? (
                 <button
                   type="button"
                   onClick={aoAbrirPostes}
@@ -176,7 +203,16 @@ function Navegador({ base, aoVoltar }: { base: BaseDoAcervo; aoVoltar: () => voi
     };
   }, [base.id, debQ, page]);
 
-  const colunas = dados?.hits.length ? Object.keys(dados.hits[0]).slice(0, 6) : [];
+  /**
+   * TODAS as colunas, não as seis primeiras.
+   *
+   * O corte antigo escondia justamente o que difere uma linha da outra — as
+   * ruas repetem código e nome entre bairros, e a `localizacao` (que é o que
+   * distingue) ficava fora da tela. A tabela rola na horizontal; a informação
+   * não pode sumir. As chaves saem da união de todas as linhas da página, e não
+   * só da primeira, porque um campo nulo no primeiro registro apagaria a coluna.
+   */
+  const colunas = dados?.hits.length ? [...new Set(dados.hits.flatMap((l) => Object.keys(l)))] : [];
   const paginas = dados ? Math.ceil(dados.total / 50) : 0;
 
   return (
@@ -211,6 +247,8 @@ function Navegador({ base, aoVoltar }: { base: BaseDoAcervo; aoVoltar: () => voi
       </div>
 
       <Card className="overflow-x-auto">
+        {/* Rola na horizontal: com todas as colunas, `street` tem 14 e `bridge`
+            tem 20. Esconder coluna para caber seria esconder dado. */}
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--border-subtle)]">
@@ -231,11 +269,21 @@ function Navegador({ base, aoVoltar }: { base: BaseDoAcervo; aoVoltar: () => voi
                 key={i}
                 className="border-b border-[var(--border-subtle)] last:border-0"
               >
-                {colunas.map((c) => (
-                  <td key={c} className="max-w-[16rem] truncate px-3 py-1.5 font-mono text-xs">
-                    {String(linha[c] ?? "—")}
-                  </td>
-                ))}
+                {colunas.map((c) => {
+                  const v = linha[c];
+                  const texto = v === null || v === undefined || v === "" ? "—" : String(v);
+                  return (
+                    <td
+                      key={c}
+                      // `title` porque o texto é truncado: o conteúdo inteiro
+                      // continua alcançável sem esticar a tabela.
+                      title={texto}
+                      className="max-w-[18rem] truncate px-3 py-1.5 font-mono text-xs"
+                    >
+                      {texto}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
