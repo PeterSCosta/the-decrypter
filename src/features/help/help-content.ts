@@ -461,8 +461,8 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Inscrição imobiliária de Blumenau",
-        desc: "O número do carnê de IPTU → o lote no mapa, com endereço, bairro, CEP e área. Aceita as três grafias que existem na vida real: 412400200002000, 4.1.24.20.2.0 e 4-1-24-20-2 — os zeros à esquerda são obrigatórios na base, e a bancada os repõe sozinha. São 84.539 lotes, do geoportal da Prefeitura. O ponto é o centro do lote, não a porta.",
-        example: { in: "4.1.24.20.2.0", out: "15 de Novembro, 1231 · Centro" },
+        desc: "O número do carnê de IPTU → o lote no mapa, com endereço, bairro, CEP e área. Aceita as QUATRO grafias que existem na vida real: 412400200002000, 4.1.24.20.2.0, 4-1-24-20-2 e o mesmo número sem os hífens (41241628) — que é o que sai de quem copia a tela do geoportal à mão. Os zeros à esquerda são obrigatórios na base, e a bancada os repõe sozinha. Sem os hífens não dá para saber onde a quadra termina e o lote começa: 41101634 é tanto 4-1-10-16-34 quanto 4-1-10-1-634, e as duas existem — nesses 2,3% dos casos a bancada mostra as leituras reais em vez de escolher uma no escuro. São 84.539 lotes, do geoportal da Prefeitura. O ponto é o centro do lote, não a porta.",
+        example: { in: "41241628", out: "7 de Setembro · Centro (4-1-24-16-28)" },
       },
       {
         name: "CNAE",

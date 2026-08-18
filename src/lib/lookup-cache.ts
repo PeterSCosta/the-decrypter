@@ -31,8 +31,13 @@ export interface LookupHits {
   /** CID-10 por código exato; `cids` é a busca pelo nome da doença. */
   cid?: Cid | null;
   cids?: Cid[] | null;
-  /** Lote do cadastro imobiliário de Blumenau. */
+  /** Lote do cadastro imobiliário de Blumenau, quando o número é exato. */
   lote?: LoteBlumenau | null;
+  /**
+   * Os candidatos, quando o número veio SEM os hífens e admite mais de um
+   * agrupamento real (`41101634` = `4-1-10-16-34` ou `4-1-10-1-634`).
+   */
+  lotes?: LoteBlumenau[] | null;
 }
 
 /**

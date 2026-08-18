@@ -271,8 +271,10 @@ export const GRUPOS_GEO: GrupoDeFormatos[] = [
         resolveEm: "decodificador",
         nome: "Inscrição imobiliária de Blumenau",
         oQueE: "O número do carnê de IPTU. São 84.539 lotes na bancada, com endereço e coordenada.",
-        cara: "Quinze dígitos, ou seis grupos pontuados.",
-        exemplo: { entrada: "4.1.24.20.2.0", saida: "15 de Novembro, 1231 · Centro" },
+        cara: "Quinze dígitos, seis grupos pontuados, ou os grupos sem os hífens.",
+        exemplo: { entrada: "41241628", saida: "7 de Setembro · Centro (4-1-24-16-28)" },
+        atalho:
+          "A tela do geoportal mostra 4-1-24-16-28; digitar 41241628 acha o mesmo lote. Sem os hífens o número é ambíguo em 2,3% dos casos — aí a bancada mostra as duas ou três leituras reais em vez de escolher uma.",
         precisao:
           "Os zeros à esquerda são obrigatórios na base, e o carnê os omite — a bancada repõe. O ponto é o centro do lote, não a porta.",
       },
