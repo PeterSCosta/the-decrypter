@@ -299,6 +299,16 @@ export const SOURCES: DataSourceRef[] = [
     note: "Achado colateral da investigação do SIATU, e vale mais que ela. O geoportal da Prefeitura é ArcGIS REST público: a camada `consulta_construir/Rol_de_ruas/MapServer/0` traz `COD_LOG` em 9.370 eixos, com `DESCRICAO`, `BAIRRO_DIR` e `CEP_DIREIT`. Verificado aqui: `7 DE SETEMBRO` → 998, no Centro, CEP 89010-200. Atenção a dois detalhes: a mesma rua aparece em vários eixos (um por trecho), então o mesmo código volta repetido com bairros diferentes; e o campo do nome é `DESCRICAO`, não `NOME` — consultar `NOME` devolve erro 400, não lista vazia.",
     anchors: ["GIA-20", "GIA-34"],
   },
+  {
+    id: "lotes-blumenau",
+    name: "Cadastro imobiliário de Blumenau",
+    indexes: "Inscrição imobiliária → endereço, bairro, CEP, área e coordenada do lote.",
+    use: "Número burocrático estável por PEDAÇO DE CIDADE — a mesma família do VM que a GIA-20 e a GIA-34 usaram, e esta veio inteira.",
+    url: "https://geo.blumenau.sc.gov.br",
+    urlLabel: "geo.blumenau.sc.gov.br",
+    status: "aberta",
+    note: "84.539 lotes na bancada, do geoportal da Prefeitura. O Decodificador aceita as três grafias — `412400200002000`, `4.1.24.20.2.0` e `4-1-24-20-2` — e devolve o ponto no mapa; a Biblioteca lista tudo e busca por rua. Duas ressalvas honestas: a coordenada é o CENTROIDE do lote, não a porta; e a base tem 48 lotes sem inscrição, que só se acham pelo nome da rua. Armadilha do serviço: os zeros à esquerda são obrigatórios na chave, e o carnê do IPTU os omite — a bancada normaliza, quem consultar na mão precisa lembrar.",
+  },
 
   // ── Adiada: dá para ter offline, falta o pedido oficial ────────────────────
   {

@@ -295,6 +295,9 @@ describe("decisões registradas — não regredir", () => {
       // Achado colateral da investigação do SIATU: o COD_LOG, que é o "número
       // por rua" que se procurava lá, e este é público e consultável.
       "cod-log-blumenau",
+      // 84.539 lotes do geoportal — a maior base do acervo, e a que fecha o
+      // caso que o SIATU não fechava (número burocrático → pedaço de cidade).
+      "lotes-blumenau",
     ]);
     // O CID-10 entra no meio da lista, e não no fim: a ordem aqui é a do
     // arquivo, e ele foi para junto das outras bases embarcadas.

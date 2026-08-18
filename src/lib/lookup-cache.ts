@@ -31,6 +31,24 @@ export interface LookupHits {
   /** CID-10 por código exato; `cids` é a busca pelo nome da doença. */
   cid?: Cid | null;
   cids?: Cid[] | null;
+  /** Lote do cadastro imobiliário de Blumenau. */
+  lote?: LoteBlumenau | null;
+}
+
+/**
+ * Um lote de Blumenau. A coordenada é o CENTROIDE do terreno, não a porta — a
+ * diferença é de metros, mas quem for até lá precisa saber.
+ */
+export interface LoteBlumenau {
+  inscricao: string | null;
+  iq: string | null;
+  logradouro: string | null;
+  numero: string | null;
+  bairro: string | null;
+  cep: string | null;
+  lat: number | null;
+  lng: number | null;
+  areaM2: number | null;
 }
 
 /** Um código da CID-10, como a API o devolve. `codigo` vem sem o ponto. */

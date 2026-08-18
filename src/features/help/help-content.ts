@@ -430,6 +430,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "22030000", out: "Cervejas de malte" },
       },
       {
+        name: "Inscrição imobiliária de Blumenau",
+        desc: "O número do carnê de IPTU → o lote no mapa, com endereço, bairro, CEP e área. Aceita as três grafias que existem na vida real: 412400200002000, 4.1.24.20.2.0 e 4-1-24-20-2 — os zeros à esquerda são obrigatórios na base, e a bancada os repõe sozinha. São 84.539 lotes, do geoportal da Prefeitura. O ponto é o centro do lote, não a porta.",
+        example: { in: "4.1.24.20.2.0", out: "15 de Novembro, 1231 · Centro" },
+      },
+      {
         name: "CNAE",
         desc: "Código de atividade econômica → a atividade e a hierarquia inteira (classe, grupo, divisão e seção). Numa cadeia, quem costuma ligar os códigos é a SEÇÃO, não a atividade — do mesmo jeito que o capítulo liga os códigos da CID-10. A pontuação é a assinatura: 62.01-5/01 é inconfundível, enquanto 6201501 nu tem a mesma forma de um telefone, e só sobrevive se o IBGE confirmar.",
         example: { in: "62.01-5/01", out: "Desenvolvimento de programas · Seção J" },
