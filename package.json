@@ -25,7 +25,8 @@
     "enrich:postes": "tsx scripts/enrich-postes.ts",
     "build:bridges": "tsx scripts/build-bridges.ts",
     "build:cid10": "tsx scripts/build-cid10.ts",
-    "build:lotes": "tsx scripts/build-lotes-blumenau.ts"
+    "build:lotes": "tsx scripts/build-lotes-blumenau.ts",
+    "build:votacoes": "tsx scripts/build-votacoes-blumenau.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

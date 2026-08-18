@@ -20,11 +20,13 @@ import type { CaesarShiftRow } from "../engine/decoders/caesar-bruteforce";
 import type { CipherDiskWheel } from "../engine/decoders/cipher-disk";
 import type { CnaeHint } from "../engine/decoders/cnae";
 import type { DocResult } from "../engine/decoders/documents";
+import type { FipeHint } from "../engine/decoders/fipe";
 import type { IsbnHint } from "../engine/decoders/isbn";
 import type { LocationData } from "../engine/decoders/location";
 import type { NcmHint } from "../engine/decoders/ncm";
 import type { ElementInfo } from "../engine/decoders/periodic-table";
 import type { RegistroBrHint } from "../engine/decoders/registrobr";
+import type { VotacaoHint } from "../engine/decoders/votacao";
 import type { YoutubeHint } from "../engine/decoders/youtube";
 import { realWords } from "../engine/score";
 import type { DecoderCategory, ScoredCandidate } from "../engine/types";
@@ -35,11 +37,13 @@ import { CnaeCard } from "./cnae-card";
 import { CodeListCard } from "./code-list-card";
 import { DocumentCard } from "./document-card";
 import { ElementsCard } from "./elements-card";
+import { FipeCard } from "./fipe-card";
 import { IsbnCard } from "./isbn-card";
 import { MapCard } from "./map-card";
 import { MathCard } from "./math-card";
 import { NcmCard } from "./ncm-card";
 import { RegistroBrCard } from "./registrobr-card";
+import { VotacaoCard } from "./votacao-card";
 import { WheelCard } from "./wheel-card";
 import { YoutubeCard } from "./youtube-card";
 
@@ -119,6 +123,10 @@ export function ResultCard({
           <PosteCard poste={c.data as Poste} />
         ) : c.render === "youtube" ? (
           <YoutubeCard hint={c.data as YoutubeHint} />
+        ) : c.render === "votacao" ? (
+          <VotacaoCard hint={c.data as VotacaoHint} onChain={onChain} />
+        ) : c.render === "fipe" ? (
+          <FipeCard hint={c.data as FipeHint} />
         ) : c.render === "cnae" ? (
           <CnaeCard hint={c.data as CnaeHint} />
         ) : c.render === "cid" ? (

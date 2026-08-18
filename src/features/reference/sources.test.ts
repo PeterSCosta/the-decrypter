@@ -211,16 +211,31 @@ describe("decisões registradas — não regredir", () => {
     // régua: agora existe o decoder `cnae` e a rota `/api/cnae/{codigo}` no
     // backend, então a bancada de fato consulta por você. TSE e FIPE seguem
     // aqui — os endpoints existem, mas ninguém os chama.
-    for (const id of ["tse", "fipe"]) {
-      const s = get(id);
-      expect(s.status, id).toBe("consulta-manual");
-      // ...e a nota tem de deixar claro que a via automática já foi verificada,
-      // senão a próxima investigação refaz o mesmo trabalho.
-      expect(s.note, id).toMatch(/AINDA é você/);
+    // A lista esvaziou em ago/2026: TSE, FIPE e CNAE viraram consulta de
+    // verdade. A REGRA continua valendo e é o que este caso guarda — se uma
+    // fonte nova entrar como `aberta` sem decoder que a chame, aqui é onde a
+    // mentira aparece.
+    for (const s of SOURCES.filter((x) => x.status === "consulta-manual")) {
+      expect(s.note, s.id).toBeTruthy();
     }
-    // A descoberta não se perde: o caminho verificado fica escrito.
-    expect(get("tse").note).toMatch(/CORS|Access-Control/i);
-    expect(get("fipe").note).toMatch(/tipoConsulta=codigo/);
+  });
+
+  it("FIPE registra a correção que custou meia hora: a ordem dos endpoints", () => {
+    // A nota antiga dizia o contrário do que o teste ao vivo mostrou. Quem
+    // aceita o código nu é o ConsultarAnoModeloPeloCodigoFipe.
+    const s = get("fipe");
+    expect(s.status).toBe("aberta");
+    expect(s.note).toMatch(/ConsultarAnoModeloPeloCodigoFipe/);
+    expect(s.note).toMatch(/Parâmetros inválidos/);
+    // E o motivo de não passar pelo backend fica escrito.
+    expect(s.note).toMatch(/WAF|datacenter/i);
+  });
+
+  it("TSE declara a COBERTURA, porque 'não achei' não é 'não existe'", () => {
+    const s = get("tse");
+    expect(s.status).toBe("aberta");
+    expect(s.note).toMatch(/2024/);
+    expect(s.note).toMatch(/404|ZIP/);
   });
 
   it("CNAE virou aberta porque a bancada passou a consultar — e a nota diz a armadilha", () => {
@@ -285,8 +300,12 @@ describe("decisões registradas — não regredir", () => {
       "aeroportos",
       "pix-ispb",
       "gs1",
-      // A objeção antiga ao CNAE era o PESO de embarcar a tabela; ela caiu
-      // quando o caminho virou consulta pela API do IBGE, sem chave.
+      // Os três que eram "consultável mas não implementado" viraram consulta de
+      // verdade em ago/2026 — e cada um por um caminho diferente: o TSE por
+      // base local (só 2024), a FIPE pelo navegador (o WAF barra datacenter) e
+      // o CNAE pelo backend.
+      "tse",
+      "fipe",
       "cnae",
       // A bancada passou a responder plaqueta de poste (aba Postes, 45.285
       // pontos pela API). A ordem aqui é a do arquivo, e o Cidade Iluminada

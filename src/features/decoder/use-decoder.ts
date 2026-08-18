@@ -3,7 +3,17 @@ import type { BridgesData } from "@/features/bridge/types";
 import { aoCarregarH3 } from "@/features/location/formats";
 import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
-import { getBridges, getPix, getStreets, loadBridges, loadPix, loadStreets } from "@/lib/data";
+import type { VotacoesData } from "@/features/votacao/types";
+import {
+  getBridges,
+  getPix,
+  getStreets,
+  getVotacoes,
+  loadBridges,
+  loadPix,
+  loadStreets,
+  loadVotacoes,
+} from "@/lib/data";
 import { type LookupHits, cancelarSuperadas, consultar, valeConsultar } from "@/lib/lookup-cache";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -37,6 +47,7 @@ export function useDecoder(entradaInicial = "") {
   const [streets, setStreets] = useState<StreetsData | null>(getStreets);
   const [pix, setPix] = useState<PixData | null>(getPix);
   const [bridges, setBridges] = useState<BridgesData | null>(getBridges);
+  const [votacoes, setVotacoes] = useState<VotacoesData | null>(getVotacoes);
 
   const debInput = useDebouncedValue(input, 160);
   const debKey = useDebouncedValue(key, 160);
@@ -114,6 +125,21 @@ export function useDecoder(entradaInicial = "") {
     };
   }, [pareceEstrutura, bridges]);
 
+  // Votações: o gate é a FORMA (número de 3 a 7 dígitos), porque aqui não há
+  // palavra que anuncie. São 10 KB, e o decoder só emite se o número bater com
+  // a votação exata de alguém — o carregamento é barato e o ruído é zero.
+  const pareceVotacao = /^\d{3,7}$/.test(debInput.trim());
+  useEffect(() => {
+    if (!pareceVotacao || votacoes) return;
+    let alive = true;
+    loadVotacoes()
+      .then((d) => alive && setVotacoes(d))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [pareceVotacao, votacoes]);
+
   const digits = debInput.replace(/\D/g, "");
 
   // Participantes PIX (BrasilAPI): buscar quando a entrada for um ISPB (8 dígitos).
@@ -183,8 +209,9 @@ export function useDecoder(entradaInicial = "") {
       streets,
       pix,
       bridges,
+      votacoes,
     }),
-    [debKey, debAux, selectedId, hits, hitsCarregando, hitsErro, streets, pix, bridges],
+    [debKey, debAux, selectedId, hits, hitsCarregando, hitsErro, streets, pix, bridges, votacoes],
   );
 
   // `wordsReady` está nas dependências de propósito: o vocabulário do realce

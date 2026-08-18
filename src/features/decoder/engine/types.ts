@@ -4,6 +4,7 @@ import type { CepsData } from "@/features/cep/types";
 import type { MunicipiosData } from "@/features/ibge/types";
 import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
+import type { VotacoesData } from "@/features/votacao/types";
 import type { LookupHits } from "@/lib/lookup-cache";
 
 export type DecoderCategory = "encoding" | "classical" | "transform" | "lookup";
@@ -68,6 +69,11 @@ export interface DecodeContext {
    * que cabe na memória. Chegam quando a entrada diz "ponte"/"passarela".
    */
   bridges?: BridgesData | null;
+  /**
+   * Votações de Blumenau (TSE 2024). Preguiçosa como as pontes, e pelo mesmo
+   * motivo: 10 KB que só interessam a quem digitou um número.
+   */
+  votacoes?: VotacoesData | null;
 }
 
 export interface DecodeCandidate {
@@ -106,6 +112,8 @@ export interface DecodeCandidate {
     | "ponte"
     | "cid"
     | "cnae"
+    | "fipe"
+    | "votacao"
     | "youtube";
   /** Structured payload for custom renderers. */
   data?: unknown;

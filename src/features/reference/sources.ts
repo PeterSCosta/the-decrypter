@@ -173,12 +173,14 @@ export const SOURCES: DataSourceRef[] = [
   {
     id: "tse",
     name: "TSE — resultados eleitorais",
-    indexes: "Votação exata de um candidato → nome do candidato (por município e ano).",
-    use: "Número de 4-5 dígitos → candidato → índice de letra no nome dele.",
+    indexes: "Votação exata de um candidato → nome do candidato (Blumenau).",
+    use: "Número de 4-5 dígitos → candidato → índice de letra no nome dele. É a mecânica inteira da GIA-34.",
+    // O link fica no SIG Eleição porque é o que a resolução da GIA-34 citou —
+    // é a consulta que um humano abre. O JSON que a bancada usa está na nota.
     url: "https://sig.tse.jus.br/ords/dwapr/r/seai/sig-eleicao-resultados/home",
     urlLabel: "sig.tse.jus.br",
-    status: "consulta-manual",
-    note: "AINDA é você quem busca — mas o caminho para automatizar está aberto e verificado. A nota anterior dizia “sem JSON aberto amigável”, e estava errada: os resultados oficiais SÃO JSON estático, com CORS liberado, consultáveis direto do navegador — `resultados.tse.jus.br/oficial/ele2024/619/dados/sc/sc80470-c0011-e000619-u.json` (verificado: HTTP 200, `Access-Control-Allow-Origin: *`). Repare no `dados/` e no sufixo `-u`: o caminho `dados-simplificados/…-r` só traz agregado nacional e dá 404 por município — foi o que despistou. Cobre o ciclo corrente; anteriores só em ZIP nacional dos dados abertos. Votação repetida entre candidatos é comum: quando virar consulta, mostre todos os empates em vez de fingir resposta única.",
+    status: "aberta",
+    note: "A bancada responde, com UMA ressalva que importa: só a eleição de 2024 de Blumenau (188 candidatos, prefeito e vereador). Medido: o caminho `oficial/eleAAAA/…/dados/sc/sc80470-cXXXX-…-u.json` serve só o ciclo corrente — 2016, 2020 e 2022 devolvem 404 e só existem nos ZIPs nacionais. Por isso o card mostra a cobertura junto do acerto: aqui “não achei” não quer dizer “não existe”. Empate de votação é comum (17 das 171 votações distintas), e o card mostra todos os empatados em vez de fingir resposta única.",
     anchors: ["GIA-34"],
   },
   {
@@ -260,12 +262,12 @@ export const SOURCES: DataSourceRef[] = [
   {
     id: "fipe",
     name: "Tabela FIPE",
-    indexes: "Código FIPE (ex.: 001004-9) → modelo do veículo e preço médio.",
+    indexes: "Código FIPE (ex.: 005345-7) → marca, modelo, ano e preço médio.",
     use: "Código → modelo → nome do carro.",
     url: "https://veiculos.fipe.org.br",
     urlLabel: "veiculos.fipe.org.br",
-    status: "consulta-manual",
-    note: "AINDA é você quem busca no site; o que segue é o caminho já verificado para a bancada passar a consultar sozinha. A nota anterior argumentava contra EMBARCAR o dataset (e nisso continua certa: muda todo mês e nasceria velho dentro da imagem), mas isso nunca foi argumento contra consultar. Caminho verificado: `ConsultarTabelaDeReferencia` dá o mês vigente, e `ConsultarValorComTodosParametros` com `modeloCodigoExterno=001267-0` + `tipoConsulta=codigo` devolve marca, modelo e preço. Armadilha que me custou meia hora: `ConsultarAnoModeloPeloCodigoFipe` recusa o mesmo código com “Parâmetros inválidos” — o endpoint da busca reversa é o outro. Mande form-urlencoded (com JSON o preflight barra) e varra os tipos 1/2/3, porque o tipo não está no código. Do NAVEGADOR, nunca do backend: o WAF da FIPE bloqueia IP de datacenter (foi o que derrubou a BrasilAPI, cujo `/api/fipe/preco` dá 500 permanente), e forjar cabeçalho para escapar dele seria driblar barreira posta de propósito. É API interna e sem contrato: se mudarem o site, trate como fonte fora do ar.",
+    status: "aberta",
+    note: "O Decodificador consulta sozinho: cole `005345-7` e volta VW Gol 2014 Flex com o preço do mês vigente. **CORREÇÃO da nota anterior, que estava invertida e custou meia hora:** quem aceita o código nu é o `ConsultarAnoModeloPeloCodigoFipe` — o `ConsultarValorComTodosParametros` com `tipoConsulta=codigo` sozinho responde “Parâmetros inválidos” nos três tipos de veículo. A ordem certa é: código → anos → valor. O tipo (1 carro, 2 moto, 3 caminhão) não está no código, então varre-se os três; o errado responde `nadaencontrado` na hora. Chamada do NAVEGADOR, nunca do backend: o WAF da FIPE bloqueia IP de datacenter (foi o que derrubou a BrasilAPI), e forjar cabeçalho seria driblar barreira posta de propósito. API interna e sem contrato — se o site mudar, isto quebra.",
   },
   {
     id: "cnae",

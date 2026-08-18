@@ -430,6 +430,16 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "22030000", out: "Cervejas de malte" },
       },
       {
+        name: "Código FIPE",
+        desc: "Seis dígitos, hífen e um dígito → marca, modelo, ano e preço médio do mês vigente. É a única consulta da bancada que sai direto do seu navegador, e não pelo backend: o WAF da FIPE bloqueia IP de datacenter.",
+        example: { in: "005345-7", out: "VW Gol 2014 Flex · R$ 31.600" },
+      },
+      {
+        name: "Votação de candidato (Blumenau)",
+        desc: "Número exato de votos → o candidato. É a mecânica inteira da GIA-34: a prova dá a votação, você acha o nome e conta a letra na posição pedida. Cobre só a eleição de 2024 (188 candidatos) — o card diz isso junto do acerto, porque aqui “não achei” não significa “não existe”. Empate de votação aparece inteiro, com todos os candidatos.",
+        example: { in: "55968", out: "Odair Tramontin (Prefeito, 2024)" },
+      },
+      {
         name: "Inscrição imobiliária de Blumenau",
         desc: "O número do carnê de IPTU → o lote no mapa, com endereço, bairro, CEP e área. Aceita as três grafias que existem na vida real: 412400200002000, 4.1.24.20.2.0 e 4-1-24-20-2 — os zeros à esquerda são obrigatórios na base, e a bancada os repõe sozinha. São 84.539 lotes, do geoportal da Prefeitura. O ponto é o centro do lote, não a porta.",
         example: { in: "4.1.24.20.2.0", out: "15 de Novembro, 1231 · Centro" },

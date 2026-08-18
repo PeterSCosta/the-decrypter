@@ -1,6 +1,7 @@
 import type { BridgesData } from "@/features/bridge/types";
 import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
+import type { VotacoesData } from "@/features/votacao/types";
 import { apiFetch } from "./api";
 
 /**
@@ -100,6 +101,18 @@ export function loadBridges(): Promise<BridgesData> {
 
 export function getBridges(): BridgesData | null {
   return bridges.value;
+}
+
+// Votações de Blumenau (TSE). 10 KB — preguiçosa mesmo assim, porque a maioria
+// das sessões nunca digita um número de votos.
+const votacoes: Slot<VotacoesData> = { promise: null, value: null };
+
+export function loadVotacoes(): Promise<VotacoesData> {
+  return loadOnce(votacoes, dataUrl("votacoes-blumenau.json"), asJson<VotacoesData>);
+}
+
+export function getVotacoes(): VotacoesData | null {
+  return votacoes.value;
 }
 
 // Participantes PIX (~900 instituições) via backend /api/pix. Carregado sob
