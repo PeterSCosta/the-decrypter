@@ -61,7 +61,10 @@ export const decoders = defineDecoder({
             label: `${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}`,
             format: loc.format,
           },
-          0.9,
+          // A nota vem da CAMADA que resolveu, não é fixa: um Geohash frouxo
+          // não pode empatar com um Plus Code completo, e muito menos ganhar
+          // de um acerto pré-resolvido numa base real.
+          loc.confianca,
         ),
       );
     }

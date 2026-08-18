@@ -45,7 +45,13 @@ export const decoders = defineDecoder({
     if (plus) out.push(candidate(plus, "Plus Code (local)", 0.72));
 
     const gh = decodeGeohashLocal(q);
-    if (gh) out.push(candidate(gh, "Geohash (cauda)", 0.5));
+    // 0,62 e não 0,50: o atalho SE AUTO-VALIDA — só emite se o ponto cair na
+    // caixa do Vale —, e isso é evidência que o Geohash global não tem. Com os
+    // dois em 0,50 dava empate, e `g7rpj` continuava saindo na Islândia acima
+    // de Blumenau, que é justamente o que a Ajuda promete o contrário.
+    // Fica abaixo do Plus Code local (0,72), porque a cauda de geohash é uma
+    // inferência mais frouxa que a de plus code.
+    if (gh) out.push(candidate(gh, "Geohash (cauda)", 0.62));
 
     return out;
   },

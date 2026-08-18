@@ -26,7 +26,8 @@
     "build:bridges": "tsx scripts/build-bridges.ts",
     "build:cid10": "tsx scripts/build-cid10.ts",
     "build:lotes": "tsx scripts/build-lotes-blumenau.ts",
-    "build:votacoes": "tsx scripts/build-votacoes-blumenau.ts"
+    "build:votacoes": "tsx scripts/build-votacoes-blumenau.ts",
+    "build:estacoes": "tsx scripts/build-estacoes-ibge.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

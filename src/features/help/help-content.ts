@@ -403,6 +403,26 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "b62kBXlBlyQ", out: "título e canal do vídeo" },
       },
       {
+        name: "Geo URI · ISO 6709 · link do OSM",
+        desc: "Três formas de escrever o mesmo par de coordenadas que a bancada não lia: `geo:` é o que sai de QR de local e do “abrir no mapa” do Android (e o `;u=` diz a precisão em metros); o ISO 6709 é o do EXIF, com sinal nos dois números e barra no fim; e o link curto do OSM é o que sai ao compartilhar um ponto — nele, cada hífen no fim desce um nível de zoom.",
+        example: { in: "geo:-26.9194,-49.0661;u=35", out: "Blumenau · precisão de 35 m" },
+      },
+      {
+        name: "Placekey e C-squares",
+        desc: "Placekey é o identificador de lugar em duas metades separadas por `@`; só a de trás vira ponto, e ela é um hexágono H3. C-squares é a grade hierárquica da CSIRO, usada em dado de biodiversidade — cada grupo depois dos dois-pontos divide a célula, e o primeiro dígito carrega os sinais.",
+        example: { in: "5204:414:340", out: "célula de 0,1° sobre Blumenau" },
+      },
+      {
+        name: "Estação geodésica do IBGE",
+        desc: "A chapa de bronze cravada em ponte, calçada ou rocha, com código gravado. São 491 no Vale do Itajaí, e a descrição do cadastro costuma ser enunciado pronto — “chapa cravada na cabeceira da ponte sobre o Rio Perequê”. O código não tem forma própria, então só responde quando existe de verdade na base.",
+        example: { in: "1400M", out: "estação em Blumenau, no mapa" },
+      },
+      {
+        name: "CAR (imóvel rural)",
+        desc: "UF, geocódigo do IBGE com dígito verificador e 32 hexadecimais. É a assinatura mais forte que a bancada tem, e o município sai do próprio número, sem consulta. A coordenada NÃO sai: o polígono vive no SICAR, atrás de captcha — e a tela diz isso em vez de fingir.",
+        example: { in: "SC-4202404-D9ADE9…", out: "imóvel rural em Blumenau/SC" },
+      },
+      {
         name: "Aeroporto (IATA/ICAO)",
         desc: "Código de aeroporto → nome, cidade, país e mapa (base mundial OpenFlights).",
         example: { in: "GRU", out: "Guarulhos · São Paulo, Brasil" },

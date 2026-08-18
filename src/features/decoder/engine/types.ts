@@ -1,6 +1,7 @@
 import type { AirportsData } from "@/features/airport/types";
 import type { BridgesData } from "@/features/bridge/types";
 import type { CepsData } from "@/features/cep/types";
+import type { EstacoesData } from "@/features/estacao/types";
 import type { MunicipiosData } from "@/features/ibge/types";
 import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
@@ -74,6 +75,8 @@ export interface DecodeContext {
    * motivo: 10 KB que só interessam a quem digitou um número.
    */
   votacoes?: VotacoesData | null;
+  /** Estações geodésicas do Vale (IBGE). Preguiçosa, como as votações. */
+  estacoes?: EstacoesData | null;
 }
 
 export interface DecodeCandidate {
@@ -111,6 +114,7 @@ export interface DecodeCandidate {
     | "poste"
     | "ponte"
     | "cid"
+    | "car"
     | "cnae"
     | "fipe"
     | "votacao"

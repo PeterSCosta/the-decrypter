@@ -29,6 +29,16 @@ export interface FormatoGeo {
   atalho?: string;
   /** Precisão de cada nível, quando o formato tem níveis. */
   precisao?: string;
+  /**
+   * Onde este formato é resolvido.
+   *
+   * `"aba"` é o padrão: a caixa "que formato é este?" resolve na hora, porque é
+   * conta pura. `"decodificador"` é para os que dependem de uma BASE — a
+   * estação geodésica, o CAR e a inscrição imobiliária não são coordenada
+   * disfarçada, são número de cadastro, e quem responde é a consulta. Dizer
+   * isso na ficha evita a caixa responder "não reconheci" a um código correto.
+   */
+  resolveEm?: "aba" | "decodificador";
   link?: { url: string; rotulo: string };
 }
 
@@ -60,6 +70,26 @@ export const GRUPOS_GEO: GrupoDeFormatos[] = [
         oQueE: "O mesmo par em base 60, com hemisfério por letra.",
         cara: "Tem ° ′ ″ e termina em N/S/E/W.",
         exemplo: { entrada: "26°55'09.8\"S 49°03'57.9\"W", saida: "centro de Blumenau" },
+      },
+      {
+        id: "geo-uri",
+        nome: "Geo URI (RFC 5870)",
+        oQueE:
+          "O par de graus decimais dentro de um endereço de aplicativo — é o que sai de QR de local e do “abrir no mapa” do Android.",
+        cara: "Começa com `geo:`. Pode trazer `;u=` com a precisão em metros.",
+        exemplo: { entrada: "geo:-26.9194,-49.0661;u=35", saida: "Blumenau, com precisão de 35 m" },
+        precisao:
+          "O `u=` é a INCERTEZA declarada pelo aparelho, em metros — informação de prova, não enfeite.",
+        link: { url: "https://www.rfc-editor.org/rfc/rfc5870", rotulo: "RFC 5870" },
+      },
+      {
+        id: "iso6709",
+        nome: "ISO 6709",
+        oQueE:
+          "A forma normalizada de escrever coordenada em metadado. É o que está no EXIF e no XMP de uma foto.",
+        cara: "Sinal obrigatório nos dois números, longitude com TRÊS dígitos de grau, e barra no fim.",
+        exemplo: { entrada: "-26.9194-049.0661/", saida: "Blumenau" },
+        precisao: "Aceita altitude como terceiro campo: `-26.9194-049.0661+21.0CRSWGS_84/`.",
       },
       {
         id: "ddm",
@@ -157,6 +187,41 @@ export const GRUPOS_GEO: GrupoDeFormatos[] = [
         precisao: "O ponto é o canto NOROESTE da célula, não o centro.",
       },
       {
+        id: "osm-shortlink",
+        nome: "Link curto do OpenStreetMap",
+        oQueE:
+          "O endereço que sai quando alguém compartilha um ponto do OSM. Por dentro é o par entrelaçado bit a bit, em base 64 própria.",
+        cara: "Contém `osm.org/go/` ou `openstreetmap.org/go/`.",
+        exemplo: { entrada: "https://osm.org/go/0EEQjE--", saida: "Londres, zoom 9" },
+        precisao:
+          "Cada hífen no fim desce um nível de zoom — e o zoom diz o quanto quem compartilhou tinha ampliado.",
+        link: {
+          url: "https://wiki.openstreetmap.org/wiki/Shortlink",
+          rotulo: "wiki.openstreetmap.org",
+        },
+      },
+      {
+        id: "placekey",
+        nome: "Placekey",
+        oQueE:
+          "Identificador de lugar em duas metades: o “Quê” (estabelecimento) e o “Onde”, que é um hexágono H3 de resolução 10.",
+        cara: "Trios separados por hífen com um `@` no meio ou na frente.",
+        exemplo: { entrada: "zzw-22y@5vg-7gt-qzz", saida: "Ferry Building, São Francisco" },
+        precisao:
+          "Só a metade depois do `@` vira ponto. Sem o `@`, os três trios não são assinatura de nada.",
+        link: { url: "https://www.placekey.io", rotulo: "placekey.io" },
+      },
+      {
+        id: "csquares",
+        nome: "C-squares",
+        oQueE:
+          "Grade hierárquica da CSIRO, usada em dado oceanográfico e de biodiversidade (é o que o OBIS e o GBIF publicam).",
+        cara: "Grupos de dígitos separados por dois-pontos. O primeiro dígito carrega os sinais: 1 = NE, 3 = SE, 5 = SO, 7 = NO.",
+        exemplo: { entrada: "5204:414:340", saida: "célula de 0,1° sobre Blumenau" },
+        precisao:
+          "Cada ciclo divide a célula: `5204` = 10°, `5204:414` = 1°, `5204:414:340` = 0,1°. O ciclo pode vir cortado num dígito só (célula de 5°).",
+      },
+      {
         id: "mapcode",
         nome: "Mapcode",
         oQueE: "Código curto por território — e o território é justamente o que costuma faltar.",
@@ -165,6 +230,51 @@ export const GRUPOS_GEO: GrupoDeFormatos[] = [
         precisao:
           "A bancada reconhece a forma e avisa, mas não plota: “2JF.5R” vale em 467 dos 533 territórios. Assumindo BR-SC, cai na Prefeitura de Blumenau.",
         link: { url: "https://www.mapcode.com", rotulo: "mapcode.com" },
+      },
+    ],
+  },
+  {
+    id: "cadastros",
+    titulo: "Cadastros com número gravado",
+    intro:
+      "Não são coordenadas: são NÚMEROS de objetos e imóveis reais, que a bancada resolve em lugar. É a família da plaqueta de poste — o que a gincana mais usa.",
+    formatos: [
+      {
+        id: "estacao-ibge",
+        resolveEm: "decodificador",
+        nome: "Estação geodésica do IBGE",
+        oQueE:
+          "A chapa de bronze cravada em ponte, calçada ou rocha, com um código curto gravado. São 491 no Vale do Itajaí.",
+        cara: "Dígitos com uma letra: 1400M, 9Z, 2007U.",
+        exemplo: { entrada: "1400M", saida: "estação em Blumenau, no mapa" },
+        precisao:
+          "A descrição do cadastro costuma ser enunciado pronto — “chapa cravada na cabeceira da ponte sobre o Rio Perequê”.",
+        link: { url: "https://servicodados.ibge.gov.br/api/v1/bdg", rotulo: "API do BDG" },
+      },
+      {
+        id: "car",
+        resolveEm: "decodificador",
+        nome: "CAR — Cadastro Ambiental Rural",
+        oQueE:
+          "O registro de um imóvel rural. O município sai do próprio código, sem consulta nenhuma.",
+        cara: "UF, hífen, sete dígitos do IBGE, hífen, 32 hexadecimais em maiúscula.",
+        exemplo: {
+          entrada: "SC-4202404-D9ADE9A8B4C24E5FA0F3B1C2D3E4F5A6",
+          saida: "imóvel rural em Blumenau/SC",
+        },
+        precisao:
+          "A coordenada NÃO sai: o polígono vive no SICAR, atrás de captcha. O dígito verificador confere o número, mas não pega município trocado — Itajaí e Itapema são ambos válidos.",
+        link: { url: "https://www.car.gov.br", rotulo: "car.gov.br" },
+      },
+      {
+        id: "inscricao-blumenau",
+        resolveEm: "decodificador",
+        nome: "Inscrição imobiliária de Blumenau",
+        oQueE: "O número do carnê de IPTU. São 84.539 lotes na bancada, com endereço e coordenada.",
+        cara: "Quinze dígitos, ou seis grupos pontuados.",
+        exemplo: { entrada: "4.1.24.20.2.0", saida: "15 de Novembro, 1231 · Centro" },
+        precisao:
+          "Os zeros à esquerda são obrigatórios na base, e o carnê os omite — a bancada repõe. O ponto é o centro do lote, não a porta.",
       },
     ],
   },

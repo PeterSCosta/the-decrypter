@@ -170,9 +170,17 @@ export function GeoPanel({
 
               <button
                 type="button"
-                onClick={() => usarExemplo(f.exemplo.entrada)}
+                onClick={() =>
+                  f.resolveEm === "decodificador"
+                    ? aoDecodificar?.(f.exemplo.entrada)
+                    : usarExemplo(f.exemplo.entrada)
+                }
                 className="mt-2 flex w-full flex-wrap items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--surface-sunken)] px-2.5 py-1.5 text-left hover:bg-[var(--surface-sunken)]/70"
-                title="Usar este exemplo na caixa acima"
+                title={
+                  f.resolveEm === "decodificador"
+                    ? "Abrir este exemplo no Decodificador"
+                    : "Usar este exemplo na caixa acima"
+                }
               >
                 <span className="font-mono text-xs text-[var(--text-primary)]">
                   {f.exemplo.entrada}
@@ -181,6 +189,12 @@ export function GeoPanel({
                 <span className="text-xs text-[var(--text-secondary)]">{f.exemplo.saida}</span>
               </button>
 
+              {f.resolveEm === "decodificador" ? (
+                <p className="mt-2 text-xs text-[var(--text-muted)]">
+                  Este não é coordenada disfarçada: é número de cadastro, e quem responde é a
+                  consulta do <strong>Decodificador</strong> — a caixa acima não o reconhece.
+                </p>
+              ) : null}
               {f.atalho ? (
                 <p className="mt-2 text-xs text-[var(--text-secondary)]">
                   <span className="text-[var(--brand-strong)]">Atalho local:</span> {f.atalho}

@@ -6,11 +6,14 @@
 import { getCellByCode, getCellByLocation } from "geohex";
 import { ANCHORS, VALE_BBOX, inBBox, scopeLabel } from "./anchors";
 import { cartaScaleLabel, decodeCartaIbge } from "./carta-ibge";
+import { decodeCSquares } from "./csquares";
 import { decodeGars, garsCellLabel } from "./gars";
+import { decodeGeoUri, decodeIso6709, decodeOsmShortlink } from "./geo-uri";
 import { decodeGeoref, decodeGeorefLocal } from "./georef";
 import { decodeGeoTude } from "./geotude";
 import { decodeGradeIbge, gradeCellLabel } from "./grade-ibge";
 import { decodeMgrs, decodeMgrsLocal, mgrsPrecisionLabel } from "./mgrs";
+import { placekeyParaH3 } from "./placekey";
 import { decodePlusCodeLib, recoverPlusCodeLib } from "./plus-code";
 import { utmToLatLng } from "./utm";
 
@@ -20,7 +23,27 @@ export interface GeoPoint {
 }
 export interface DetectedLocation extends GeoPoint {
   format: string;
+  /**
+   * O quanto a leitura merece confiança — e ela NÃO é a mesma em toda a
+   * cascata.
+   *
+   * A ordem do `detectLocation` sempre soube disso (os frouxos vêm por último,
+   * e o comentário diz o porquê), mas a nota emitida era 0,90 para todos. O
+   * efeito medido: `1400M` saía como Geohash na Antártida com 0,90, acima de
+   * uma estação geodésica REAL de Blumenau; e `g7rpj` saía na Islândia acima do
+   * atalho local que a própria Ajuda documenta.
+   *
+   * Agora a nota acompanha o degrau:
+   *   0,95  assinatura literal (prefixo, pontuação própria) — quase impossível
+   *         ser outra coisa;
+   *   0,90  forma própria (DD, MGRS, Plus Code cheio…);
+   *   0,50  frouxos (Geohash e GeoTude aceitam quase todo alfanumérico curto).
+   */
+  confianca: number;
 }
+
+/** Os três degraus de confiança da cascata. Ver `DetectedLocation`. */
+export const CONFIANCA = { literal: 0.95, forma: 0.9, frouxa: 0.5 } as const;
 
 function valid(lat: number, lng: number): GeoPoint | null {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
@@ -238,7 +261,11 @@ export function aoCarregarH3(cb: () => void): () => void {
  * (a Triangulação resolve em `async`), evita perder o H3 na primeira tentativa.
  */
 export async function prepararDeteccao(raw: string): Promise<void> {
-  if (FORMA_H3.test(raw.trim().toLowerCase())) await carregarH3();
+  const t = raw.trim();
+  // O Placekey também precisa do H3 — ele É um H3, escrito de outro jeito. Sem
+  // este ramo, colar um Placekey devolvia "não reconheci" na primeira vez e só
+  // funcionava na tecla seguinte.
+  if (FORMA_H3.test(t.toLowerCase()) || placekeyParaH3(t) !== null) await carregarH3();
 }
 
 export function parseH3(raw: string): GeoPoint | null {
@@ -384,12 +411,67 @@ const withDetail = (format: string, detail: string) => `${format} · ${detail}`;
  * uma ÁREA, e esconder isso faria o card parecer mais preciso do que é.
  */
 function detectNamedGrid(input: string): DetectedLocation | null {
+  // ── Prefixo literal primeiro ────────────────────────────────────────────
+  // Geo URI, ISO 6709 e link do OSM têm assinatura de PREFIXO, que é a única
+  // espécie imune ao Geohash frouxo lá no fim da cascata. E o Geo URI precisa
+  // vir antes do `parseDD`: os números dele são um par de graus decimais
+  // legítimo, e o DD engoliria a leitura perdendo a incerteza.
+  const uri = decodeGeoUri(input);
+  if (uri) {
+    return {
+      lat: uri.lat,
+      lng: uri.lng,
+      format: uri.incerteza
+        ? withDetail("Geo URI", `precisão declarada de ${uri.incerteza} m`)
+        : "Geo URI",
+      confianca: CONFIANCA.literal,
+    };
+  }
+  const iso = decodeIso6709(input);
+  if (iso) {
+    return {
+      lat: iso.lat,
+      lng: iso.lng,
+      format:
+        iso.altitude != null ? withDetail("ISO 6709", `altitude ${iso.altitude} m`) : "ISO 6709",
+      confianca: CONFIANCA.literal,
+    };
+  }
+  const osm = decodeOsmShortlink(input);
+  if (osm) {
+    return {
+      lat: osm.lat,
+      lng: osm.lng,
+      format: withDetail("Link do OSM", `zoom ${osm.zoom}`),
+      confianca: CONFIANCA.literal,
+    };
+  }
+  // Placekey: o `@` é a assinatura, e o "Onde" vira um hexágono H3 — que a lib
+  // já carregada resolve. Sem o `@`, os três trios colidiriam com ID de vídeo.
+  const pk = placekeyParaH3(input);
+  if (pk) {
+    // `parseH3` dispara o carregamento da lib quando ela ainda não chegou e
+    // devolve null nesse passe — o ouvinte `aoCarregarH3` refaz a detecção.
+    const pt = parseH3(pk);
+    if (pt) return { ...pt, format: "Placekey", confianca: CONFIANCA.literal };
+  }
+  const cs = decodeCSquares(input);
+  if (cs) {
+    return {
+      lat: cs.lat,
+      lng: cs.lng,
+      format: withDetail("C-squares", `célula de ${cs.resolucao}°`),
+      confianca: CONFIANCA.literal,
+    };
+  }
+
   const grade = decodeGradeIbge(input);
   if (grade) {
     return {
       lat: grade.lat,
       lng: grade.lng,
       format: withDetail("Grade estatística IBGE", `célula de ${gradeCellLabel(grade.cell)}`),
+      confianca: CONFIANCA.literal,
     };
   }
   const carta = decodeCartaIbge(input);
@@ -398,6 +480,7 @@ function detectNamedGrid(input: string): DetectedLocation | null {
       lat: carta.lat,
       lng: carta.lng,
       format: withDetail("Carta IBGE/DSG", cartaScaleLabel(carta.scale)),
+      confianca: CONFIANCA.literal,
     };
   }
   return null;
@@ -436,7 +519,7 @@ export function detectLocation(raw: string): DetectedLocation | null {
     ["H3", parseH3(input)],
     ["GeoHex", parseGeoHex(input)],
   ];
-  for (const [format, pt] of attempts) if (pt) return { ...pt, format };
+  for (const [format, pt] of attempts) if (pt) return { ...pt, format, confianca: CONFIANCA.forma };
 
   // ---- Atalhos de cauda local (o prefixo da cidade fica subentendido) -----
   // Vem ANTES do Geohash de propósito: uma cauda de MGRS como "FR9203021024"
@@ -454,7 +537,15 @@ export function detectLocation(raw: string): DetectedLocation | null {
     ["GEOREF", decodeGeorefLocal(input)],
   ];
   for (const [format, pt] of local) {
-    if (pt) return { ...pt, format: `${format} (${scopeLabel(pt) ?? "Vale do Itajaí"})` };
+    if (pt) {
+      return {
+        ...pt,
+        format: `${format} (${scopeLabel(pt) ?? "Vale do Itajaí"})`,
+        // O atalho local se auto-valida (só passa se cair na caixa do Vale),
+        // então vale mais que um frouxo — e menos que forma própria.
+        confianca: 0.75,
+      };
+    }
   }
 
   // Os mais frouxos por último: o Geohash aceita quase todo alfanumérico curto,
@@ -463,6 +554,6 @@ export function detectLocation(raw: string): DetectedLocation | null {
     ["Geohash", decodeGeohash(input)],
     ["GeoTude", decodeGeoTude(input)],
   ];
-  for (const [format, pt] of loose) if (pt) return { ...pt, format };
+  for (const [format, pt] of loose) if (pt) return { ...pt, format, confianca: CONFIANCA.frouxa };
   return null;
 }

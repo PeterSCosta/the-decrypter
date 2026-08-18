@@ -1,4 +1,5 @@
 import type { BridgesData } from "@/features/bridge/types";
+import type { EstacoesData } from "@/features/estacao/types";
 import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
 import type { VotacoesData } from "@/features/votacao/types";
@@ -113,6 +114,17 @@ export function loadVotacoes(): Promise<VotacoesData> {
 
 export function getVotacoes(): VotacoesData | null {
   return votacoes.value;
+}
+
+// Estações geodésicas do Vale (IBGE). 49 KB, preguiçosa pelo mesmo motivo.
+const estacoes: Slot<EstacoesData> = { promise: null, value: null };
+
+export function loadEstacoes(): Promise<EstacoesData> {
+  return loadOnce(estacoes, dataUrl("estacoes-ibge.json"), asJson<EstacoesData>);
+}
+
+export function getEstacoes(): EstacoesData | null {
+  return estacoes.value;
 }
 
 // Participantes PIX (~900 instituições) via backend /api/pix. Carregado sob

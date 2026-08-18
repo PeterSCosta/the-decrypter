@@ -17,6 +17,7 @@ import type { Cid } from "@/lib/lookup-cache";
 import { CornerDownRight } from "lucide-react";
 import type { BarcodeHint } from "../engine/decoders/barcode";
 import type { CaesarShiftRow } from "../engine/decoders/caesar-bruteforce";
+import type { CarHint } from "../engine/decoders/car";
 import type { CipherDiskWheel } from "../engine/decoders/cipher-disk";
 import type { CnaeHint } from "../engine/decoders/cnae";
 import type { DocResult } from "../engine/decoders/documents";
@@ -33,6 +34,7 @@ import type { DecoderCategory, ScoredCandidate } from "../engine/types";
 import { chainValueOf } from "../trail";
 import { BarcodeCard } from "./barcode-card";
 import { CaesarTable } from "./caesar-table";
+import { CarCard } from "./car-card";
 import { CnaeCard } from "./cnae-card";
 import { CodeListCard } from "./code-list-card";
 import { DocumentCard } from "./document-card";
@@ -123,6 +125,8 @@ export function ResultCard({
           <PosteCard poste={c.data as Poste} />
         ) : c.render === "youtube" ? (
           <YoutubeCard hint={c.data as YoutubeHint} />
+        ) : c.render === "car" ? (
+          <CarCard hint={c.data as CarHint} />
         ) : c.render === "votacao" ? (
           <VotacaoCard hint={c.data as VotacaoHint} onChain={onChain} />
         ) : c.render === "fipe" ? (

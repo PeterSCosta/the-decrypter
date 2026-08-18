@@ -17,6 +17,15 @@ const km = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) =>
   );
 
 describe("os exemplos da aba Geolocalização", () => {
+  it("quem resolve por base está marcado, e quem é conta pura não está", () => {
+    const porBase = GRUPOS_GEO.flatMap((g) => g.formatos).filter(
+      (f) => f.resolveEm === "decodificador",
+    );
+    // Se um destes perder a marca, o teste abaixo passa a cobrá-lo do
+    // `detectLocation` e falha — que é exatamente o aviso desejado.
+    expect(porBase.map((f) => f.id).sort()).toEqual(["car", "estacao-ibge", "inscricao-blumenau"]);
+  });
+
   it("Maidenhead e Quadkey apontam para Blumenau de verdade", () => {
     expect(km(decodeMaidenhead("GG53lb") as { lat: number; lng: number }, BLUMENAU)).toBeLessThan(
       5,
@@ -36,6 +45,9 @@ describe("os exemplos da aba Geolocalização", () => {
 
   it("todo exemplo que promete Blumenau ou Itajaí cai lá", () => {
     for (const f of GRUPOS_GEO.flatMap((g) => g.formatos)) {
+      // Os que resolvem por BASE não passam pelo `detectLocation` — e a ficha
+      // deles diz isso na tela. Testá-los aqui seria testar a coisa errada.
+      if (f.resolveEm === "decodificador") continue;
       const promete = /blumenau/i.test(f.exemplo.saida)
         ? BLUMENAU
         : /itaja/i.test(f.exemplo.saida)
