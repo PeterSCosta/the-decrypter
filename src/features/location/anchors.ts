@@ -29,8 +29,6 @@ export interface LocalAnchor {
   bbox: BBox;
   /** Código IBGE do município. */
   ibge: string;
-  /** Faixa de CEP da sede [min, max] como inteiros de 8 dígitos. */
-  cepSede: [number, number];
   /** Prefixo de 2 letras do GeoHex (geohex.net) — comum às duas: "Nb". */
   geohex: string;
   /** "Area code" de 4 chars do Plus Code (OLC) p/ recuperar código curto. */
@@ -49,7 +47,6 @@ export const BLUMENAU: LocalAnchor = {
   lng: -49.0661,
   bbox: { latMin: -27.05, latMax: -26.78, lonMin: -49.2, lonMax: -48.95 },
   ibge: "4202404",
-  cepSede: [89010000, 89045999],
   geohex: "Nb",
   plusPrefix: "585G",
   plusExample: "585G3WJM+6H",
@@ -63,7 +60,6 @@ export const ITAJAI: LocalAnchor = {
   lng: -48.6618,
   bbox: { latMin: -27.0, latMax: -26.82, lonMin: -48.78, lonMax: -48.58 },
   ibge: "4208203",
-  cepSede: [88300000, 88319999],
   geohex: "Nb",
   plusPrefix: "585H",
   plusExample: "585H38RQ+V7",

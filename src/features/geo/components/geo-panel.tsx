@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Input } from "@/components/ui/input";
 import { MapCard } from "@/features/decoder/components/map-card";
-import { detectLocation, prepararDeteccao } from "@/features/location/formats";
+import { detectLocation, detectWhat3Words, prepararDeteccao } from "@/features/location/formats";
 import { ArrowRight, Compass, Database, ExternalLink, Search } from "lucide-react";
 import { useState } from "react";
 import { BASES_GEO, GRUPOS_GEO, LINKS_GEO } from "../formatos";
@@ -32,6 +32,28 @@ export function GeoPanel({
 }) {
   const [texto, setTexto] = useState("");
   const achado = texto.trim() ? detectLocation(texto) : null;
+  /**
+   * O what3words não sai do `detectLocation` — ele não tem como sair.
+   *
+   * Três palavras não viram coordenada por conta: quem resolve é a API, e o
+   * `detectLocation` é síncrono. A aba listava o formato e devolvia "não
+   * reconheci" para o próprio exemplo dela. Aqui a forma é detectada e o
+   * `MapCard` resolve, que é exatamente o que ele já faz no Decodificador.
+   */
+  const w3w = !achado && texto.trim() ? detectWhat3Words(texto) : null;
+
+  /**
+   * Clicar no exemplo tem de acordar o H3 igual a digitar.
+   *
+   * O H3 mora numa lib pesada que entra por `import()`. O campo chama
+   * `prepararDeteccao` a cada tecla, mas o botão de exemplo escrevia direto no
+   * estado — então clicar no exemplo de H3 mostrava "não reconheci" e CONTINUAVA
+   * assim até a pessoa digitar outra tecla.
+   */
+  const usarExemplo = (entrada: string) => {
+    setTexto(entrada);
+    void prepararDeteccao(entrada);
+  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -82,13 +104,31 @@ export function GeoPanel({
                 ) : null}
               </div>
               <div className="mt-3">
+                {/* `key` pela ENTRADA, e não é detalhe: o `MapCard` guarda a
+                    coordenada em estado interno, e sem remontar ele mostrava o
+                    ponto do texto ANTERIOR — medido aqui, um what3words
+                    aparecendo com a coordenada do Maidenhead de antes. */}
                 <MapCard
+                  key={texto}
                   data={{
                     lat: achado.lat,
                     lng: achado.lng,
                     label: achado.format,
                     format: achado.format,
                   }}
+                />
+              </div>
+            </div>
+          ) : w3w ? (
+            <div className="mt-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge tone="brand">what3words</Badge>
+                <span className="font-mono text-sm text-[var(--text-primary)]">{`///${w3w}`}</span>
+              </div>
+              <div className="mt-3">
+                {/* Quem resolve é o card, com a chave que vive no servidor. */}
+                <MapCard
+                  data={{ lat: null, lng: null, label: `///${w3w}`, format: "what3words", w3w }}
                 />
               </div>
             </div>
@@ -130,7 +170,7 @@ export function GeoPanel({
 
               <button
                 type="button"
-                onClick={() => setTexto(f.exemplo.entrada)}
+                onClick={() => usarExemplo(f.exemplo.entrada)}
                 className="mt-2 flex w-full flex-wrap items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--surface-sunken)] px-2.5 py-1.5 text-left hover:bg-[var(--surface-sunken)]/70"
                 title="Usar este exemplo na caixa acima"
               >

@@ -118,14 +118,18 @@ export const GRUPOS_GEO: GrupoDeFormatos[] = [
         nome: "Maidenhead (grid locator)",
         oQueE: "A grade do radioamadorismo, em pares alternados de letras e dígitos.",
         cara: "Duas letras, dois dígitos, duas letras — GG52 no sul do Brasil.",
-        exemplo: { entrada: "GG42vb", saida: "região de Blumenau" },
+        // MEDIDO: GG42vb cai em −27,94/−50,21, a ~150 km daqui (perto de Lages).
+        // O locator de Blumenau é GG53lb → −26,9375/−49,0417.
+        exemplo: { entrada: "GG53lb", saida: "Blumenau (−26,94 · −49,04)" },
       },
       {
         id: "quadkey",
         nome: "Quadkey",
         oQueE: "O índice de tile do Bing Maps: cada dígito 0–3 desce um nível de zoom.",
         cara: "Só os dígitos 0, 1, 2 e 3, em sequência longa.",
-        exemplo: { entrada: "211102203311", saida: "tile sobre Blumenau" },
+        // MEDIDO: 211102203311 cai em −9,49/−21,14 — meio do Atlântico. O tile
+        // de zoom 12 sobre Blumenau é 210311232221.
+        exemplo: { entrada: "210311232221", saida: "Blumenau (−26,94 · −49,09)" },
       },
       {
         id: "h3",

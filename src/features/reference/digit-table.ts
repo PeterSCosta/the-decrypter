@@ -17,7 +17,7 @@ export const DOC_FORMATS: DocFormat[] = [
   { name: "DDD / código de área (DDI)", min: 2, max: 2 },
   { name: "Número do banco / lei", min: 3, max: 3 },
   { name: "Número do voo / CRM", min: 4, max: 4 },
-  { name: "CRM", min: 5, max: 5 },
+  { name: "CRM · matrícula do SAMAE", min: 5, max: 5 },
   { name: "RG", min: 7, max: 9 },
   { name: "CEP", min: 8, max: 8 },
   { name: "Data de nascimento (DDMMAAAA)", min: 8, max: 8 },

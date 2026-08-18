@@ -30,7 +30,7 @@ export interface DecodeContext {
   key: string;
   /**
    * Segundo campo genérico: a fonte a indexar, o texto original de um diff, a
-   * lista de deslocamentos. Opcional — 74 decoders o ignoram.
+   * lista de deslocamentos. Opcional — 104 dos 106 decoders o ignoram.
    */
   aux?: string;
   /** Id do decoder quando a bancada roda no modo "uma cifra só". */

@@ -640,8 +640,8 @@ Saber isto de véspera evita queimar 15 minutos procurando um botão que não ex
 | **Revelação física** (calor, gelo, UV) | não é software | secador, freezer, lanterna UV |
 | **Sobreposição / overlay físico** | idem | guardar e alinhar as peças |
 | **Combinação de cofre** | a cifra que gera os dígitos é outra entrada | — |
-| **Áudio** | não há nada de áudio na bancada | reconhecer a música é o gargalo; `Notas musicais` (`music-notes`) só lê notas **já transcritas** |
-| **Vídeo** | idem | pausar e transcrever à mão; depois o subproduto textual entra na bancada |
+| **Áudio** | ~~não há nada de áudio na bancada~~ — **FECHADO, ago/2026** | a aba **Arquivo → Áudio** tem espectrograma por canal (Esquerdo, Direito e a Diferença E−D, que revela mensagem em antifase), Morse por tom, DTMF, notas musicais, LSB, recorte por canal e por segundo, e o botão de **identificar música** |
+| **Vídeo** | ~~idem~~ — **FECHADO, ago/2026** | a aba **Arquivo → Vídeo** extrai quadro em instantes escolhidos (`14, 60, 72, 90`) e tira de miniaturas; cada quadro vira PNG e volta ao topo da análise |
 | **Encenação / performance** | Família D | — |
 
 ### 7.2 Ausências verificadas por grep (não encontrado no `src/`)
@@ -654,7 +654,7 @@ Saber isto de véspera evita queimar 15 minutos procurando um botão que não ex
   descobrir *contra o quê* comparar continua sendo busca externa manual.
 - **Caça-palavras e cruzadinha** — manuais. *(O **nonograma** deixou de ser: a aba **Matriz**
   resolve, e com ele a Et.3 do pocket-7 de 2023, que cumpriu 1/4.)*
-- **CNAE, FIPE, Anatel, CID-10** — **nenhum decoder**, e por decisão de projeto: esses códigos não
+- **CNAE, FIPE, Anatel** — **nenhum decoder**, e por decisão de projeto: esses códigos não
   têm assinatura (um VM é "um número de 4 dígitos"), então um decoder que disparasse neles seria
   ruído em toda entrada numérica. *(Já a **chave de NF-e**, o **boleto**, o **rastreio dos
   Correios**, o **título de eleitor** e a **placa** entraram — esses TÊM assinatura: comprimento
@@ -664,7 +664,13 @@ Saber isto de véspera evita queimar 15 minutos procurando um botão que não ex
 - **Coordenada → cidade** — o `municipios.json` não tem lat/lng. *(As linhas de `ceps.json` têm
   lat/lng, mas nenhum decoder lê no sentido inverso.)* O degrau seguinte, **cidade → DDD**, a bancada
   já faz (`ddd-cidade`, §4.4).
-- **Qualquer entrada por imagem** — sem OCR, sem EXIF, sem paleta, sem LSB.
+- ~~**Qualquer entrada por imagem** — sem OCR, sem EXIF, sem paleta, sem LSB.~~ **FECHADO,
+  ago/2026:** a aba **Arquivo → Imagem** lê EXIF (com a coordenada indo direto ao mapa), planos de
+  bit por canal, canal alfa com cor escondida, mede a estrutura do plano menos significativo e
+  **lê QR e código de barras da foto** (leitor do sistema, com o `jsQR` de reserva). O que segue
+  faltando é só **OCR** — texto impresso na imagem continua sendo transcrição à mão.
+- **CID-10 saiu desta lista:** os 14.233 códigos do DATASUS estão no acervo desde ago/2026, e
+  respondem nos dois sentidos (código → doença e nome da doença → código).
 
 ### 7.2b O que você acharia que falta — e não falta mais
 

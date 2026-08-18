@@ -5,8 +5,9 @@ import { bruteDecoder } from "../define";
  * espalha números pela prosa (`0,10`, `100`, `0,100`, `111`) e a OBS manda
  * ignorar as vírgulas; só a concatenação de TODOS os dígitos, repartida em
  * blocos de tamanho fixo, vira mensagem. O codec `binary` não alcança isso
- * porque exige os octetos já separados por espaço, e o `decimal` respeita a
- * largura dos tokens que o texto entrega — aqui a largura é justamente o que
+ * porque lê a largura que o texto entrega — e não porque exija espaço entre os
+ * octetos, como este comentário afirmou por engano até agosto/2026 —, e o
+ * `decimal` respeita a mesma largura — aqui a largura é justamente o que
  * está escondido.
  *
  * O portão é o que impede a cifra de sujar cada tecla: ≥ 16 dígitos, e cada

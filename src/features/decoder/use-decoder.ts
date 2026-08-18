@@ -265,7 +265,7 @@ export function useDecoder(entradaInicial = "") {
      * escreve como "nunca mascarar falha de backend como estado vazio".
      *
      * O aviso diz também o que CONTINUA funcionando, porque quase tudo
-     * continua: as ~100 cifras, o realce de palavra real e os anagramas são
+     * continua: as 106 cifras, o realce de palavra real e os anagramas são
      * todos locais.
      */
     const daRede: Hint[] = hitsErro

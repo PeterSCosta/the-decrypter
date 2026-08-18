@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
 import { cn } from "@/lib/cn";
-import { Wand2 } from "lucide-react";
+import { ScanLine, Wand2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { type CodigoLido, lerCodigos, rotuloDoFormato, temLeitorNativo } from "../codigo";
 import { type Exif, lerExif } from "../exif";
 import { alfaOpaco, apenasCanal, medirPlanos, planoDeBit } from "../planos";
 
@@ -40,9 +41,40 @@ export function ImagemPainel({
   const [exato, setExato] = useState(true);
   const [vista, setVista] = useState<Vista>({ tipo: "original" });
   const [erro, setErro] = useState<string | null>(null);
+  const [codigos, setCodigos] = useState<CodigoLido[] | null>(null);
+  const [motivoCodigo, setMotivoCodigo] = useState<string | null>(null);
+  const [lendoCodigo, setLendoCodigo] = useState(false);
   const ref = useRef<HTMLCanvasElement>(null);
 
   const exif: Exif | null = useMemo(() => lerExif(bytes), [bytes]);
+
+  /**
+   * Ler QR / código de barras da FOTO.
+   *
+   * Sob demanda, e não ao abrir a imagem: o leitor de reserva é um download, e
+   * a maioria das imagens de prova não tem código nenhum. O botão também deixa
+   * a ação explícita — quem clica sabe o que esperar, e a ausência de resposta
+   * vira uma frase em vez de silêncio.
+   */
+  const lerCodigo = async () => {
+    if (!px) return;
+    setLendoCodigo(true);
+    setMotivoCodigo(null);
+    try {
+      // O `Uint8ClampedArray` que veio do canvas pode estar sobre um
+      // `SharedArrayBuffer` no tipo, e o construtor de `ImageData` exige
+      // `ArrayBuffer`. A cópia resolve o tipo e não custa nada perto do
+      // trabalho de decodificar a imagem.
+      const img = new ImageData(new Uint8ClampedArray(px.dados), px.w, px.h);
+      const r = await lerCodigos(img);
+      setCodigos(r.achados);
+      setMotivoCodigo(r.motivo);
+    } catch (e) {
+      setMotivoCodigo(e instanceof Error ? e.message : "não consegui ler");
+    } finally {
+      setLendoCodigo(false);
+    }
+  };
 
   // ── carregar os pixels ────────────────────────────────────────────────────
   useEffect(() => {
@@ -196,6 +228,55 @@ export function ImagemPainel({
             — o navegador não os desenha, e eles continuam ali. Veja a vista Alfa.
           </p>
         ) : null}
+
+        {/* Código impresso na imagem — QR, EAN, Code128. É a outra forma de a
+            prova esconder texto numa foto, e não tem nada a ver com os planos
+            de bit acima: aqui o dado está VISÍVEL, só não está legível. */}
+        <div className="mt-4 border-t border-[var(--border-subtle)] pt-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" variant="secondary" disabled={!px || lendoCodigo} onClick={lerCodigo}>
+              <ScanLine className="h-4 w-4" />
+              {lendoCodigo ? "Lendo…" : "Ler QR / código de barras"}
+            </Button>
+            {!temLeitorNativo() ? (
+              <span className="text-xs text-[var(--text-muted)]">
+                este navegador só lê QR; o Chrome lê também código de barras
+              </span>
+            ) : null}
+          </div>
+
+          {codigos?.length ? (
+            <div className="mt-3 space-y-2">
+              {codigos.map((c) => (
+                <div
+                  key={c.texto}
+                  className="rounded-[var(--radius-md)] bg-[var(--surface-sunken)] p-2.5"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge tone="brand">{rotuloDoFormato(c.formato)}</Badge>
+                    <span className="font-mono text-[0.625rem] text-[var(--text-muted)]">
+                      {c.origem === "nativo" ? "leitor do sistema" : "leitor de reserva"}
+                    </span>
+                    <CopyButton value={c.texto} />
+                    {onDecodificador ? (
+                      <Button size="sm" variant="ghost" onClick={() => onDecodificador(c.texto)}>
+                        <Wand2 className="h-3.5 w-3.5" />
+                        usar como entrada
+                      </Button>
+                    ) : null}
+                  </div>
+                  <p className="mt-1 break-all font-mono text-sm text-[var(--text-primary)]">
+                    {c.texto}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {motivoCodigo ? (
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">{motivoCodigo}</p>
+          ) : null}
+        </div>
       </Card>
 
       {/* EXIF */}

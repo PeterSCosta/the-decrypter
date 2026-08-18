@@ -121,7 +121,7 @@ export function App() {
    * Menu recolhido vira coluna de ÍCONES, não some.
    *
    * Sumir por completo devolveria o problema que a coluna resolveu: sem uma
-   * âncora visível, quem recolheu não acha de volta. Com 13 ícones e o rótulo
+   * âncora visível, quem recolheu não acha de volta. Com 14 ícones e o rótulo
    * no `title`, a navegação continua inteira em 3,5 rem.
    */
   const [menuAberto, setMenuAberto] = useState(true);
@@ -160,7 +160,7 @@ export function App() {
         /**
          * Duas navegações, uma por largura — e a razão é aritmética.
          *
-         * São 13 abas. Numa barra horizontal elas não cabem nem em 2000 px: o
+         * São 14 abas. Numa barra horizontal elas não cabem nem em 2000 px: o
          * print do dono mostrava "Cola" cortado no meio, e o resto atrás de
          * rolagem lateral que ninguém descobre. Ao mesmo tempo, o conteúdo
          * estava preso em `max-w-5xl` (1024 px) — num monitor largo, metade da

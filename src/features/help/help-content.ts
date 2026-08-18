@@ -18,10 +18,10 @@ export interface HelpSection {
 }
 
 export const HELP_INTRO = [
-  "O The Decrypter é uma oficina de cifras: você cola UMA entrada (texto, números, um código) e ele tenta TODAS as interpretações ao mesmo tempo — 100 cifras, codificações, tabelas e bases de dados — e mostra os resultados ranqueados por “o que faz sentido”.",
+  "O The Decrypter é uma oficina de cifras: você cola UMA entrada (texto, números, um código) e ele tenta TODAS as interpretações ao mesmo tempo — 106 cifras, codificações, tabelas e bases de dados — e mostra os resultados ranqueados por “o que faz sentido”.",
   "Os mais prováveis aparecem em cima; o resto fica em “pouco provável”, recolhido. Cada resultado tem um selo (codificação, cifra, transformação, base de dados), um botão de copiar e, quando a saída bate no dicionário pt/en, o selo “palavra real”. Quando há chave (Vigenère, índices, deslocamentos), use o campo de chave; o 2º campo guarda a fonte a indexar ou a lista.",
   "Acima da entrada ficam os chips do sniffer (“isto tem cara de…”) e a barra de Cadeia, que empurra um resultado de volta para a entrada e registra a trilha. O campo de título lê o nome da prova como pista — ele só levanta chips, nunca mexe no ranking.",
-  "Tudo roda no navegador. As consultas externas (CNPJ, CEP, ISBN, NCM, PIX, produto pelo código de barras, what3words, geocodificação) passam pelo backend do projeto, e os mapas vêm do OpenStreetMap.",
+  "Tudo roda no navegador. As consultas externas (CNPJ, CEP, ISBN, NCM, PIX, produto pelo código de barras, what3words, geocodificação) passam pelo backend do projeto, e os mapas vêm do OpenStreetMap. O único caso em que um ARQUIVO SEU sai do navegador é o botão “Identificar música” da aba Arquivo, que envia o trecho de áudio recortado — com clique explícito, e nunca sozinho.",
 ];
 
 export const HELP_SECTIONS: HelpSection[] = [
@@ -580,7 +580,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     entries: [
       {
         name: "Arquivo",
-        desc: "Solte QUALQUER arquivo e descubra o que ele esconde. Ele identifica o que o arquivo é pelos BYTES (não pela extensão, que qualquer um renomeia), mede quantos bytes existem depois do fim declarado, procura outros arquivos embutidos e os RECORTA para você abrir e baixar, extrai o texto legível de dentro do binário e desenha o mapa de entropia. Cada achado leva ao byte exato no hexdump, para você conferir em vez de acreditar. Um recorte vira arquivo novo e volta ao topo da análise, com trilha de migalhas. Tudo local: nada é enviado para lugar nenhum.",
+        desc: "Solte QUALQUER arquivo e descubra o que ele esconde. Ele identifica o que o arquivo é pelos BYTES (não pela extensão, que qualquer um renomeia), mede quantos bytes existem depois do fim declarado, procura outros arquivos embutidos e os RECORTA para você abrir e baixar, extrai o texto legível de dentro do binário e desenha o mapa de entropia. Cada achado leva ao byte exato no hexdump, para você conferir em vez de acreditar. Um recorte vira arquivo novo e volta ao topo da análise, com trilha de migalhas. Tudo local — com UMA exceção, e ela está sempre a um clique de distância: o botão “Identificar música”, no painel de Áudio, envia o trecho que você recortou para um serviço de reconhecimento. Nada mais sai daqui, e nada sai sozinho.",
         example: {
           in: "um .wav com uma foto colada no fim",
           out: "“Este arquivo contém um JPEG inteiro dentro dele” — 9 KB a partir do byte 176.444",
@@ -588,7 +588,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Arquivo · Áudio",
-        desc: "Espectrograma com três vistas de canal (Esquerdo, Direito e Diferença E−D, que revela mensagem em antifase — a que some quando o som vira mono), com piso de dB e faixa de frequência ajustáveis. Lê Morse por tom, DTMF e notas musicais, sempre CANAL A CANAL e sempre no áudio original a 1,0× — velocidade e modo fita são para o ouvido e nunca alimentam detector. Extrai os bits menos significativos com o corte na tela. E recorta trecho e canal para levar a outra ferramenta.",
+        desc: "Espectrograma com três vistas de canal (Esquerdo, Direito e Diferença E−D, que revela mensagem em antifase — a que some quando o som vira mono), com piso de dB e faixa de frequência ajustáveis. Lê Morse por tom, DTMF e notas musicais, sempre CANAL A CANAL e sempre no áudio original a 1,0× — velocidade e modo fita são para o ouvido e nunca alimentam detector. Extrai os bits menos significativos com o corte na tela. E recorta trecho e canal para levar a outra ferramenta. O botão “Identificar música” é o ÚNICO ponto da bancada que manda dado para fora: ele envia o trecho recortado (não o arquivo) a um serviço de reconhecimento, só com clique explícito e com o aviso na tela.",
         example: {
           in: "um WAV com Morse só no canal esquerdo",
           out: "PONTE DE FERRO · 802 Hz · 11 WPM",
@@ -697,6 +697,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         desc: "Tudo que a bancada conhece, com o tamanho real de cada base (a contagem vem do banco, não de um número escrito à mão), e embaixo as bases públicas que ainda se consultam à mão, com o link oficial. Cada base abre para navegar; a de postes abre no mapa.",
       },
       {
+        name: "Geolocalização",
+        desc: "O mapa do assunto: os 18 formatos de coordenada que a bancada entende, com o que cada um é, como se reconhece, um exemplo clicável e o atalho local — porque Blumenau e Itajaí têm prefixo fixo, e um código PELA METADE já localiza. Tem uma caixa que responde “que formato é este?”, nomeia o sistema e plota. Também lista as bases que viram ponto (postes, CEP, ruas, pontes, aeroportos) e onde conferir por fora.",
+        example: { in: "22JGR3221221631", out: "MGRS · 1 m · Itajaí no mapa" },
+      },
+      {
         name: "Frota",
         desc: "Mapa ao vivo dos celulares da equipe (Traccar): posição, status, bateria e quem está mais perto — o mesmo cálculo que aparece no cartão de localização.",
       },
@@ -721,6 +726,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         name: "BrasilAPI (via backend)",
         desc: "CNPJ, CEP, ISBN, NCM, participantes do PIX (ISPB) e domínios .br (Registro.br).",
         example: { in: "brasilapi.com.br", out: "grátis · sem chave" },
+      },
+      {
+        name: "Reconhecimento de música (via backend)",
+        desc: "A ÚNICA chamada que envia um arquivo seu, e só com clique: o trecho de áudio recortado no painel de Áudio sobe para um serviço de reconhecimento e volta com título, artista e o instante dentro da faixa. Sem clique, nada sai. Se o servidor não tiver a chave configurada, a resposta diz isso em vez de fingir que não reconheceu.",
+        example: { in: "trecho de 12 s, canal direito", out: "título · artista · timecode" },
       },
       {
         name: "Open Food Facts (via backend)",
