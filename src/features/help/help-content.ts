@@ -18,7 +18,7 @@ export interface HelpSection {
 }
 
 export const HELP_INTRO = [
-  "O The Decrypter é uma oficina de cifras: você cola UMA entrada (texto, números, um código) e ele tenta TODAS as interpretações ao mesmo tempo — 106 cifras, codificações, tabelas e bases de dados — e mostra os resultados ranqueados por “o que faz sentido”.",
+  "O The Decrypter é uma oficina de cifras: você cola UMA entrada (texto, números, um código) e ele tenta TODAS as interpretações ao mesmo tempo — 112 cifras, codificações, tabelas e bases de dados — e mostra os resultados ranqueados por “o que faz sentido”.",
   "Os mais prováveis aparecem em cima; o resto fica em “pouco provável”, recolhido. Cada resultado tem um selo (codificação, cifra, transformação, base de dados), um botão de copiar e, quando a saída bate no dicionário pt/en, o selo “palavra real”. Quando há chave (Vigenère, índices, deslocamentos), use o campo de chave; o 2º campo guarda a fonte a indexar ou a lista.",
   "Acima da entrada ficam os chips do sniffer (“isto tem cara de…”) e a barra de Cadeia, que empurra um resultado de volta para a entrada e registra a trilha. O campo de título lê o nome da prova como pista — ele só levanta chips, nunca mexe no ranking.",
   "Tudo roda no navegador. As consultas externas (CNPJ, CEP, ISBN, NCM, PIX, produto pelo código de barras, what3words, geocodificação) passam pelo backend do projeto, e os mapas vêm do OpenStreetMap. O único caso em que um ARQUIVO SEU sai do navegador é o botão “Identificar música” da aba Arquivo, que envia o trecho de áudio recortado — com clique explícito, e nunca sozinho.",
@@ -40,7 +40,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       {
         name: "Base45 / Base58 / Base85 (Ascii85)",
         desc: "Bases compactas (Base45 de QR, Base58 de cripto, Ascii85).",
-        example: { in: "9xa^", out: "bytes" },
+        example: { in: "StV1DL6CwTryKyV", out: "hello world (Base58)" },
       },
       {
         name: "Base91 (basE91)",
@@ -66,8 +66,8 @@ export const HELP_SECTIONS: HelpSection[] = [
       { name: "Braille", desc: "Padrões Braille (⠿) → letras.", example: { in: "⠓⠊", out: "hi" } },
       {
         name: "Baudot / ITA2",
-        desc: "Teleimpressora de 5 bits.",
-        example: { in: "11000 10011", out: "AE" },
+        desc: "Teleimpressora de 5 bits — grupos de cinco 0/1, com troca entre LETRAS e NÚMEROS. Toda entrada de Baudot é também uma sequência binária, então o card “Binário → número” aparece junto e costuma ficar em cima: se o texto que você espera é palavra, olhe o segundo card.",
+        example: { in: "10110 11000 01100 10000 00001", out: "PONTE" },
       },
       {
         name: "URL (percent) / Entidades HTML",
@@ -104,7 +104,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       {
         name: "César — força bruta",
         desc: "Mostra todos os deslocamentos −26 a +26 numa tabela.",
-        example: { in: "Khoor", out: "tabela de 0 a 25" },
+        example: { in: "Khoor", out: "tabela de −26 a +26 (Hello em −3)" },
       },
       { name: "Atbash", desc: "Alfabeto invertido (A↔Z).", example: { in: "Svool", out: "Hello" } },
       {
@@ -135,7 +135,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       {
         name: "Cerca (rail fence) / Transposição colunar",
         desc: "Transposições (ziguezague / colunas).",
-        example: { in: "Hloleh", out: "Hello" },
+        example: { in: "Hloel", out: "Hello (2 trilhos)" },
       },
       {
         name: "Cifra de Bacon",
@@ -192,6 +192,11 @@ export const HELP_SECTIONS: HelpSection[] = [
     title: "Transformações e tabelas",
     intro: "Conversões e tabelas de referência aplicadas à entrada.",
     entries: [
+      {
+        name: "Binário → número",
+        desc: "A MESMA entrada tem duas leituras, e a bancada oferece as duas: `01001000 01001001` lido de 8 em 8 vira o texto “HI”, e lido como um número só vira 18.505. Este verbete é a segunda leitura — quando os bits não formam texto legível, quase sempre é porque são um número (um ano, um CEP, uma quantia).",
+        example: { in: "100101010", out: "dec 298 · hex 12A · oct 452" },
+      },
       {
         name: "Conversor de base",
         desc: "Converte um número entre decimal, hex, octal e binário (e o caminho de volta: um binário solto também sai como número).",
@@ -287,7 +292,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         name: "Cores (hex/RGB/HSL)",
         desc: "Hex, rgb(), hsl() ou uma lista de triplas → nome aproximado na Lista de cores da Wikipédia em português, com as iniciais e os valores nos outros espaços.",
         example: {
-          in: "245-245-220 · 244-196-48 · 0-0-128 · 0-0-255 · 255-250-250 · 153-102-204",
+          in: "245-245-220, 244-196-48, 0-0-128, 0-0-255, 255-250-250, 153-102-204",
           out: "Bege · Açafrão · Naval · Azul · Neve · Ametista → BANANA",
         },
       },
@@ -403,13 +408,28 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "b62kBXlBlyQ", out: "título e canal do vídeo" },
       },
       {
-        name: "Geo URI · ISO 6709 · link do OSM",
-        desc: "Três formas de escrever o mesmo par de coordenadas que a bancada não lia: `geo:` é o que sai de QR de local e do “abrir no mapa” do Android (e o `;u=` diz a precisão em metros); o ISO 6709 é o do EXIF, com sinal nos dois números e barra no fim; e o link curto do OSM é o que sai ao compartilhar um ponto — nele, cada hífen no fim desce um nível de zoom.",
-        example: { in: "geo:-26.9194,-49.0661;u=35", out: "Blumenau · precisão de 35 m" },
+        name: "Geo URI",
+        desc: "O `geo:` é o que sai de QR de local e do botão “abrir no mapa” do Android. O parâmetro `;u=` é informação de prova: diz a incerteza EM METROS, ou seja, o quanto o aparelho não sabia onde estava.",
+        example: { in: "geo:-26.9194,-49.0661;u=35", out: "Blumenau · precisão declarada de 35 m" },
       },
       {
-        name: "Placekey e C-squares",
-        desc: "Placekey é o identificador de lugar em duas metades separadas por `@`; só a de trás vira ponto, e ela é um hexágono H3. C-squares é a grade hierárquica da CSIRO, usada em dado de biodiversidade — cada grupo depois dos dois-pontos divide a célula, e o primeiro dígito carrega os sinais.",
+        name: "ISO 6709",
+        desc: "A forma do EXIF e do XMP de uma foto. Três coisas juntas dão a assinatura, e é a combinação que a separa de um par de números qualquer: sinal obrigatório nos dois, longitude com TRÊS dígitos de grau (`-049`, nunca `-49`) e barra no fim.",
+        example: { in: "-26.9194-049.0661/", out: "Blumenau" },
+      },
+      {
+        name: "Link curto do OpenStreetMap",
+        desc: "O que sai ao compartilhar um ponto no OSM. É o par lat/lng entrelaçado bit a bit num base64 próprio — e cada hífen no fim NÃO é enchimento: desce um nível de zoom.",
+        example: { in: "https://osm.org/go/0EEQjE--", out: "Londres · zoom 9" },
+      },
+      {
+        name: "Placekey",
+        desc: "Identificador de LUGAR em duas metades separadas por `@`. Só a de trás vira ponto — ela é um hexágono H3 escrito num alfabeto sem vogais, para não formar palavra. Sem o `@` a bancada não aceita: três trios alfanuméricos soltos têm a forma de meio mundo (e disparam o leitor de ID do YouTube).",
+        example: { in: "zzw-22y@5vg-7gt-qzz", out: "Ferry Building, São Francisco" },
+      },
+      {
+        name: "C-squares",
+        desc: "A grade hierárquica da CSIRO, o que o OBIS e o GBIF publicam em dado oceanográfico e de biodiversidade. Cada grupo depois dos dois-pontos divide a célula por dez, e o primeiro dígito de todos carrega os SINAIS: 1 = NE, 3 = SE, 5 = SW, 7 = NW.",
         example: { in: "5204:414:340", out: "célula de 0,1° sobre Blumenau" },
       },
       {
@@ -420,7 +440,10 @@ export const HELP_SECTIONS: HelpSection[] = [
       {
         name: "CAR (imóvel rural)",
         desc: "UF, geocódigo do IBGE com dígito verificador e 32 hexadecimais. É a assinatura mais forte que a bancada tem, e o município sai do próprio número, sem consulta. A coordenada NÃO sai: o polígono vive no SICAR, atrás de captcha — e a tela diz isso em vez de fingir.",
-        example: { in: "SC-4202404-D9ADE9…", out: "imóvel rural em Blumenau/SC" },
+        example: {
+          in: "SC-4202404-D9ADE9A8B4C24E5FA0F3B1C2D3E4F5A6",
+          out: "imóvel rural em Blumenau/SC",
+        },
       },
       {
         name: "Aeroporto (IATA/ICAO)",
@@ -636,7 +659,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Arquivo · Imagem",
-        desc: "Planos de bit (é onde se esconde: o bit menos significativo muda 1/255 da cor e some a olho nu), canais isolados, canal alfa forçado a opaco — pixel transparente ainda carrega cor — e EXIF, com a MINIATURA embutida, que costuma ser do original não editado e revela o que foi apagado da foto grande.",
+        desc: "Planos de bit (é onde se esconde: o bit menos significativo muda 1/255 da cor e some a olho nu), canais isolados, canal alfa forçado a opaco — pixel transparente ainda carrega cor — e EXIF, com a MINIATURA embutida, que costuma ser do original não editado e revela o que foi apagado da foto grande. Tem também o botão **Ler QR / código de barras**: ele lê o código direto da FOTO da prova, sem app de celular no meio, e o resultado vai para a bancada com um toque em “usar como entrada”. Serve para QR, EAN e Code 128.",
         example: {
           in: "um PNG com texto no bit 0 do azul",
           out: "a frase aparece nítida no plano isolado",
@@ -738,7 +761,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Geolocalização",
-        desc: "O mapa do assunto: os 18 formatos de coordenada que a bancada entende, com o que cada um é, como se reconhece, um exemplo clicável e o atalho local — porque Blumenau e Itajaí têm prefixo fixo, e um código PELA METADE já localiza. Tem uma caixa que responde “que formato é este?”, nomeia o sistema e plota. Também lista as bases que viram ponto (postes, CEP, ruas, pontes, aeroportos) e onde conferir por fora.",
+        desc: "O mapa do assunto: os 26 formatos de coordenada que a bancada entende — inclusive os cadastros com número gravado (lote, imóvel rural, estação geodésica), que não são coordenada disfarçada e por isso quem responde é o Decodificador, com o que cada um é, como se reconhece, um exemplo clicável e o atalho local — porque Blumenau e Itajaí têm prefixo fixo, e um código PELA METADE já localiza. Tem uma caixa que responde “que formato é este?”, nomeia o sistema e plota. Também lista as bases que viram ponto (postes, CEP, ruas, pontes, aeroportos) e onde conferir por fora.",
         example: { in: "22JGR3221221631", out: "MGRS · 1 m · Itajaí no mapa" },
       },
       {
@@ -755,11 +778,11 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: "apis",
     title: "APIs utilizadas",
     intro:
-      "Consultas externas que o app faz. Quase tudo passa pelo backend do projeto (the-decrypter-api), que cacheia, limita a taxa e guarda as chaves — o navegador só fala direto com o OpenStreetMap. Mantida em sincronia com o que é realmente chamado.",
+      "Consultas externas que o app faz. Quase tudo passa pelo backend do projeto (the-decrypter-api), que cacheia, limita a taxa e guarda as chaves — o navegador só fala direto com o OpenStreetMap e com a FIPE. A FIPE é exceção declarada: o WAF dela bloqueia IP de datacenter, então a chamada do nosso backend morreria — do navegador de quem joga, ela é igual à que o próprio site faz. Mantida em sincronia com o que é realmente chamado.",
     entries: [
       {
         name: "Backend (the-decrypter-api)",
-        desc: "Porta de entrada das consultas externas (/cnpj, /isbn, /ncm, /registrobr, /pix, /produto, /what3words, /geocode, /fleet) e, agora, das bases grandes: CEP, municípios, aeroportos e postes vêm dele em vez de serem baixados pelo navegador. Toda chamada leva o token da sessão.",
+        desc: "Porta de entrada das consultas externas (/cnpj, /isbn, /ncm, /cnae, /registrobr, /pix, /produto, /what3words, /geocode, /fleet) e a consulta multiplexada /lookup, que numa resposta só devolve CEP, município, poste, aeroporto, CID-10 e lote e, agora, das bases grandes: CEP, municípios, aeroportos e postes vêm dele em vez de serem baixados pelo navegador. Toda chamada leva o token da sessão.",
         example: { in: "/api/lookup?q=…", out: "uma resposta só, com o que a entrada podia ser" },
       },
       {
@@ -799,7 +822,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Bases embutidas (sem rede)",
-        desc: "Ruas de Blumenau, as 94 pontes/passarelas/viadutos nomeados de Blumenau (lei de denominação + geometria do OSM), CEPs de SC, municípios do IBGE, aeroportos do OpenFlights, as tabelas de país (ISO 3166/COI/FIFA), moeda (ISO 4217), alfabetos do mundo e estilos Unicode e as listas de palavras pt/en vêm empacotados; boleto, chave de NF-e, título de eleitor, placa, rastreio S10 e todas as grades de coordenada (MGRS, GEOREF, GARS, carta e grade do IBGE) são conta local, sem rede; o Mapcode carrega a lib por import dinâmico, também sem consulta externa.",
+        desc: "Ruas de Blumenau, as 94 pontes/passarelas/viadutos nomeados de Blumenau (lei de denominação + geometria do OSM), CEPs de SC, municípios do IBGE, aeroportos do OpenFlights, as tabelas de país (ISO 3166/COI/FIFA), moeda (ISO 4217), alfabetos do mundo e estilos Unicode e as listas de palavras pt/en vêm empacotados; boleto, chave de NF-e, título de eleitor, placa, rastreio S10 e todas as grades de coordenada (MGRS, GEOREF, GARS, carta e grade do IBGE, e as que entraram em 18/08: Geo URI, ISO 6709, link curto do OSM, Placekey e C-squares) são conta local, sem rede; as 491 estações geodésicas do IBGE no Vale e as 188 votações de Blumenau em 2024 também vêm empacotadas; o Mapcode carrega a lib por import dinâmico, também sem consulta externa.",
         example: { in: "/data/*.json", out: "offline" },
       },
     ],
