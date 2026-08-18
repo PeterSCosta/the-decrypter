@@ -7,10 +7,21 @@ import {
   SITUACAO_LABEL,
   type SituacaoUsuario,
   type Usuario,
+  rotuloDe,
 } from "@/features/auth/types";
 import { mensagemDeErro, useAuth } from "@/features/auth/use-auth";
 import { apiFetch } from "@/lib/api";
-import { AlertTriangle, ArrowLeft, Ban, Check, Loader2, Trash2, UserPlus } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  AtSign,
+  Ban,
+  Check,
+  KeyRound,
+  Loader2,
+  Trash2,
+  UserPlus,
+} from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 
 const TOM: Record<SituacaoUsuario, "success" | "pulse" | "neutral"> = {
@@ -58,8 +69,27 @@ export function AdminPage({ onClose }: { onClose: () => void }) {
     }
   }
 
+  async function definirApelido(u: Usuario) {
+    const novo = prompt(
+      `Apelido de ${rotuloDe(u)} — é por ele que a pessoa entra.\nDe 3 a 24 caracteres: letras sem acento, números, ponto, hífen ou sublinhado.`,
+      u.apelido ?? "",
+    );
+    if (novo === null) return;
+    await agir(u.id, { apelido: novo });
+  }
+
+  async function redefinirSenha(u: Usuario) {
+    const senha = prompt(
+      `Nova senha de ${rotuloDe(u)} — ao menos 8 caracteres.\nCombine com a pessoa: ela não recebe aviso nenhum.`,
+    );
+    if (senha === null || senha.trim().length === 0) return;
+    await agir(u.id, { senha });
+  }
+
   async function remover(u: Usuario) {
-    if (!confirm(`Remover ${u.email}? A conta some e a pessoa perde o acesso.`)) return;
+    // `rotuloDe`, e nunca `u.email` cru: com e-mail opcional, a frase virava
+    // "Remover ? A conta some…" e o admin confirmava sem saber de quem.
+    if (!confirm(`Remover ${rotuloDe(u)}? A conta some e a pessoa perde o acesso.`)) return;
     setOcupado(u.id);
     setErro(null);
     try {
@@ -113,15 +143,34 @@ export function AdminPage({ onClose }: { onClose: () => void }) {
               key={u.id}
               className="flex flex-wrap items-center gap-3 border-b border-[var(--border-subtle)] px-4 py-3 last:border-0"
             >
-              <div className="min-w-0 flex-1">
+              {/* `basis-full` no celular: são QUATRO ações por linha agora
+                  (aprovar, bloquear, apelido, senha, remover), e dividir 375 px
+                  com elas espremia o identificador em "admi…" — justo o dado
+                  que decide se aquela conta é aprovada. A identidade toma a
+                  linha inteira e os botões descem para a de baixo. */}
+              <div className="min-w-0 flex-1 basis-full sm:basis-auto">
+                {/* O identificador vem PRIMEIRO e em mono; o nome, que é texto
+                    livre, fica em segundo. Invertido, um cadastro com nome
+                    "peter@empresa.com" se passaria por outra pessoa na linha em
+                    que o admin decide aprovar. */}
                 <p className="truncate text-sm text-[var(--text-primary)]">
-                  {u.nome ? `${u.nome} · ` : ""}
-                  <span className="font-mono">{u.email}</span>
+                  <span className="font-mono">{rotuloDe(u)}</span>
                   {u.id === eu?.id ? (
                     <span className="ml-1 text-xs text-[var(--text-muted)]">(você)</span>
                   ) : null}
                 </p>
-                <p className="text-xs text-[var(--text-muted)]">{PAPEL_LABEL[u.papel]}</p>
+                <p className="truncate text-xs text-[var(--text-muted)]">
+                  {[
+                    PAPEL_LABEL[u.papel],
+                    u.nome,
+                    // Só quando há apelido: sem ele, o e-mail já é o rótulo
+                    // principal e repeti-lo aqui seria eco.
+                    u.apelido && u.email ? u.email : null,
+                    u.apelido ? null : "sem apelido",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
               </div>
 
               <Badge tone={TOM[u.situacao]}>{SITUACAO_LABEL[u.situacao]}</Badge>
@@ -153,6 +202,25 @@ export function AdminPage({ onClose }: { onClose: () => void }) {
                         <Ban className="h-3.5 w-3.5" />
                       </Button>
                     ) : null}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => definirApelido(u)}
+                      title={u.apelido ? "Trocar o apelido" : "Definir um apelido"}
+                    >
+                      <AtSign className="h-3.5 w-3.5" />
+                    </Button>
+                    {/* A ÚNICA recuperação de senha que existe. Não há e-mail de
+                        reset em lugar nenhum — nem SMTP na API —, então sem este
+                        botão uma senha esquecida vira conta perdida. */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => redefinirSenha(u)}
+                      title="Redefinir a senha"
+                    >
+                      <KeyRound className="h-3.5 w-3.5" />
+                    </Button>
                     {u.id !== eu?.id ? (
                       <Button
                         variant="ghost"
@@ -177,6 +245,7 @@ export function AdminPage({ onClose }: { onClose: () => void }) {
 /** Criação direta: nasce já aprovada, porque é o admin que está criando. */
 function NovoUsuario({ aoCriar }: { aoCriar: () => Promise<void> }) {
   const [aberto, setAberto] = useState(false);
+  const [apelido, setApelido] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState<string | null>(null);
@@ -189,8 +258,17 @@ function NovoUsuario({ aoCriar }: { aoCriar: () => Promise<void> }) {
     try {
       await apiFetch("/admin/users", {
         method: "POST",
-        body: JSON.stringify({ email, senha, nome: null, admin: false }),
+        // E-mail em branco vai como `null`, nunca `""`: duas contas com e-mail
+        // vazio colidiriam no índice único.
+        body: JSON.stringify({
+          apelido,
+          email: email.trim() || null,
+          senha,
+          nome: null,
+          admin: false,
+        }),
       });
+      setApelido("");
       setEmail("");
       setSenha("");
       setAberto(false);
@@ -213,15 +291,27 @@ function NovoUsuario({ aoCriar }: { aoCriar: () => Promise<void> }) {
   return (
     <Card className="mt-4 p-4">
       <form className="flex flex-wrap items-end gap-3" onSubmit={enviar}>
+        <label htmlFor="novo-apelido" className="flex min-w-[12rem] flex-1 flex-col gap-1.5">
+          <span className="text-xs text-[var(--text-secondary)]">Apelido</span>
+          <Input
+            id="novo-apelido"
+            type="text"
+            required
+            value={apelido}
+            onChange={(e) => setApelido(e.target.value)}
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            autoFocus
+          />
+        </label>
         <label htmlFor="novo-email" className="flex min-w-[12rem] flex-1 flex-col gap-1.5">
-          <span className="text-xs text-[var(--text-secondary)]">E-mail</span>
+          <span className="text-xs text-[var(--text-secondary)]">E-mail (opcional)</span>
           <Input
             id="novo-email"
             type="email"
-            required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            autoFocus
           />
         </label>
         <label htmlFor="novo-senha" className="flex min-w-[12rem] flex-1 flex-col gap-1.5">

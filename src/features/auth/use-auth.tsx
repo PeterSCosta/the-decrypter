@@ -12,8 +12,9 @@ interface Auth {
   usuario: Usuario | null;
   /** `true` até sabermos se o token guardado ainda vale. */
   carregando: boolean;
-  entrar(email: string, senha: string): Promise<void>;
-  cadastrar(email: string, senha: string, nome: string): Promise<string>;
+  /** O campo único do login: apelido OU e-mail, o servidor decide pelo `@`. */
+  entrar(identificador: string, senha: string): Promise<void>;
+  cadastrar(apelido: string, senha: string, email: string): Promise<string>;
   sair(): void;
 }
 
@@ -45,19 +46,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // clicando numa tela logada que não responde mais nada.
   useEffect(() => aoExpirarSessao(() => setUsuario(null)), []);
 
-  const entrar = useCallback(async (email: string, senha: string) => {
+  const entrar = useCallback(async (identificador: string, senha: string) => {
     const sessao = await apiFetch<Sessao>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, senha }),
+      body: JSON.stringify({ identificador, senha }),
     });
     setToken(sessao.token);
     setUsuario(sessao.usuario);
   }, []);
 
-  const cadastrar = useCallback(async (email: string, senha: string, nome: string) => {
+  const cadastrar = useCallback(async (apelido: string, senha: string, email: string) => {
     const r = await apiFetch<{ message: string }>("/auth/register", {
       method: "POST",
-      body: JSON.stringify({ email, senha, nome }),
+      // O e-mail vai só quando foi preenchido: string vazia viraria uma conta
+      // com e-mail "" — e a segunda delas colidiria no índice único.
+      body: JSON.stringify({ apelido, senha, email: email.trim() || null }),
     });
     return r.message;
   }, []);

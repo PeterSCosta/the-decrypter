@@ -92,9 +92,23 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   const res = await fetch(api(path), { ...init, headers });
 
   if (res.status === 401) {
-    setToken(null);
-    for (const cb of ouvintes401) cb();
-    throw new ApiError(401, "Sessão expirada. Entre de novo.");
+    // NEM TODO 401 É SESSÃO EXPIRADA — e tratar todos como se fossem apagava a
+    // resposta do servidor na única tela onde ela importa. Quem errava a senha
+    // no login lia "Sessão expirada. Entre de novo." numa tela em que nunca
+    // houve sessão, e o "E-mail ou senha inválidos." do backend morria aqui.
+    //
+    // O que separa os dois casos é ter mandado token: com token, o 401 é a
+    // sessão caindo e a árvore precisa saber; sem token, é a própria resposta do
+    // login, e ela vai inteira para a tela.
+    const corpo = (await res.json().catch(() => null)) as { message?: string } | null;
+    if (token) {
+      setToken(null);
+      for (const cb of ouvintes401) cb();
+    }
+    throw new ApiError(
+      401,
+      corpo?.message ?? (token ? "Sessão expirada. Entre de novo." : "Credenciais inválidas."),
+    );
   }
   if (!res.ok) {
     const corpo = (await res.json().catch(() => null)) as { message?: string } | null;

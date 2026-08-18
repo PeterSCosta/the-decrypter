@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, CheckCircle2, KeyRound, Loader2, Mail, User } from "lucide-react";
+import { AlertTriangle, AtSign, CheckCircle2, KeyRound, Loader2, Mail } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { mensagemDeErro, useAuth } from "../use-auth";
 
@@ -10,13 +10,23 @@ import { mensagemDeErro, useAuth } from "../use-auth";
  * aberto, mas quem entra depende de aprovação do admin: a tela precisa dizer
  * isso com todas as letras, senão a pessoa se cadastra e fica achando que a
  * senha está errada.
+ *
+ * ── UM CAMPO SÓ PARA ENTRAR ─────────────────────────────────────────────────
+ * "Apelido ou e-mail" é um campo, não dois nem duas abas: quem já tinha conta
+ * digita o e-mail de sempre, quem se cadastrou depois digita o apelido, e
+ * ninguém precisa lembrar em qual grupo caiu. O servidor decide pela presença do
+ * `@` — e é por isso que o apelido proíbe `@`.
+ *
+ * O `type` deste campo é `text` de propósito: com `type="email"` o navegador
+ * BLOQUEIA o envio de qualquer coisa sem arroba, e o apelido não sairia da tela.
  */
 export function LoginScreen() {
   const { entrar, cadastrar } = useAuth();
   const [modo, setModo] = useState<"entrar" | "criar">("entrar");
+  const [identificador, setIdentificador] = useState("");
+  const [apelido, setApelido] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [nome, setNome] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -34,9 +44,12 @@ export function LoginScreen() {
     setEnviando(true);
     try {
       if (modo === "entrar") {
-        await entrar(email, senha);
+        await entrar(identificador, senha);
       } else {
-        setAviso(await cadastrar(email, senha, nome));
+        setAviso(await cadastrar(apelido, senha, email));
+        // O apelido vai junto para o campo de entrar: quem acabou de escolher
+        // não deveria digitá-lo de novo para descobrir que ainda falta aprovar.
+        setIdentificador(apelido);
         setModo("entrar");
         setSenha("");
       }
@@ -80,36 +93,63 @@ export function LoginScreen() {
           </div>
 
           <form className="flex flex-col gap-3 p-4" onSubmit={enviar}>
-            {modo === "criar" ? (
-              <label htmlFor="login-nome" className="flex flex-col gap-1.5">
+            {modo === "entrar" ? (
+              <label htmlFor="login-identificador" className="flex flex-col gap-1.5">
                 <span className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
-                  <User className="h-3.5 w-3.5" /> Nome
+                  <AtSign className="h-3.5 w-3.5" /> Apelido ou e-mail
                 </span>
                 <Input
-                  id="login-nome"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  placeholder="Como te chamamos"
-                  autoComplete="name"
+                  id="login-identificador"
+                  type="text"
+                  required
+                  value={identificador}
+                  onChange={(e) => setIdentificador(e.target.value)}
+                  placeholder="peter ou peter@exemplo.com"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  autoFocus
                 />
               </label>
-            ) : null}
+            ) : (
+              <>
+                <label htmlFor="login-apelido" className="flex flex-col gap-1.5">
+                  <span className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+                    <AtSign className="h-3.5 w-3.5" /> Apelido
+                  </span>
+                  <Input
+                    id="login-apelido"
+                    type="text"
+                    required
+                    value={apelido}
+                    onChange={(e) => setApelido(e.target.value)}
+                    placeholder="como você vai entrar"
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    autoFocus
+                  />
+                </label>
 
-            <label htmlFor="login-email" className="flex flex-col gap-1.5">
-              <span className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
-                <Mail className="h-3.5 w-3.5" /> E-mail
-              </span>
-              <Input
-                id="login-email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="voce@exemplo.com"
-                autoComplete="email"
-                autoFocus
-              />
-            </label>
+                <label htmlFor="login-email" className="flex flex-col gap-1.5">
+                  <span className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+                    <Mail className="h-3.5 w-3.5" /> E-mail (opcional)
+                  </span>
+                  <Input
+                    id="login-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="voce@exemplo.com"
+                    autoComplete="email"
+                  />
+                  <span className="text-[0.6875rem] text-[var(--text-muted)]">
+                    Não enviamos nada — nem confirmação, nem recuperação de senha. Serve só para o
+                    administrador te reconhecer.
+                  </span>
+                </label>
+              </>
+            )}
 
             <label htmlFor="login-senha" className="flex flex-col gap-1.5">
               <span className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
@@ -125,6 +165,12 @@ export function LoginScreen() {
                 placeholder={modo === "criar" ? "Ao menos 8 caracteres" : "Sua senha"}
                 autoComplete={modo === "criar" ? "new-password" : "current-password"}
               />
+              {modo === "criar" ? (
+                <span className="text-[0.6875rem] text-[var(--text-muted)]">
+                  Guarde a senha: não há recuperação automática. Esquecendo, só o administrador
+                  redefine.
+                </span>
+              ) : null}
             </label>
 
             {erro ? (

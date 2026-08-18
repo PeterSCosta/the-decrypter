@@ -702,7 +702,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Entrar e aprovar acesso",
-        desc: "A bancada pede login. Quem se cadastra entra como “aguardando aprovação” e só usa depois que um administrador liberar — não há confirmação por e-mail, a porta é a aprovação. Quem é admin tem o botão de usuários no topo, para aprovar, bloquear, criar e remover contas.",
+        desc: "O login é um campo só: apelido ou e-mail, o que você tiver. Quem se cadastrou antes do apelido continua entrando pelo e-mail de sempre, sem fazer nada; quem se cadastra agora escolhe um apelido (3 a 24 caracteres, sem acento e sem @) e o e-mail é opcional. Quem se cadastra entra como “aguardando aprovação” e só usa depois que um administrador liberar — não há confirmação por e-mail, a porta é a aprovação. Não existe recuperação automática de senha: quem esquece fala com o administrador, que redefine pelo painel de usuários — o mesmo lugar onde se aprova, bloqueia, define apelido e remove contas.",
       },
     ],
   },
