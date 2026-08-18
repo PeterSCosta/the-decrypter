@@ -270,12 +270,12 @@ export const SOURCES: DataSourceRef[] = [
   {
     id: "cnae",
     name: "CNAE (atividades econômicas)",
-    indexes: "Código 00.00-0/00 → atividade econômica.",
-    use: "Número com aquela pontuação típica → texto da atividade.",
+    indexes: "Código 00.00-0/00 → atividade econômica, com a hierarquia até a seção.",
+    use: "Número com aquela pontuação típica → texto da atividade. Numa cadeia, quem costuma ligar os códigos é a SEÇÃO, não a atividade.",
     url: "https://concla.ibge.gov.br/busca-online-cnae.html",
     urlLabel: "concla.ibge.gov.br",
-    status: "consulta-manual",
-    note: "AINDA é você quem busca; a via automática está verificada e é curta. Resolve pela API do IBGE — `servicodados.ibge.gov.br/api/v2/cnae/subclasses/6201501` — sem chave e direto do navegador (verificado: HTTP 200 com a hierarquia inteira, subclasse → classe → grupo → divisão → seção). Vários códigos numa chamada só, separados por `|`; é o mesmo host que a bancada já usa para municípios. Duas armadilhas: `00.00-0/00` é SUBCLASSE, de 7 dígitos, e mandar isso em `/classes` (que é de 5) devolve `[]` em silêncio; e código inexistente devolve HTTP 200 com `[]`, não 404. Só resolve código → atividade: busca por texto exige o dataset embarcado.",
+    status: "aberta",
+    note: "O Decodificador responde na hora: cole `62.01-5/01` (ou os 7 dígitos nus) e a bancada consulta o IBGE pelo backend, devolvendo atividade, classe, grupo, divisão e seção. A pontuação é a assinatura — os 7 dígitos nus entram com nota baixa e só sobrevivem se o IBGE confirmar. Armadilha medida da API: código inexistente devolve **HTTP 200 com `[]`**, não 404; quem desserializar direto estoura no primeiro número errado.",
   },
   {
     id: "cidade-iluminada",

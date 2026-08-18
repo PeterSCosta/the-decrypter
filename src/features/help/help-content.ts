@@ -430,6 +430,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "22030000", out: "Cervejas de malte" },
       },
       {
+        name: "CNAE",
+        desc: "Código de atividade econômica → a atividade e a hierarquia inteira (classe, grupo, divisão e seção). Numa cadeia, quem costuma ligar os códigos é a SEÇÃO, não a atividade — do mesmo jeito que o capítulo liga os códigos da CID-10. A pontuação é a assinatura: 62.01-5/01 é inconfundível, enquanto 6201501 nu tem a mesma forma de um telefone, e só sobrevive se o IBGE confirmar.",
+        example: { in: "62.01-5/01", out: "Desenvolvimento de programas · Seção J" },
+      },
+      {
         name: "CID-10",
         desc: "Código de doença → descrição, capítulo e grupo. Aceita A00.0 e A000 (a grafia das bases do SUS), e também acha o código pelo nome da doença. O capítulo costuma ser a pista: numa prova, o que liga os códigos é o agrupamento, não o diagnóstico.",
         example: { in: "F41.1", out: "Ansiedade generalizada · Capítulo 5" },

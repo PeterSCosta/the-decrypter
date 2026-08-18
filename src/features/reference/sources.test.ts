@@ -207,7 +207,11 @@ describe("decisões registradas — não regredir", () => {
    * coisas divergem, e é justamente essa divergência que vira item de roadmap.
    */
   it("fonte consultável mas não implementada NÃO é aberta — o selo é sobre nós", () => {
-    for (const id of ["tse", "fipe", "cnae"]) {
+    // O CNAE SAIU desta lista em ago/2026, e por ter mudado o fato, não a
+    // régua: agora existe o decoder `cnae` e a rota `/api/cnae/{codigo}` no
+    // backend, então a bancada de fato consulta por você. TSE e FIPE seguem
+    // aqui — os endpoints existem, mas ninguém os chama.
+    for (const id of ["tse", "fipe"]) {
       const s = get(id);
       expect(s.status, id).toBe("consulta-manual");
       // ...e a nota tem de deixar claro que a via automática já foi verificada,
@@ -216,8 +220,15 @@ describe("decisões registradas — não regredir", () => {
     }
     // A descoberta não se perde: o caminho verificado fica escrito.
     expect(get("tse").note).toMatch(/CORS|Access-Control/i);
-    expect(get("cnae").note).toMatch(/servicodados/);
     expect(get("fipe").note).toMatch(/tipoConsulta=codigo/);
+  });
+
+  it("CNAE virou aberta porque a bancada passou a consultar — e a nota diz a armadilha", () => {
+    const s = get("cnae");
+    expect(s.status).toBe("aberta");
+    // A armadilha medida: a API do IBGE devolve 200 com [] quando não existe.
+    expect(s.note).toMatch(/200/);
+    expect(s.note).toMatch(/\[\]/);
   });
 
   /**
@@ -274,6 +285,9 @@ describe("decisões registradas — não regredir", () => {
       "aeroportos",
       "pix-ispb",
       "gs1",
+      // A objeção antiga ao CNAE era o PESO de embarcar a tabela; ela caiu
+      // quando o caminho virou consulta pela API do IBGE, sem chave.
+      "cnae",
       // A bancada passou a responder plaqueta de poste (aba Postes, 45.285
       // pontos pela API). A ordem aqui é a do arquivo, e o Cidade Iluminada
       // ficou no bloco que era o das bloqueadas.

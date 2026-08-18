@@ -105,6 +105,7 @@ export interface DecodeCandidate {
     | "poste"
     | "ponte"
     | "cid"
+    | "cnae"
     | "youtube";
   /** Structured payload for custom renderers. */
   data?: unknown;

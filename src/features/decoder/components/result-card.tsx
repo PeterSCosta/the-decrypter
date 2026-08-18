@@ -18,6 +18,7 @@ import { CornerDownRight } from "lucide-react";
 import type { BarcodeHint } from "../engine/decoders/barcode";
 import type { CaesarShiftRow } from "../engine/decoders/caesar-bruteforce";
 import type { CipherDiskWheel } from "../engine/decoders/cipher-disk";
+import type { CnaeHint } from "../engine/decoders/cnae";
 import type { DocResult } from "../engine/decoders/documents";
 import type { IsbnHint } from "../engine/decoders/isbn";
 import type { LocationData } from "../engine/decoders/location";
@@ -30,6 +31,7 @@ import type { DecoderCategory, ScoredCandidate } from "../engine/types";
 import { chainValueOf } from "../trail";
 import { BarcodeCard } from "./barcode-card";
 import { CaesarTable } from "./caesar-table";
+import { CnaeCard } from "./cnae-card";
 import { CodeListCard } from "./code-list-card";
 import { DocumentCard } from "./document-card";
 import { ElementsCard } from "./elements-card";
@@ -117,6 +119,8 @@ export function ResultCard({
           <PosteCard poste={c.data as Poste} />
         ) : c.render === "youtube" ? (
           <YoutubeCard hint={c.data as YoutubeHint} />
+        ) : c.render === "cnae" ? (
+          <CnaeCard hint={c.data as CnaeHint} />
         ) : c.render === "cid" ? (
           <CidCard dado={c.data as Cid | Cid[]} />
         ) : c.render === "ponte" ? (
