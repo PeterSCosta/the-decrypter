@@ -1,5 +1,6 @@
 import { PARECE_ESTRUTURA } from "@/features/bridge/match";
 import type { BridgesData } from "@/features/bridge/types";
+import { type EixosData, PARECE_QUADRA } from "@/features/eixos/types";
 import type { EstacoesData } from "@/features/estacao/types";
 import { aoCarregarH3 } from "@/features/location/formats";
 import type { PixData } from "@/features/pix/types";
@@ -7,11 +8,13 @@ import type { StreetsData } from "@/features/street-guide/types";
 import type { VotacoesData } from "@/features/votacao/types";
 import {
   getBridges,
+  getEixos,
   getEstacoes,
   getPix,
   getStreets,
   getVotacoes,
   loadBridges,
+  loadEixos,
   loadEstacoes,
   loadPix,
   loadStreets,
@@ -52,6 +55,7 @@ export function useDecoder(entradaInicial = "") {
   const [bridges, setBridges] = useState<BridgesData | null>(getBridges);
   const [votacoes, setVotacoes] = useState<VotacoesData | null>(getVotacoes);
   const [estacoes, setEstacoes] = useState<EstacoesData | null>(getEstacoes);
+  const [eixos, setEixos] = useState<EixosData | null>(getEixos);
 
   const debInput = useDebouncedValue(input, 160);
   const debKey = useDebouncedValue(key, 160);
@@ -158,6 +162,22 @@ export function useDecoder(entradaInicial = "") {
     };
   }, [pareceEstacao, estacoes]);
 
+  // Eixos (quadra de Blumenau): o gate é a FORMA — quatro grupos de números na
+  // grade do cadastro (`3-4-10-3`). É a base preguiçosa mais cara (197 KB gz),
+  // então o portão aqui é o mais estreito de todos: sem os quatro grupos, nem
+  // se pergunta. Quem confere se a quadra existe é o decoder.
+  const pareceQuadra = PARECE_QUADRA.test(debInput);
+  useEffect(() => {
+    if (!pareceQuadra || eixos) return;
+    let alive = true;
+    loadEixos()
+      .then((d) => alive && setEixos(d))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [pareceQuadra, eixos]);
+
   const digits = debInput.replace(/\D/g, "");
 
   // Participantes PIX (BrasilAPI): buscar quando a entrada for um ISPB (8 dígitos).
@@ -229,6 +249,7 @@ export function useDecoder(entradaInicial = "") {
       bridges,
       votacoes,
       estacoes,
+      eixos,
     }),
     [
       debKey,
@@ -242,6 +263,7 @@ export function useDecoder(entradaInicial = "") {
       bridges,
       votacoes,
       estacoes,
+      eixos,
     ],
   );
 

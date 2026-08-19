@@ -13,6 +13,18 @@ export interface StreetRow {
   /** Centroide do logradouro (join local com a base de CEPs de Blumenau). */
   lat?: number;
   lng?: number;
+  /**
+   * De onde veio a coordenada, quando NÃO veio do join por nome com o CEP:
+   * `eixos:codigo+bairro` ou `eixos:codigo` (ver `scripts/enrich-streets-eixos.ts`).
+   * Ausente = a rua casou por nome com a base de CEP, o caminho original.
+   */
+  fonteGeo?: string;
+  /**
+   * Nome da via no cadastro do geoportal, gravado só quando difere DE VERDADE
+   * do nome do Rol — "ANNA CATHARINA LENZ" contra o "LEZ" que o PDF truncou.
+   * O nome do Rol continua sendo o `nome`: aqui ninguém sobrescreve ninguém.
+   */
+  nomeEixos?: string;
 }
 
 export interface StreetsData {

@@ -5,12 +5,28 @@
  * sem acento e sem o prefixo de tipo) e gravamos o CENTROIDE dos CEPs daquela rua
  * em Blumenau. Reexecutável: `pnpm build:streets-geo`.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const STREETS = resolve(ROOT, "public/data/streets.json");
-const CEPS = resolve(ROOT, "public/data/ceps.json");
+/**
+ * A base de CEP mudou de `public/data/` para `seed-data/` quando ela passou a
+ * ser servida pela API em vez de baixada pelo navegador — e este caminho ficou
+ * para trás. Medido: `pnpm build:data` morria aqui com ENOENT, e como este passo
+ * fica NO MEIO da cadeia, tudo depois dele (eixos, enriquecimento das ruas)
+ * nunca chegava a rodar numa clonagem limpa.
+ *
+ * Procura nos dois lugares porque o `make sync-data` da API faz o mesmo, pelo
+ * mesmo motivo: enquanto a migração não fecha, um caminho fixo quebra alguém.
+ */
+const CEPS = [resolve(ROOT, "seed-data/ceps.json"), resolve(ROOT, "public/data/ceps.json")].find(
+  (p) => existsSync(p),
+);
+if (!CEPS) {
+  console.error("ERRO: não achei ceps.json nem em seed-data/ nem em public/data/.");
+  process.exit(1);
+}
 
 type StreetRow = { nome: string; lat?: number; lng?: number; [k: string]: unknown };
 type CepRow = [string, string, string, number, number | null, number | null];
@@ -153,6 +169,7 @@ for (const r of ceps.rows) {
 }
 
 let matched = 0;
+let preservados = 0;
 const unmatched: string[] = [];
 for (const row of streets.rows) {
   const acc = byName.get(norm(row.nome, false));
@@ -160,11 +177,25 @@ for (const row of streets.rows) {
     row.lat = Math.round((acc.lat / acc.n) * 1e6) / 1e6;
     row.lng = Math.round((acc.lng / acc.n) * 1e6) / 1e6;
     matched += 1;
+  } else if (row.fonteGeo) {
+    // ── A GUARDA ────────────────────────────────────────────────────────────
+    // Esta rua ganhou coordenada de OUTRA fonte (o eixo do geoportal, por
+    // `enrich-streets-eixos`), e este script não sabe casá-la pelo nome. Zerar
+    // aqui apagaria 1.108 resgates em silêncio.
+    //
+    // Estava escrito num comentário que a ordem em `build:data` resolvia — e
+    // resolvia, até alguém (eu) rodar este passo avulso para testar outra
+    // coisa e desfazer tudo sem nenhum aviso. Comentário não é guarda.
+    preservados += 1;
   } else {
     row.lat = undefined;
     row.lng = undefined;
     if (unmatched.length < 20) unmatched.push(row.nome);
   }
+}
+
+if (preservados > 0) {
+  console.log(`Preservadas de outra fonte (fonteGeo): ${preservados} — não zeradas.`);
 }
 
 streets.geocoded = matched;

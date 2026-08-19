@@ -1,6 +1,7 @@
 import type { AirportsData } from "@/features/airport/types";
 import type { BridgesData } from "@/features/bridge/types";
 import type { CepsData } from "@/features/cep/types";
+import type { EixosData } from "@/features/eixos/types";
 import type { EstacoesData } from "@/features/estacao/types";
 import type { MunicipiosData } from "@/features/ibge/types";
 import type { PixData } from "@/features/pix/types";
@@ -77,6 +78,14 @@ export interface DecodeContext {
   votacoes?: VotacoesData | null;
   /** Estações geodésicas do Vale (IBGE). Preguiçosa, como as votações. */
   estacoes?: EstacoesData | null;
+  /**
+   * Eixos de logradouro de Blumenau — quadra e CEP de cada lado de cada trecho.
+   *
+   * A maior das bases preguiçosas (197 KB gzip), e a que menos gente vai usar:
+   * só chega quando a entrada tem a cara de uma quadra (`3-4-10-3`). Carregá-la
+   * junto com o resto seria cobrar de toda sessão o preço de uma consulta rara.
+   */
+  eixos?: EixosData | null;
 }
 
 export interface DecodeCandidate {

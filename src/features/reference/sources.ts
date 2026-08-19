@@ -309,7 +309,7 @@ export const SOURCES: DataSourceRef[] = [
     url: "https://geo.blumenau.sc.gov.br",
     urlLabel: "geo.blumenau.sc.gov.br",
     status: "aberta",
-    note: "84.539 lotes na bancada, do geoportal da Prefeitura. O Decodificador aceita as três grafias — `412400200002000`, `4.1.24.20.2.0` e `4-1-24-20-2` — e devolve o ponto no mapa; a Biblioteca lista tudo e busca por rua. Duas ressalvas honestas: a coordenada é o CENTROIDE do lote, não a porta; e a base tem 48 lotes sem inscrição, que só se acham pelo nome da rua. Armadilha do serviço: os zeros à esquerda são obrigatórios na chave, e o carnê do IPTU os omite — a bancada normaliza, quem consultar na mão precisa lembrar.",
+    note: "84.539 lotes na bancada, do geoportal da Prefeitura. O Decodificador aceita as QUATRO grafias — `412400200002000`, `4.1.24.20.2.0`, `4-1-24-20-2` e o mesmo número sem os hífens (`41241628`), que é o que se copia da tela do geoportal — e devolve o ponto no mapa. O NÚMERO DE PORTA vem de uma segunda tabela do mesmo geoportal: 57.273 lotes ganharam número que o cadastro não trazia, e o lote de esquina mostra os dois endereços. Com QUATRO grupos o número aponta a QUADRA, e aí quem responde é o card de quadra, descrita pelas ruas que a cercam; a Biblioteca lista tudo e busca por rua. Duas ressalvas honestas: a coordenada é o CENTROIDE do lote, não a porta; e a base tem 48 lotes sem inscrição, que só se acham pelo nome da rua. Armadilha do serviço: os zeros à esquerda são obrigatórios na chave, e o carnê do IPTU os omite — a bancada normaliza, quem consultar na mão precisa lembrar.",
   },
 
   // ── Adiada: dá para ter offline, falta o pedido oficial ────────────────────

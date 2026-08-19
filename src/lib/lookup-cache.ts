@@ -54,6 +54,12 @@ export interface LoteBlumenau {
   lat: number | null;
   lng: number | null;
   areaM2: number | null;
+  /**
+   * O conjunto de endereços do lote, `"RUA, NÚMERO"` separados por `;`, quando
+   * ele não cabe em `logradouro` + `numero` — lote de esquina, ou endereço de
+   * outra rua. Nulo no caso comum, em que o número já está em `numero`.
+   */
+  enderecos?: string | null;
 }
 
 /** Um código da CID-10, como a API o devolve. `codigo` vem sem o ponto. */

@@ -14,7 +14,7 @@
     "format": "biome check --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:data": "pnpm build:streets && pnpm build:ceps && pnpm build:streets-geo && pnpm build:municipios && pnpm build:words && pnpm build:airports && pnpm build:bridges && pnpm build:cid10",
+    "build:data": "pnpm build:streets && pnpm build:ceps && pnpm build:streets-geo && pnpm build:eixos && pnpm enrich:streets && pnpm build:municipios && pnpm build:words && pnpm build:airports && pnpm build:bridges && pnpm build:cid10",
     "build:streets": "tsx scripts/build-streets.ts",
     "build:ceps": "tsx scripts/build-ceps.ts",
     "build:streets-geo": "tsx scripts/geocode-streets.ts",
@@ -26,8 +26,11 @@
     "build:bridges": "tsx scripts/build-bridges.ts",
     "build:cid10": "tsx scripts/build-cid10.ts",
     "build:lotes": "tsx scripts/build-lotes-blumenau.ts",
+    "build:enderecos": "tsx scripts/build-enderecos-blumenau.ts",
     "build:votacoes": "tsx scripts/build-votacoes-blumenau.ts",
-    "build:estacoes": "tsx scripts/build-estacoes-ibge.ts"
+    "build:estacoes": "tsx scripts/build-estacoes-ibge.ts",
+    "build:eixos": "tsx scripts/build-eixos-blumenau.ts",
+    "enrich:streets": "tsx scripts/enrich-streets-eixos.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

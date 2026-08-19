@@ -591,9 +591,14 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Inscrição imobiliária de Blumenau",
-        desc: "O número do carnê de IPTU → o lote no mapa, com endereço, bairro, CEP e área. Aceita as QUATRO grafias que existem na vida real: 412400200002000, 4.1.24.20.2.0, 4-1-24-20-2 e o mesmo número sem os hífens (41241628) — que é o que sai de quem copia a tela do geoportal à mão. Os zeros à esquerda são obrigatórios na base, e a bancada os repõe sozinha. Sem os hífens não dá para saber onde a quadra termina e o lote começa: 41101634 é tanto 4-1-10-16-34 quanto 4-1-10-1-634, e as duas existem — nesses 2,3% dos casos a bancada mostra as leituras reais em vez de escolher uma no escuro. São 84.539 lotes, do geoportal da Prefeitura. O ponto é o centro do lote, não a porta.",
+        desc: "O número do carnê de IPTU → o lote no mapa, com endereço, bairro, CEP e área. Aceita as QUATRO grafias da vida real: 412400200002000, 4.1.24.20.2.0, 4-1-24-20-2 e o mesmo número sem os hífens (41241628), que é o que sai de quem copia a tela do geoportal. Sem os hífens o número é ambíguo em 2,3% dos casos, e aí a bancada mostra as leituras reais em vez de escolher uma. **O NÚMERO DE PORTA veio de outra tabela do geoportal:** 57.273 dos 84.539 lotes ganharam número que a base do cadastro não tinha, e o lote de ESQUINA mostra os dois endereços — 1.133 deles respondem por ruas diferentes, que é exatamente o que uma prova usa (“a casa da esquina da X com a Y”). O ponto é o centro do lote, não a porta.",
         examples: ["41241628", "412400160028000", "4.1.24.16.28.0", "4-1-24-16-28"],
         esperado: "7 de Setembro · Centro (4-1-24-16-28)",
+      },
+      {
+        name: "Quadra (Blumenau)",
+        desc: "A inscrição imobiliária tem CINCO grupos e aponta um lote; com QUATRO ela aponta a QUADRA, e até agora isso não respondia nada — o decoder de lote não reage a quatro grupos. A camada de eixos não desenha a quadra: ela diz, para cada trecho de rua, que quadra fica de cada lado. Então a quadra se descreve pelo avesso, pelas ruas que a cercam. Cuidado com o nome: a mediana tem 4 ruas em volta e é quarteirão de verdade, mas 7,3% passam de 20 ruas e a maior tem 97 — nas bordas da cidade “quadra” é zona do cadastro, não quarteirão, e o card avisa.",
+        examples: ["4-2-14-8", "3-4-10-3", "3.4.10.3"],
       },
       {
         name: "CNAE",

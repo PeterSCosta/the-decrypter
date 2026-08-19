@@ -49,11 +49,41 @@ function confianca(texto: string, ambiguo: boolean): number {
   return ambiguo ? Number((base * 0.8).toFixed(2)) : base;
 }
 
+/**
+ * "00" é o vazio disfarçado do cadastro — e ele também escreve "000", "0000" e
+ * "0". Nenhum é número de porta, e imprimir "7 DE SETEMBRO, 00" seria inventar
+ * um endereço que não existe.
+ */
+const numeroDeVerdade = (n: string | null | undefined): boolean => !!n && /[1-9]/.test(n);
+
+/**
+ * Os endereços do lote, do mais completo para o mais pobre.
+ *
+ * O campo `enderecos` existe quando o conjunto não cabe em `logradouro` +
+ * `numero`: lote de ESQUINA (mais de uma porta) ou endereço de outra rua. Ele
+ * já vem com o conjunto inteiro, então quando existe ele SUBSTITUI o par — não
+ * se soma a ele, senão o endereço principal apareceria duas vezes.
+ */
+function enderecos(l: LoteBlumenau): string[] {
+  const conjunto = (l.enderecos ?? "")
+    .split(";")
+    .map((e) => e.trim())
+    .filter(Boolean);
+  if (conjunto.length) return conjunto;
+  const um = [l.logradouro, numeroDeVerdade(l.numero) ? l.numero : null].filter(Boolean).join(", ");
+  return um ? [um] : [];
+}
+
 function cartao(l: LoteBlumenau, score: number, ambiguo: boolean) {
-  const endereco = [l.logradouro, l.numero && l.numero !== "00" ? l.numero : null]
-    .filter(Boolean)
-    .join(", ");
-  const detalhe = [l.bairro, l.areaM2 ? `${l.areaM2.toLocaleString("pt-BR")} m²` : null]
+  const lista = enderecos(l);
+  const endereco = lista.join(" · ");
+  const detalhe = [
+    l.bairro,
+    l.areaM2 ? `${l.areaM2.toLocaleString("pt-BR")} m²` : null,
+    // A esquina é a informação, não um detalhe de formatação: é ela que
+    // responde "a casa da esquina da X com a Y".
+    lista.length > 1 ? `esquina — ${lista.length} endereços` : null,
+  ]
     .filter(Boolean)
     .join(" · ");
   const grafia = l.iq ?? l.inscricao ?? "";

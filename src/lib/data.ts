@@ -1,4 +1,5 @@
 import type { BridgesData } from "@/features/bridge/types";
+import type { EixosData } from "@/features/eixos/types";
 import type { EstacoesData } from "@/features/estacao/types";
 import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
@@ -114,6 +115,19 @@ export function loadVotacoes(): Promise<VotacoesData> {
 
 export function getVotacoes(): VotacoesData | null {
   return votacoes.value;
+}
+
+// Eixos de logradouro de Blumenau (geoportal): 9.370 trechos com a quadra e o
+// CEP de cada lado. 197 KB gzip — a maior das preguiçosas, e a mais rara: só
+// desce quando a entrada tem forma de quadra.
+const eixos: Slot<EixosData> = { promise: null, value: null };
+
+export function loadEixos(): Promise<EixosData> {
+  return loadOnce(eixos, dataUrl("eixos-blumenau.json"), asJson<EixosData>);
+}
+
+export function getEixos(): EixosData | null {
+  return eixos.value;
 }
 
 // Estações geodésicas do Vale (IBGE). 49 KB, preguiçosa pelo mesmo motivo.
