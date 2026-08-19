@@ -1,6 +1,8 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { QUADGRAMAS_N } from "./quadgramas-pt";
 import {
+  JANELA,
+  ORCAMENTO_TRABALHO,
   aplicarChave,
   carregarQuadgramas,
   chaveEmTexto,
@@ -156,18 +158,42 @@ describe("solver de substituição", () => {
     expect(aplicarChave(longo, solucao.chave).startsWith("a resposta desta etapa")).toBe(true);
   });
 
-  it("cabe no teto de tempo do fan-out", () => {
-    tabelaQuadgramas(); // não medir a expansão da tabela
-    const casos = [120, 300, 700, 2000].map((n) => {
+  /**
+   * O teto é de TRABALHO, não de relógio — e a diferença já custou uma suíte
+   * vermelha.
+   *
+   * Este teste media `performance.now()` e afirmava "menos de 50 ms". Sozinho
+   * passava; na suíte cheia, com o vitest rodando arquivos em paralelo, ele
+   * reprovava por carga da máquina. Um teste que falha por vizinho é pior que
+   * teste nenhum: ele ensina a equipe a reexecutar até passar, e no dia em que
+   * a lentidão for real ninguém vai acreditar nele.
+   *
+   * O que sustenta o custo é `ORCAMENTO_TRABALHO` (reinícios × letras), que é
+   * FIXO por construção — a subida não olha o relógio, justamente para não
+   * quebrar o determinismo. Então é ele que se mede: o produto não pode crescer
+   * com o texto, senão colar um capítulo inteiro trava o fan-out, que roda a
+   * cada tecla.
+   */
+  it("o trabalho da subida não cresce com o tamanho do texto", () => {
+    tabelaQuadgramas();
+    const medidos = [120, 300, 700, 2000].map((n) => {
       const base = `${TEXTO} `.repeat(20);
-      return cifrar(base.replace(/[^a-z ]/g, "").slice(0, n), alfabeto(11));
+      const caso = cifrar(base.replace(/[^a-z ]/g, "").slice(0, n), alfabeto(11));
+      const letras = letrasDe(caso);
+      const r = resolverSubstituicao(letras);
+      // Janela: a subida não lê o texto inteiro, ela para em `JANELA` letras.
+      return { n, trabalho: r.reinicios * Math.min(letras.length, JANELA) };
     });
-    for (const caso of casos) {
-      const t0 = performance.now();
-      resolverSubstituicao(letrasDe(caso));
-      const gasto = performance.now() - t0;
-      expect(gasto).toBeLessThan(50);
+
+    for (const { n, trabalho } of medidos) {
+      expect(trabalho, `texto de ${n} letras estourou o orçamento`).toBeLessThanOrEqual(
+        ORCAMENTO_TRABALHO,
+      );
     }
+    // E o teto é o mesmo para todos: o texto longo não paga mais que o curto.
+    const maior = Math.max(...medidos.map((m) => m.trabalho));
+    const menor = Math.min(...medidos.map((m) => m.trabalho));
+    expect(maior / menor).toBeLessThan(1.5);
   });
 });
 

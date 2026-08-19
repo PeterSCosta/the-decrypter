@@ -72,4 +72,36 @@ describe("useRota", () => {
     // quebrado, e de lá a correção empurraria de novo — laço sem saída.
     expect(window.history.length).toBe(antes);
   });
+
+  it("atalho de cifra: o endereço abre a bancada com ela isolada", () => {
+    irPara("/cifra/base64");
+    const { result } = renderHook(() => useRota(true, true));
+    expect(result.current.aba).toBe("decoder");
+    expect(result.current.cifra).toBe("base64");
+  });
+
+  it("trocar de cifra escreve na barra; soltar volta para a raiz", () => {
+    const { result } = renderHook(() => useRota(true, true));
+    act(() => result.current.irParaCifra("atbash"));
+    expect(window.location.pathname).toBe("/cifra/atbash");
+    act(() => result.current.irParaCifra(null));
+    expect(window.location.pathname).toBe("/");
+  });
+
+  it("cifra que NÃO existe sai do endereço em vez de virar beco sem saída", () => {
+    // Sem isto, a bancada rodava "só" um decoder inexistente: lista filtrada
+    // vazia, zero resultado, e nenhuma explicação na tela.
+    irPara("/cifra/nao-existe");
+    const { result } = renderHook(() => useRota(true, false));
+    expect(result.current.cifra).toBeNull();
+    expect(window.location.pathname).toBe("/");
+  });
+
+  it("enquanto ninguém checou a cifra, o endereço sobrevive", () => {
+    // Mesma regra da guarda de admin: "não sei ainda" não é "não existe".
+    irPara("/cifra/base64");
+    const { result } = renderHook(() => useRota(true, null));
+    expect(result.current.cifra).toBe("base64");
+    expect(window.location.pathname).toBe("/cifra/base64");
+  });
 });

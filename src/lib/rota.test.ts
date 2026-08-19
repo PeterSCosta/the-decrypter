@@ -65,4 +65,32 @@ describe("rota", () => {
     expect(Object.values(APELIDOS_DE_ABA)).not.toContain("text");
     expect(Object.values(APELIDOS_DE_ABA)).not.toContain("fleet");
   });
+
+  it("atalho de cifra: ida e volta pelo id do decoder", () => {
+    // O apelido É o id, e isso é decisão: são 117 decoders, e um mapa de
+    // apelidos escrito à mão divergiria da lista real na primeira cifra nova.
+    for (const id of ["base64", "atbash", "vigenere-crack", "a1z26-ciclico"]) {
+      const caminho = escreverCaminho({ painel: "app", aba: "decoder", cifra: id });
+      expect(caminho).toBe(`/cifra/${id}`);
+      expect(lerCaminho(caminho)).toEqual({ painel: "app", aba: "decoder", cifra: id });
+    }
+  });
+
+  it("/cifra sem id não vira atalho quebrado", () => {
+    expect(lerCaminho("/cifra")).toEqual({ painel: "app", aba: "decoder" });
+    expect(lerCaminho("/cifra/")).toEqual({ painel: "app", aba: "decoder" });
+  });
+
+  it("caminho de dois níveis que NÃO é cifra cai na bancada", () => {
+    // `/ajuda/extra` e `/geolocalizacao/algo` são link velho ou digitado
+    // errado; nenhum pode dar tela branca.
+    expect(lerCaminho("/geolocalizacao/algo")).toEqual({ painel: "app", aba: "decoder" });
+    expect(lerCaminho("/nada/aqui")).toEqual({ painel: "app", aba: "decoder" });
+  });
+
+  it("a cifra manda sobre a aba — o atalho é da bancada", () => {
+    expect(escreverCaminho({ painel: "app", aba: "geo", cifra: "morse" })).toBe("/cifra/morse");
+    // Mas painel cobre tudo: ele substitui a bancada inteira.
+    expect(escreverCaminho({ painel: "admin", aba: "geo", cifra: "morse" })).toBe("/usuarios");
+  });
 });

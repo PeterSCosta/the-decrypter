@@ -37,7 +37,21 @@ import { type TrailStep, popStep, pushStep, truncateTo } from "./trail";
  * grade para cá. Funciona como valor inicial (e não por efeito) porque a
  * bancada é desmontada ao trocar de aba — ao voltar, ela nasce com o valor novo.
  */
-export function useDecoder(entradaInicial = "") {
+export function useDecoder(
+  entradaInicial = "",
+  /**
+   * A cifra isolada e quem a troca vêm de FORA — da rota.
+   *
+   * Primeira tentativa foi espelhar: estado local aqui, efeito sincronizando os
+   * dois lados. Deu a corrida clássica, medida no navegador: depois do VOLTAR a
+   * URL dizia `/cifra/atbash` e a faixa continuava em "Rodando só: Código
+   * Morse". Dois donos do mesmo valor sempre discordam em algum quadro.
+   *
+   * Agora há um dono só. Sem os parâmetros (nos testes, e em qualquer uso fora
+   * do App), o hook cai no estado local de sempre.
+   */
+  cifra?: { id: string | null; trocar: (id: string | null) => void },
+) {
   const [input, setInput] = useState(entradaInicial);
   const [key, setKey] = useState("");
   /** Segundo campo genérico (fonte a indexar, texto original, deslocamentos). */
@@ -49,7 +63,9 @@ export function useDecoder(entradaInicial = "") {
    */
   const [title, setTitle] = useState("");
   /** Quando setado, roda só esse decoder (modo "testar uma cifra"). */
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selecaoLocal, setSelecaoLocal] = useState<string | null>(null);
+  const selectedId = cifra ? cifra.id : selecaoLocal;
+  const setSelectedId = cifra ? cifra.trocar : setSelecaoLocal;
   const [trail, setTrail] = useState<TrailStep[]>([]);
   const [streets, setStreets] = useState<StreetsData | null>(getStreets);
   const [pix, setPix] = useState<PixData | null>(getPix);
@@ -318,7 +334,10 @@ export function useDecoder(entradaInicial = "") {
       setSelectedId(null);
       setAux("");
     },
-    [input],
+    // `setSelectedId` deixou de ser o setter estável de um `useState`: quando a
+    // rota é a dona da seleção, ele é o `irParaCifra` dela e muda junto. Omitir
+    // congelaria a limpeza da cifra numa versão velha da rota.
+    [input, setSelectedId],
   );
 
   const undoChain = useCallback(() => {

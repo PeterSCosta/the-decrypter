@@ -4,6 +4,7 @@ import { AnagramPanel } from "@/features/anagram/components/anagram-panel";
 import { LoginScreen } from "@/features/auth/components/login-screen";
 import { useAuth } from "@/features/auth/use-auth";
 import { DecoderWorkbench } from "@/features/decoder/components/decoder-workbench";
+import { decoders } from "@/features/decoder/engine/registry";
 import { DiffPanel } from "@/features/diff/components/diff-panel";
 import { FontsPanel } from "@/features/fonts/components/fonts-panel";
 import { HelpPage } from "@/features/help/components/help-page";
@@ -13,7 +14,7 @@ import { PositionsPanel } from "@/features/positions/components/positions-panel"
 import { ReferencePanel } from "@/features/reference/components/reference-panel";
 import { TextExtractPanel } from "@/features/text-extract/components/text-extract-panel";
 import { cn } from "@/lib/cn";
-import type { RotaAba } from "@/lib/rota";
+import { type RotaAba, lerCaminho } from "@/lib/rota";
 import { useRota } from "@/lib/use-rota";
 import {
   BookOpen,
@@ -123,13 +124,27 @@ export function App() {
    * chegar onde o link mandava. Se a rota só nascesse depois do login, o
    * endereço compartilhado se perderia exatamente na hora que mais importa.
    */
+  /**
+   * A cifra do endereço existe mesmo?
+   *
+   * Quem tem o registro é este arquivo (o `lib/rota.ts` fica puro de propósito),
+   * então a conferência é aqui e o resultado desce para o hook. `/cifra/xpto`
+   * sem esta linha deixava a bancada rodando "só" um decoder inexistente: zero
+   * resultado, sem dizer por quê.
+   */
+  const caminhoInicial = typeof window === "undefined" ? "/" : window.location.pathname;
+  const cifraDoCaminho = lerCaminho(caminhoInicial).cifra ?? null;
+  const cifraExiste = cifraDoCaminho ? decoders.some((d) => d.id === cifraDoCaminho) : null;
+
   const {
     aba: tab,
     painel: view,
+    cifra,
     irParaAba: setTab,
     irParaPainel,
+    irParaCifra,
     alternarPainel,
-  } = useRota(carregando ? null : usuario?.papel === "admin");
+  } = useRota(carregando ? null : usuario?.papel === "admin", cifraExiste);
   /**
    * Menu recolhido vira coluna de ÍCONES, não some.
    *
@@ -304,7 +319,13 @@ export function App() {
           {/* `min-w-0` é obrigatório: sem ele um filho largo (hexdump,
               espectrograma) estica o flex e empurra a coluna para fora. */}
           <div className="min-w-0 flex-1">
-            {tab === "decoder" && <DecoderWorkbench entradaInicial={semente} />}
+            {tab === "decoder" && (
+              <DecoderWorkbench
+                entradaInicial={semente}
+                cifra={cifra}
+                aoTrocarCifra={irParaCifra}
+              />
+            )}
             {tab === "text" && <TextExtractPanel />}
             {tab === "positions" && <PositionsPanel />}
             {tab === "matrix" && <MatrixPanel onDecodificador={mandarParaDecodificador} />}

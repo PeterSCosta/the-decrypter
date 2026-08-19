@@ -11,7 +11,17 @@ import { TrailBar } from "./trail-bar";
 
 const EXAMPLES = ["SGVsbG8gbXVuZG8=", "Wklab xli gshi", "3722", "88xxx500", "Nb11458750330"];
 
-export function DecoderWorkbench({ entradaInicial }: { entradaInicial?: string }) {
+export function DecoderWorkbench({
+  entradaInicial,
+  cifra = null,
+  aoTrocarCifra,
+}: {
+  entradaInicial?: string;
+  /** Cifra isolada vinda do endereço (`/cifra/base64`). */
+  cifra?: string | null;
+  /** Avisa a rota quando a pessoa troca a cifra pela lista lateral. */
+  aoTrocarCifra?: (id: string | null) => void;
+}) {
   const {
     input,
     setInput,
@@ -37,7 +47,8 @@ export function DecoderWorkbench({ entradaInicial }: { entradaInicial?: string }
     goToStep,
     clearTrail,
     hints,
-  } = useDecoder(entradaInicial);
+  } = useDecoder(entradaInicial, aoTrocarCifra ? { id: cifra, trocar: aoTrocarCifra } : undefined);
+
   const [showUnlikely, setShowUnlikely] = useState(false);
   const [showAux, setShowAux] = useState(false);
 

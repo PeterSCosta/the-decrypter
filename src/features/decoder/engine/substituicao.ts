@@ -84,7 +84,7 @@ const ALFABETO = 26;
 /** Ordem de frequência das letras em pt-BR — o chute inicial da subida. */
 const ORDEM_PT = "aeosridmntucplvghqbfzjxkwy";
 /** Teto do produto reinícios × letras. Ver o bloco ORÇAMENTO. */
-const ORCAMENTO_TRABALHO = 16_600;
+export const ORCAMENTO_TRABALHO = 16_600;
 /** Reinícios: nunca menos que isto (texto longo converge fácil)… */
 const MIN_REINICIOS = 8;
 /** …e nunca mais que isto (texto curto não melhora indefinidamente). */

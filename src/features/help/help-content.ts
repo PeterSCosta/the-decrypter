@@ -908,9 +908,9 @@ export const HELP_SECTIONS: HelpSection[] = [
         desc: "Mapa ao vivo dos celulares da equipe (Traccar): posição, status, bateria e quem está mais perto — o mesmo cálculo que aparece no cartão de localização.",
       },
       {
-        name: "Compartilhar a tela pela URL",
-        desc: "Cada aba e cada painel têm endereço próprio, em português: `/geolocalizacao`, `/biblioteca`, `/cola`, `/usuarios`, `/ajuda`. Mandar o link leva a pessoa direto na tela — e o VOLTAR do navegador passou a funcionar dentro da bancada, em vez de sair dela. Recarregar mantém onde você estava. Endereço desconhecido cai no Decodificador, sem tela de erro. Quem não é administrador que abrir `/usuarios` vai para a bancada, e o endereço se corrige sozinho.",
-        example: { in: "…/geolocalizacao", out: "abre a aba de Geolocalização" },
+        name: "Atalho por URL",
+        desc: "Cada aba e cada painel têm endereço próprio, em português: `/geolocalizacao`, `/biblioteca`, `/cola`, `/usuarios`, `/ajuda`. E cada CIFRA tem o dela: `/cifra/base64`, `/cifra/atbash`, `/cifra/vigenere-crack` abrem a bancada já rodando só aquela — é o atalho que se manda para a equipe (“usa esta aqui”). O VOLTAR do navegador passou a funcionar dentro da bancada em vez de sair dela, e recarregar mantém onde você estava. Endereço desconhecido cai no Decodificador, sem tela de erro; cifra que não existe idem, e o endereço se corrige sozinho. Quem não é administrador que abrir `/usuarios` vai para a bancada. O que NÃO viaja no link é a entrada: o conteúdo da prova não vai para a barra de endereço.",
+        example: { in: "…/cifra/base64", out: "a bancada rodando só o Base64" },
       },
       {
         name: "Entrar e aprovar acesso",

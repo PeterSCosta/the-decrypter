@@ -77,7 +77,26 @@ const PAINEIS: Record<Exclude<RotaPainel, "app">, string> = {
 export interface Rota {
   painel: RotaPainel;
   aba: RotaAba;
+  /**
+   * A cifra isolada, quando há uma. É o ATALHO que o dono pediu: mandar o link
+   * de uma cifra específica, não de um resultado.
+   *
+   * O apelido é o próprio `id` do decoder, e isso é decisão, não preguiça: são
+   * 117 decoders, um mapa de apelidos escrito à mão divergiria da lista real na
+   * primeira cifra nova — e foi assim que a Cola ficou com dez formatos
+   * enquanto a fonte tinha 26. Medido: os 117 ids já casam com
+   * `^[a-z0-9][a-z0-9-]*$` e nenhum se repete, então eles JÁ SÃO apelidos de
+   * URL, e são legíveis o bastante (`base64`, `atbash`, `vigenere`, `morse`).
+   *
+   * Quem valida se a cifra existe é quem tem o registro na mão — este módulo
+   * fica puro de propósito, para não arrastar o grafo inteiro de decoders (e o
+   * `import.meta.glob`, que só roda no Vite) para dentro do roteamento.
+   */
+  cifra?: string;
 }
+
+/** Prefixo do atalho de cifra. Fora dos apelidos de aba, então não colide. */
+const PREFIXO_CIFRA = "cifra";
 
 const porApelido = <T extends string>(mapa: Record<T, string>, apelido: string): T | null =>
   (Object.entries(mapa) as [T, string][]).find(([, s]) => s === apelido)?.[0] ?? null;
@@ -90,6 +109,15 @@ export function lerCaminho(caminho: string): Rota {
   const apelido = caminho.replace(/^\/+|\/+$/g, "").toLowerCase();
   if (!apelido) return { painel: "app", aba: ABA_PADRAO };
 
+  // `/cifra/base64` → a bancada com o Base64 isolado. O id vem cru; quem
+  // confere se ele existe é o `App`, que tem o registro.
+  const partes = apelido.split("/").filter(Boolean);
+  if (partes[0] === PREFIXO_CIFRA) {
+    const id = partes[1];
+    return id ? { painel: "app", aba: ABA_PADRAO, cifra: id } : { painel: "app", aba: ABA_PADRAO };
+  }
+  if (partes.length > 1) return { painel: "app", aba: ABA_PADRAO };
+
   const painel = porApelido(PAINEIS, apelido);
   if (painel) return { painel, aba: ABA_PADRAO };
 
@@ -98,8 +126,9 @@ export function lerCaminho(caminho: string): Rota {
 }
 
 /** Rota → caminho. O painel manda: ele cobre a bancada inteira. */
-export function escreverCaminho({ painel, aba }: Rota): string {
+export function escreverCaminho({ painel, aba, cifra }: Rota): string {
   if (painel !== "app") return `/${PAINEIS[painel]}`;
+  if (cifra) return `/${PREFIXO_CIFRA}/${cifra}`;
   return aba === ABA_PADRAO ? "/" : `/${ABAS[aba]}`;
 }
 

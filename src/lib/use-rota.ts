@@ -23,11 +23,21 @@ import { type Rota, type RotaAba, type RotaPainel, escreverCaminho, lerCaminho }
  * `null` = ainda não se sabe (sessão carregando). A distinção não é preciosismo:
  * ver a nota da guarda de admin abaixo.
  */
-export function useRota(podeAdmin: boolean | null): {
+export function useRota(
+  podeAdmin: boolean | null,
+  /**
+   * `true` quando a cifra do endereço existe de verdade no registro. `null`
+   * enquanto ninguém checou. Quem sabe é o `App`, que tem o registro; este hook
+   * só reage — do mesmo jeito, e pelo mesmo motivo, que a guarda de admin.
+   */
+  cifraExiste: boolean | null = null,
+): {
   aba: RotaAba;
   painel: RotaPainel;
+  cifra: string | null;
   irParaAba: (a: RotaAba) => void;
   irParaPainel: (p: RotaPainel) => void;
+  irParaCifra: (id: string | null) => void;
   alternarPainel: (p: Exclude<RotaPainel, "app">) => void;
 } {
   const [rota, setRota] = useState<Rota>(() =>
@@ -65,13 +75,26 @@ export function useRota(podeAdmin: boolean | null): {
       navegar({ painel: "app", aba: rota.aba }, "replace");
       return;
     }
+    /**
+     * Cifra que não existe no registro sai do endereço.
+     *
+     * Sem isto, `/cifra/nao-existe` deixava a bancada rodando "só" um decoder
+     * inexistente: a lista filtrada ficava vazia e a tela não mostrava
+     * resultado NENHUM, sem dizer por quê. Beco sem saída silencioso — pior que
+     * erro, porque parece defeito da bancada.
+     */
+    if (rota.cifra && cifraExiste === false) {
+      navegar({ painel: rota.painel, aba: rota.aba }, "replace");
+      return;
+    }
+
     // Normaliza a barra de endereço na primeira carga: `/GEOLOCALIZACAO/` e
     // `/nao-existe` viram o caminho canônico sem empurrar histórico.
     const canonico = escreverCaminho(rota);
     if (window.location.pathname !== canonico) {
       window.history.replaceState(rota, "", canonico);
     }
-  }, [rota, podeAdmin, navegar]);
+  }, [rota, podeAdmin, cifraExiste, navegar]);
 
   useEffect(() => {
     const aoVoltar = (e: PopStateEvent) => {
@@ -84,8 +107,14 @@ export function useRota(podeAdmin: boolean | null): {
     return () => window.removeEventListener("popstate", aoVoltar);
   }, []);
 
+  /** Trocar de aba solta a cifra: o atalho vale para a bancada, não para a Cola. */
   const irParaAba = useCallback(
     (a: RotaAba) => navegar({ painel: "app", aba: a }, "push"),
+    [navegar],
+  );
+  const irParaCifra = useCallback(
+    (id: string | null) =>
+      navegar({ painel: "app", aba: "decoder", ...(id ? { cifra: id } : {}) }, "push"),
     [navegar],
   );
   const irParaPainel = useCallback(
@@ -99,5 +128,13 @@ export function useRota(podeAdmin: boolean | null): {
     [navegar, rota],
   );
 
-  return { aba: rota.aba, painel: rota.painel, irParaAba, irParaPainel, alternarPainel };
+  return {
+    aba: rota.aba,
+    painel: rota.painel,
+    cifra: rota.cifra ?? null,
+    irParaAba,
+    irParaPainel,
+    irParaCifra,
+    alternarPainel,
+  };
 }
