@@ -9,6 +9,42 @@
 
 ---
 
+## Placar — atualizado em 19/08, fim do dia
+
+| item | estado |
+|---|---|
+| Push dos 3 commits | **feito**, deploy verde |
+| Guia mentindo em 4 exemplos | **feito** (`d77ab9f`), com teste de regressão |
+| **Guia novo** — filtro, múltiplos exemplos, código encurtado, motor ao vivo | **feito** (`e1efbe0`) |
+| **1.1** Plus Code curto e Geohash na cascata | **feito** (`0563966`) — virou "todas as leituras" |
+| **1.2** A1Z26 cíclico | **feito** (`4d37994`) |
+| **1.3** Zero-width estendido (7 → 406 pontos de código) | **feito** (`4d37994`) |
+| **3.3** Carta ao milionésimo, separadores, número MI | **feito** (`4d37994`) |
+| Dedup do motor ignorando caixa | **feito** (`dee8e09`) — achado no caminho |
+| **1.4** Verdade das telas (roadmap, `sources.ts`, Cola) | aberto |
+| **1.5** Exemplo clicável | **feito dentro do guia novo** |
+| **3.1** Endereço dos lotes · **3.2** Eixos | em construção |
+| Onda 2 (senha, backup, `sync-data`) | **fora por decisão do dono** |
+
+### Três coisas que a regra mudou, e valem para o resto
+
+**"Se existe uma localização, mesmo longe, é válida."** Isso reenquadrou o 1.1
+inteiro: o defeito nunca foi responder Atlântico Sul, foi a resposta de Itajaí
+não existir na tela. A cascata passou a devolver LISTA, e a leitura distante
+fica — embaixo. Apagá-la seria decidir pelo jogador.
+
+**Piso sem teto não segura nada.** O A1Z26 cíclico nasceu com piso 0,32 e a
+aposta de que sem palavra ficaria na gaveta; medido, sete de vinte listas
+numéricas comuns cruzavam o corte com lixo. Só cruza com palavra real
+confirmada — e a trava só vale quando a lista de palavras já chegou, senão se
+pune por dado ausente.
+
+**Código que a tela não alcança é código que não existe.** O `decodeMiSheet`
+estava escrito, testado e com zero referências fora do módulo, enquanto a ficha
+anunciava "articulação MI".
+
+---
+
 ## O que mudou desde o inventário
 
 | item | antes | agora |
