@@ -43,7 +43,7 @@ export interface DetectedLocation extends GeoPoint {
 }
 
 /** Os três degraus de confiança da cascata. Ver `DetectedLocation`. */
-export const CONFIANCA = { literal: 0.95, forma: 0.9, frouxa: 0.5 } as const;
+export const CONFIANCA = { literal: 0.95, forma: 0.9, atalho: 0.75, frouxa: 0.5 } as const;
 
 function valid(lat: number, lng: number): GeoPoint | null {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
@@ -175,6 +175,27 @@ export function decodePlusCodeOffline(raw: string): GeoPoint | null {
  */
 export function decodePlusCode(raw: string): GeoPoint | null {
   return decodePlusCodeOffline(raw) ?? decodePlusCodeLib(raw);
+}
+
+/**
+ * O código está COMPLETO, ou é uma cauda lida como se fosse?
+ *
+ * ── POR QUE ISTO DECIDE UMA NOTA, E NÃO UM SIM/NÃO ──────────────────────────
+ * `decodePlusCodeOffline` aceita de 4 a 8 caracteres antes do `+`. Um Plus Code
+ * COMPLETO tem oito; com quatro, o que existe é a cauda, e decodificá-la como
+ * se fosse completa joga o ponto onde a grade truncada calhar de cair.
+ *
+ * Medido: `38HQ+J3` sai em −58,3987 / −44,9488 — Atlântico Sul, 2.900 km de
+ * Blumenau — enquanto a mesma cauda ancorada em Itajaí dá −26,9209 / −48,6623,
+ * que é a resposta da prova gabaritada da ITC 2017.
+ *
+ * A regra da casa é que uma localização longe **continua válida** e não se
+ * apaga. O que não pode é ela passar por evidência que não tem: ler cauda como
+ * código inteiro é palpite, então cai para a camada frouxa, e a leitura
+ * ancorada — que se auto-valida contra a caixa do Vale — fica em cima.
+ */
+export function plusCodeEhCompleto(raw: string): boolean {
+  return /^[23456789CFGHJMPQRVWX]{8}\+/.test(raw.trim().toUpperCase());
 }
 
 // ---- UTM (inverso, WGS84): "22J 734643E 7012408N" ------------------------
@@ -486,13 +507,43 @@ function detectNamedGrid(input: string): DetectedLocation | null {
   return null;
 }
 
-export function detectLocation(raw: string): DetectedLocation | null {
+/**
+ * Todas as leituras que a entrada admite, da mais confiável para a menos.
+ *
+ * ── POR QUE UMA LISTA, E NÃO A PRIMEIRA QUE CASAR ───────────────────────────
+ * A cascata sempre soube ordenar, mas ela PARAVA no primeiro acerto — e isso
+ * escondia leitura verdadeira. Medido: `g7rpj` é ao mesmo tempo um Geohash
+ * global (Islândia) e a cauda de um Geohash daqui (`6gjng7rpj`, Blumenau); a
+ * bancada mostrava só o primeiro que a ordem alcançasse, e a outra resposta
+ * simplesmente não existia para quem estava olhando.
+ *
+ * A regra desta casa: **se existe uma localização, mesmo longe, ela é válida.**
+ * Um código de outra parte do mundo não é erro — é a leitura que aquele
+ * sistema dá. O que não pode acontecer é a leitura de perto ficar de fora, ou
+ * ficar abaixo de uma leitura mais frouxa. Por isso a lista sai ORDENADA pela
+ * camada de confiança, e não pela ordem em que a cascata tentou.
+ *
+ * ── OS DOIS ATALHOS QUE FALTAVAM ────────────────────────────────────────────
+ * Plus Code curto e cauda de Geohash já existiam (`decodePlusCodeLocal`,
+ * `decodeGeohashLocal`) mas só o decoder `local-geocode` os consumia — quem
+ * chamava `detectLocation`, como a aba Geolocalização, nunca os via. Resultado
+ * medido: `38HQ+J3` respondia −58,40/−44,95 (Atlântico Sul, 2.900 km fora) com
+ * a nota MAIS ALTA da cascata, enquanto a ficha ao lado, na mesma tela,
+ * prometia que a bancada completava o prefixo da cidade. Agora as duas
+ * leituras saem, com a de Blumenau em cima.
+ */
+export function detectLocations(raw: string): DetectedLocation[] {
   const input = raw.trim();
-  if (!input) return null;
+  if (!input) return [];
 
-  // Prefixo literal / hífens: não disputam entrada com nada da lista abaixo.
+  const saida: DetectedLocation[] = [];
+  const juntar = (format: string, pt: GeoPoint | null, confianca: number) => {
+    if (pt) saida.push({ ...pt, format, confianca });
+  };
+
+  // Prefixo literal / hífens: assinatura própria, não disputa com nada.
   const named = detectNamedGrid(input);
-  if (named) return named;
+  if (named) saida.push(named);
 
   const mgrs = decodeMgrs(input);
   const gars = decodeGars(input);
@@ -502,58 +553,76 @@ export function detectLocation(raw: string): DetectedLocation | null {
     ["Graus decimais (DD)", parseDD(input)],
     ["DMS", parseDMS(input)],
     ["Graus e minutos (DDM)", parseDDM(input)],
-    ["Plus Code", decodePlusCode(input)],
     ["UTM", parseUTM(input)],
-    // MGRS é a UTM em letras: vem logo depois dela, e ANTES do Geohash — todo
-    // MGRS é lexicalmente um Geohash válido (o gate de maiúsculas é o que
-    // impede o inverso, já que Geohash se escreve minúsculo).
     [mgrs ? withDetail("MGRS/USNG", mgrsPrecisionLabel(mgrs.parts.digits)) : "MGRS/USNG", mgrs],
     ["Maidenhead", decodeMaidenhead(input)],
-    // GEOREF (4 letras + dígitos) e GARS (3 dígitos + 2 letras) também casariam
-    // como Geohash se chegassem depois dele.
     ["GEOREF", georef],
     [gars ? withDetail("GARS", `célula de ${garsCellLabel(gars.cell)}`) : "GARS", gars],
     ["Quadkey", decodeQuadkey(input)],
-    // H3 e GeoHex antes do Geohash: ambos (hex / 2 letras + dígitos) também
-    // passariam no teste base32 do Geohash.
     ["H3", parseH3(input)],
     ["GeoHex", parseGeoHex(input)],
   ];
-  for (const [format, pt] of attempts) if (pt) return { ...pt, format, confianca: CONFIANCA.forma };
+  for (const [format, pt] of attempts) juntar(format, pt, CONFIANCA.forma);
+
+  // O Plus Code fica fora da lista acima porque a nota dele depende do
+  // COMPRIMENTO, não do formato: oito caracteres antes do `+` são um código
+  // inteiro e valem forma própria; quatro são cauda lida como inteiro, e isso
+  // é palpite (ver `plusCodeEhCompleto`).
+  juntar(
+    "Plus Code",
+    decodePlusCode(input),
+    plusCodeEhCompleto(input) ? CONFIANCA.forma : CONFIANCA.frouxa,
+  );
 
   // ---- Atalhos de cauda local (o prefixo da cidade fica subentendido) -----
-  // Vem ANTES do Geohash de propósito: uma cauda de MGRS como "FR9203021024"
-  // é lexicalmente um Geohash válido, e o Geohash levaria. Inverter a ordem só
-  // é seguro porque os três atalhos são auto-validantes — só passam se o ponto
-  // cair na caixa do Vale — e porque exigem MAIÚSCULA (ou só dígitos), enquanto o
-  // Geohash da região se escreve minúsculo e começa em "6gj".
-  const local: [string, GeoPoint | null][] = [
-    // Número puro como cauda de um código "Nb…" (Blumenau/Itajaí).
+  // Todos se AUTO-VALIDAM: só emitem se o ponto reconstruído cair na caixa do
+  // Vale. É essa auto-validação que os põe acima do Geohash global frouxo —
+  // eles carregam evidência que o frouxo não tem.
+  // Nem todos os atalhos devolvem o código reconstruído: MGRS, GEOREF e GeoHex
+  // devolvem só o ponto. Por isso o tipo é o par com `full` OPCIONAL, e o
+  // rótulo só cita a cauda quando ela existe.
+  const local: [string, (GeoPoint & Partial<LocalGeoHit>) | null][] = [
     ["GeoHex", parseGeoHexBlumenau(input)],
-    // "FR9203021024" = MGRS sem o fuso "22J", comum às duas cidades: 100% dos
-    // 5.268 CEPs com coordenada de Blumenau+Itajaí em `ceps.json` caem em 22J.
     ["MGRS/USNG", decodeMgrsLocal(input)],
-    // "LD5604" = GEOREF sem a célula de 15° "JE" — idem, 100% dos 5.268.
     ["GEOREF", decodeGeorefLocal(input)],
+    ["Plus Code", decodePlusCodeLocal(input)],
+    ["Geohash", decodeGeohashLocal(input)],
   ];
   for (const [format, pt] of local) {
     if (pt) {
-      return {
-        ...pt,
-        format: `${format} (${scopeLabel(pt) ?? "Vale do Itajaí"})`,
-        // O atalho local se auto-valida (só passa se cair na caixa do Vale),
-        // então vale mais que um frouxo — e menos que forma própria.
-        confianca: 0.75,
-      };
+      saida.push({
+        lat: pt.lat,
+        lng: pt.lng,
+        format: pt.full
+          ? `${format} (${scopeLabel(pt) ?? "Vale do Itajaí"} — cauda de ${pt.full})`
+          : `${format} (${scopeLabel(pt) ?? "Vale do Itajaí"})`,
+        confianca: CONFIANCA.atalho,
+      });
     }
   }
 
   // Os mais frouxos por último: o Geohash aceita quase todo alfanumérico curto,
   // e o GeoTude, todo decimal pontuado.
-  const loose: [string, GeoPoint | null][] = [
-    ["Geohash", decodeGeohash(input)],
-    ["GeoTude", decodeGeoTude(input)],
-  ];
-  for (const [format, pt] of loose) if (pt) return { ...pt, format, confianca: CONFIANCA.frouxa };
-  return null;
+  juntar("Geohash", decodeGeohash(input), CONFIANCA.frouxa);
+  juntar("GeoTude", decodeGeoTude(input), CONFIANCA.frouxa);
+
+  // Duas leituras no MESMO ponto e do mesmo sistema são a mesma resposta dita
+  // duas vezes — o atalho local e o código cheio caem aqui quando a pessoa
+  // digita o código inteiro.
+  const vistas = new Set<string>();
+  const unicas = saida.filter((d) => {
+    const chave = `${d.format.split(" (")[0]}|${d.lat.toFixed(5)}|${d.lng.toFixed(5)}`;
+    if (vistas.has(chave)) return false;
+    vistas.add(chave);
+    return true;
+  });
+
+  // `sort` é estável no JS moderno, então dentro da mesma camada a ordem da
+  // cascata é preservada — e ela carrega a razão de MGRS vir antes de Geohash.
+  return unicas.sort((a, b) => (b.confianca ?? 0) - (a.confianca ?? 0));
+}
+
+/** A melhor leitura. Existe porque quase todo chamador quer uma só. */
+export function detectLocation(raw: string): DetectedLocation | null {
+  return detectLocations(raw)[0] ?? null;
 }

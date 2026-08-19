@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Input } from "@/components/ui/input";
 import { MapCard } from "@/features/decoder/components/map-card";
-import { detectLocation, detectWhat3Words, prepararDeteccao } from "@/features/location/formats";
+import { detectLocations, detectWhat3Words, prepararDeteccao } from "@/features/location/formats";
 import { ArrowRight, Compass, Database, ExternalLink, Search } from "lucide-react";
 import { useState } from "react";
 import { BASES_GEO, GRUPOS_GEO, LINKS_GEO } from "../formatos";
@@ -31,7 +31,17 @@ export function GeoPanel({
   aoAbrirAba?: (aba: "triangulate" | "postes" | "fleet" | "decoder") => void;
 }) {
   const [texto, setTexto] = useState("");
-  const achado = texto.trim() ? detectLocation(texto) : null;
+  /**
+   * TODAS as leituras, não a primeira.
+   *
+   * A caixa mostrava uma resposta só, e isso escondia leitura verdadeira:
+   * `38HQ+J3` é ao mesmo tempo uma cauda de Plus Code de Itajaí e um código que,
+   * lido como completo, cai no Atlântico Sul. A regra desta casa é que **uma
+   * localização longe continua válida** — o que não pode é a de perto ficar de
+   * fora. As duas aparecem, a mais confiável em cima.
+   */
+  const achados = texto.trim() ? detectLocations(texto) : [];
+  const achado = achados[0] ?? null;
   /**
    * O what3words não sai do `detectLocation` — ele não tem como sair.
    *
@@ -97,6 +107,12 @@ export function GeoPanel({
                   {achado.lat.toFixed(6)}, {achado.lng.toFixed(6)}
                 </span>
                 <CopyButton value={`${achado.lat.toFixed(6)}, ${achado.lng.toFixed(6)}`} />
+                {achados.length > 1 ? (
+                  <span className="text-xs text-[var(--text-muted)]">
+                    +{achados.length - 1} outra{achados.length > 2 ? "s" : ""} leitura
+                    {achados.length > 2 ? "s" : ""}
+                  </span>
+                ) : null}
                 {aoDecodificar ? (
                   <Button size="sm" variant="ghost" onClick={() => aoDecodificar(texto.trim())}>
                     Abrir no Decodificador <ArrowRight className="h-3.5 w-3.5" />
@@ -118,6 +134,26 @@ export function GeoPanel({
                   }}
                 />
               </div>
+
+              {/* As leituras de baixo NÃO são descarte: cada uma é o que aquele
+                  sistema devolve para o mesmo texto. Ficam abaixo porque
+                  carregam menos evidência, não porque estejam erradas. */}
+              {achados.length > 1 ? (
+                <ul className="mt-3 flex flex-col gap-1 border-t border-[var(--border-subtle)] pt-3">
+                  {achados.slice(1).map((outra) => (
+                    <li
+                      key={`${outra.format}-${outra.lat}-${outra.lng}`}
+                      className="flex flex-wrap items-center gap-2 text-xs"
+                    >
+                      <Badge tone="neutral">{outra.format}</Badge>
+                      <span className="font-mono text-[var(--text-secondary)]">
+                        {outra.lat.toFixed(6)}, {outra.lng.toFixed(6)}
+                      </span>
+                      <CopyButton value={`${outra.lat.toFixed(6)}, ${outra.lng.toFixed(6)}`} />
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </div>
           ) : w3w ? (
             <div className="mt-3">
