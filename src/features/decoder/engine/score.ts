@@ -285,6 +285,18 @@ let WORDS: WordLookup | null = null;
  * um `Set` literal nos testes. `Set<string>` satisfaz `WordLookup`
  * estruturalmente, então os testes que montam um conjunto à mão seguem valendo.
  */
+/**
+ * A lista de palavras já chegou?
+ *
+ * Existe para quem precisa PUNIR uma leitura sem palavra real: sem este sinal,
+ * o decoder puniria também no instante em que a lista ainda não carregou — e
+ * puniria sempre nos testes, onde ela nunca carrega. A regra é "só cobre o que
+ * dá para conferir".
+ */
+export function wordsProntas(): boolean {
+  return WORDS !== null;
+}
+
 export function setWordSet(set: WordLookup | null): void {
   WORDS = set;
 }

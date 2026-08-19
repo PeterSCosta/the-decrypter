@@ -120,10 +120,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         esperado: "hello",
       },
       {
-        name: "Caracteres invisíveis (zero-width)",
-        desc: "Mensagem escondida em caracteres de largura zero (esteganografia).",
-        examples: ["texto com zero-width"],
-        esperado: "mensagem oculta",
+        name: "Caracteres invisíveis (4 famílias)",
+        desc: "São quatro esconderijos diferentes, e a bancada os separa porque são coisas diferentes. **Tags** (U+E0000–E007F) carregam ASCII 1:1 e costumam vir grudadas num emoji — é o truque moderno. **Seletores de variação** carregam um BYTE cada, e foram o “variation selector smuggling” de 2025. **Bidi** não esconde nada: reordena o que você lê, então ali o achado é “a tela mente”, não “achei texto”. E o **largura-zero clássico**, que vira canal binário. Antes a bancada conhecia 7 pontos de código; agora são 406 — e o que passava batido recebia “não há nada escondido”, o pior erro possível numa prova.",
+        // Não há exemplo digitável: o caractere é invisível por definição.
+        esperado:
+          "texto oculto em Tags · byte a byte em seletores · reordenação Bidi · canal binário",
       },
       {
         name: "Espaços escondidos (whitespace)",
@@ -214,7 +215,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         name: "A1Z26 (número↔letra) e invertido (1=Z)",
         desc: "Letra ↔ número da posição no alfabeto; invertido começa do Z.",
         examples: ["8 5 12 12 15"],
-        esperado: "hello",
+      },
+      {
+        name: "A1Z26 cíclico (a contagem deu a volta)",
+        desc: "Quando a contagem passou de 26 e continuou: 27 volta em A, 53 também. Os três decoders A1Z26 acima recusam qualquer valor acima de 26 — e recusavam CALADOS, sem card nenhum, então uma contagem que deu a volta não produzia nada. Sai nas duas bases (1=A e 0=A), rotuladas. Só cruza o corte de “provável” se formar PALAVRA REAL: sem essa trava ele subia com lixo pronunciável em 7 de 20 listas de números comuns — idades, mega-sena, horários.",
+        examples: ["34 31 38 38 41", "27 5 12 1", "26 27 28 53"],
       },
       {
         name: "ROT5 / ROT18 / ROT47",
@@ -430,10 +435,14 @@ export const HELP_SECTIONS: HelpSection[] = [
         esperado: "célula de 5′ sobre Blumenau (-26,9583 · -49,0417)",
       },
       {
-        name: "Carta IBGE/DSG (articulação MI)",
-        desc: "Nomenclatura das cartas topográficas: cada sufixo desce uma escala, de 1:1.000.000 até a quadrícula de 7,5′.",
-        examples: ["SG-22-Z-B-IV-4-SE"],
-        esperado: "quadrícula 1:25.000 de Blumenau",
+        name: "Carta topográfica (nomenclatura CIM)",
+        desc: "Cada sufixo desce uma escala, de 1:1.000.000 até a quadrícula de 7,5′. Ponto, espaço, barra e sublinhado valem como separador além do hífen — código copiado de legenda escaneada ou de OCR raramente traz o hífen certo. **A folha ao milionésimo tem nota BAIXA de propósito:** 4°×6° são ~440 por 600 km, o tamanho de um estado, e `SC-22` é nomenclatura legítima e ao mesmo tempo a sigla rodoviária de Santa Catarina. A leitura fica — longe continua válido —, mas não no topo.",
+        examples: ["SG-22-Z-B-IV-4-SE", "SG.22.Z.A.III.1", "SG-22"],
+      },
+      {
+        name: "Carta topográfica (número MI)",
+        desc: "O Mapa Índice é como o acervo do IBGE e o material impresso identificam a folha. A bancada RECONHECE e diz a escala, mas **não converte em coordenada**: a correspondência entre MI e nomenclatura é uma tabela de ~3.036 folhas, não uma fórmula — o próprio Mapa Índice Digital guarda as duas como colunas separadas. Inventar a conversão daria ponto errado com cara de certo. Procure a folha pela nomenclatura, que essa a bancada resolve.",
+        examples: ["MI 2868-1", "MI-2868-2-NO", "MI2868"],
       },
       {
         name: "Grade estatística IBGE",

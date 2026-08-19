@@ -501,7 +501,25 @@ function detectNamedGrid(input: string): DetectedLocation | null {
       lat: carta.lat,
       lng: carta.lng,
       format: withDetail("Carta IBGE/DSG", cartaScaleLabel(carta.scale)),
-      confianca: CONFIANCA.literal,
+      /**
+       * ── A NOTA SEGUE O TAMANHO DA FOLHA ─────────────────────────────────
+       * O nível ao milionésimo entrou hoje, e com ele um vizinho incômodo:
+       * `SC-22` é nomenclatura CIM legítima (S + faixa C, fuso 22) **e** é a
+       * sigla rodoviária de Santa Catarina, o estado desta bancada. Medido:
+       * `SC-22` saía como carta em −10 / −51 com 0,95 — a nota máxima — e o
+       * mesmo vale para `SA-22`, `SB-20`, `SD-20`, `SE-25`, `SF-23`…
+       *
+       * Não se apaga a leitura: pela regra da casa, localização longe continua
+       * válida. O que não se sustenta é a NOTA. Uma folha de 4°×6° tem ~440 por
+       * 600 km — ela nomeia uma região do tamanho de um estado, não um lugar.
+       * Chamar isso de assinatura literal, no mesmo degrau de uma quadrícula de
+       * 7,5′, é o ranking exagerando.
+       *
+       * Do 1:500.000 para baixo a sequência de vocabulários fechados
+       * (V/X/Y/Z → A/D → I..VI → 1..4 → NO/NE/SO/SE) torna o falso positivo
+       * quase impossível, e ali a nota literal continua certa.
+       */
+      confianca: carta.scale >= 1_000_000 ? CONFIANCA.frouxa : CONFIANCA.literal,
     };
   }
   return null;

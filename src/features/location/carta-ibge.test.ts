@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BLUMENAU, ITAJAI } from "./anchors";
-import { cartaScaleLabel, decodeCartaIbge, parseCartaIbge } from "./carta-ibge";
+import { cartaScaleLabel, decodeCartaIbge, decodeMiSheet, parseCartaIbge } from "./carta-ibge";
 import { detectLocation } from "./formats";
 
 /** O ponto está dentro da quadrícula cujo CENTRO foi devolvido? */
@@ -41,8 +41,49 @@ describe("carta IBGE/DSG (articulação sistemática)", () => {
     expect(h.scale).toBe(50_000);
   });
 
+  it("SG-22 sozinho é a folha da CIM: 4°×6° (era prometido na ficha e recusado)", () => {
+    const h = contem("SG-22", BLUMENAU);
+    expect(h.scale).toBe(1_000_000);
+    // faixa G = 24–28°S, fuso 22 = -54° a -48°
+    expect(h.lat).toBeCloseTo(-26, 9);
+    expect(h.lng).toBeCloseTo(-51, 9);
+    expect(h.size).toEqual([4, 6]);
+    expect(h.sheet).toBe("SG-22");
+    // e Mafra cai na mesma folha da CIM que Blumenau
+    contem("SG-22", MAFRA);
+  });
+
+  it("parando no fuso, o gate é hemisfério + janela brasileira", () => {
+    // dentro da janela: faixas NA/NB e SA..SI, fusos 18..26
+    for (const s of ["SG-22", "SI-22", "NA-20", "NB-21", "SB-18", "SF-26", "SC-25"]) {
+      expect(decodeCartaIbge(s), s).not.toBeNull();
+    }
+    // sem hemisfério explícito é rótulo genérico
+    expect(parseCartaIbge("G-22")).toBeNull();
+    expect(parseCartaIbge("B-12")).toBeNull();
+    // fora da janela: era daqui que vinham os 59 falsos positivos medidos
+    expect(parseCartaIbge("NF-12")).toBeNull(); // nota fiscal
+    expect(parseCartaIbge("NR-18")).toBeNull(); // norma regulamentadora
+    expect(parseCartaIbge("NR-10")).toBeNull();
+    expect(parseCartaIbge("SJ-22")).toBeNull(); // faixa ao sul do Chuí
+    expect(parseCartaIbge("SG-17")).toBeNull(); // fuso a oeste do Acre
+    expect(parseCartaIbge("SG-27")).toBeNull(); // fuso a leste das ilhas
+  });
+
+  it("a janela só vale sem subdivisão — com ela, o mundo todo continua valendo", () => {
+    // "NF-12" não é folha, mas "NF-12-Z" é: a cadeia já segura o gate sozinha
+    expect(decodeCartaIbge("NF-12-Z")).not.toBeNull();
+    expect(decodeCartaIbge("G-22-Z-B")).not.toBeNull(); // hemisfério opcional
+    // "NG-22" (24–28°N) está fora do Brasil e para no gate; com subdivisão passa
+    expect(parseCartaIbge("NG-22")).toBeNull();
+    expect(decodeCartaIbge("NG-22-Z")?.lat).toBe(25);
+    // e ao norte da janela o espelhamento continua valendo
+    expect(decodeCartaIbge("NB-21")?.lat).toBe(6);
+  });
+
   it("toda a cadeia de níveis contém o ponto (cada nível parte o anterior)", () => {
     const niveis: [string, number][] = [
+      ["SG-22", 1_000_000],
       ["SG-22-Z", 500_000],
       ["SG-22-Z-B", 250_000],
       ["SG-22-Z-B-IV", 100_000],
@@ -79,10 +120,12 @@ describe("carta IBGE/DSG (articulação sistemática)", () => {
   });
 
   describe("gate anti-ruído", () => {
-    it("exige ao menos o nível 1:500.000 (V/X/Y/Z)", () => {
-      expect(parseCartaIbge("SG-22")).toBeNull();
+    it("sem os níveis de subdivisão, só passa dentro da articulação brasileira", () => {
+      // era aqui que "SG-22" morria junto com o ruído; agora a linha é outra
       expect(parseCartaIbge("B-12")).toBeNull();
       expect(parseCartaIbge("A-4")).toBeNull();
+      expect(parseCartaIbge("G-22")).toBeNull();
+      expect(parseCartaIbge("SG-22")).not.toBeNull();
     });
 
     it("recusa vocabulário fora das listas fechadas e fuso inválido", () => {
@@ -107,6 +150,108 @@ describe("carta IBGE/DSG (articulação sistemática)", () => {
       ]) {
         expect(parseCartaIbge(s), s).toBeNull();
       }
+    });
+  });
+
+  describe("separadores — legenda escaneada, OCR e planilha não usam hífen", () => {
+    const canonico = decodeCartaIbge("SG-22-Z-A-III-1");
+
+    it("ponto, espaço, barra, sublinhado e mistura caem na mesma folha", () => {
+      for (const s of [
+        "SG.22.Z.A.III.1",
+        "SG 22 Z A III 1",
+        "SG/22/Z/A/III/1",
+        "SG_22_Z_A_III_1",
+        "SG-22 . Z/A_III 1",
+        "  sg-22-z-a-iii-1  ",
+        "SG--22--Z--A--III--1",
+      ]) {
+        expect(decodeCartaIbge(s), s).toEqual(canonico);
+      }
+    });
+
+    it("a nomenclatura devolvida sai canônica, com hífen", () => {
+      expect(decodeCartaIbge("SG.22.Z.B")?.sheet).toBe("SG-22-Z-B");
+      expect(decodeCartaIbge("G 22 Z B IV 4 SE")?.sheet).toBe("SG-22-Z-B-IV-4-SE");
+    });
+
+    it("afrouxar o separador não abre vaga: o gate é a cadeia de vocabulários", () => {
+      for (const s of [
+        "89.010.000",
+        "111 444 777 35",
+        "47 3231 3000",
+        "2026.08.14",
+        "-26.9194, -49.0661",
+        "12/03/2026",
+        "A.4",
+        "B/12",
+        "G.22",
+        "NF 12", // nota fiscal
+        "NR 18", // norma regulamentadora
+        "SC 108", // rodovia estadual: três dígitos não entram no fuso
+      ]) {
+        expect(parseCartaIbge(s), s).toBeNull();
+      }
+    });
+  });
+
+  /**
+   * O MI é a outra identificação da MESMA folha ("MAFRA SG-22-Z-A-III-1 MI
+   * 2868-1"). A conversão MI → nomenclatura não está publicada — é tabela de
+   * ~3.036 folhas, e a numeração segue o contorno do país (SG-22-Z-A-III=2868,
+   * SG-22-Z-B-V=2882, SG-22-Z-D-V=2909 não fecham com linha de comprimento
+   * fixo). Então aqui só se RECONHECE; inventar coordenada seria resposta
+   * errada com cara de certa.
+   */
+  describe("número MI (Mapa Índice) — reconhece, não converte", () => {
+    it("lê o número e os sufixos, e nunca devolve coordenada", () => {
+      const h = decodeMiSheet("MI 2868-1");
+      expect(h?.mi).toBe(2868);
+      expect(h?.sub50).toBe(1);
+      expect(h?.sub25).toBeUndefined();
+      expect(h?.label).toBe("MI 2868-1");
+      expect(h).not.toHaveProperty("lat");
+      // e o caminho de coordenada segue recusando
+      expect(parseCartaIbge("MI 2868-1")).toBeNull();
+      expect(detectLocation("MI 2868-1")).toBeNull();
+    });
+
+    it("o sufixo é o que fecha a escala (o mesmo dígito/quadrante da nomenclatura)", () => {
+      expect(decodeMiSheet("MI 2868")?.scales).toEqual([100_000]);
+      expect(decodeMiSheet("MI 2882-3")?.scales).toEqual([50_000]);
+      expect(decodeMiSheet("MI-2214-2-NO")?.scales).toEqual([25_000]);
+      expect(decodeMiSheet("MI-2214-2-NO")?.sub25).toBe("NO");
+    });
+
+    it("número puro pequeno é ambíguo: o acervo também numera o 1:250.000", () => {
+      // "SERRA DOS CARAJÁS SB-22-Z-A MI 198" é 1:250.000; a série 1:100.000
+      // também tem uma folha 198. Sem sufixo, não dá para escolher.
+      expect(decodeMiSheet("MI 198")?.scales).toEqual([250_000, 100_000]);
+      expect(decodeMiSheet("MI 2868")?.scales).toEqual([100_000]);
+    });
+
+    it("aceita a pontuação frouxa do OCR, mas exige o 'MI' como assinatura", () => {
+      const alvo = decodeMiSheet("MI 2868-1");
+      for (const s of ["MI-2868-1", "MI2868-1", "mi. 2868 . 1", "  MI/2868/1  "]) {
+        expect(decodeMiSheet(s), s).toEqual(alvo);
+      }
+      // sem o "MI", "2868-1" é ano-lote-placar-qualquer-coisa
+      expect(decodeMiSheet("2868-1")).toBeNull();
+      expect(decodeMiSheet("2868")).toBeNull();
+    });
+
+    it("recusa número fora da faixa das folhas e sufixo inválido", () => {
+      expect(decodeMiSheet("MI 0")).toBeNull();
+      expect(decodeMiSheet("MI 9999")).toBeNull();
+      expect(decodeMiSheet("MI 3500")).toBeNull();
+      expect(decodeMiSheet("MI 2868-5")).toBeNull(); // 1:50.000 só 1–4
+      expect(decodeMiSheet("MI 2868-1-NW")).toBeNull(); // em pt-BR é NO
+      expect(decodeMiSheet("MIR 198")).toBeNull(); // outra sigla, outro índice
+    });
+
+    it("a nomenclatura e o MI não se confundem no mesmo passe", () => {
+      expect(decodeMiSheet("SG-22-Z-A-III-1")).toBeNull();
+      expect(decodeCartaIbge("MI 2868-1")).toBeNull();
     });
   });
 
