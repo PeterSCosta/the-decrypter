@@ -21,7 +21,11 @@
 | **1.3** Zero-width estendido (7 → 406 pontos de código) | **feito** (`4d37994`) |
 | **3.3** Carta ao milionésimo, separadores, número MI | **feito** (`4d37994`) |
 | Dedup do motor ignorando caixa | **feito** (`dee8e09`) — achado no caminho |
-| **1.4** Verdade das telas (roadmap, `sources.ts`, Cola) | aberto |
+| **1.4** Verdade das telas (roadmap, `sources.ts`, Cola) | **feito** (`641720c`) — a Cola passou de 10 para 26 formatos, derivados da fonte |
+| **Onda 4** criptanálise: IC, Kasiski, Vigenère sem chave, substituição | **feito** (`2eb4e5c`) |
+| **3.1** endereço dos lotes · **3.2** eixos | **feito** (`916f4a8` + `184def4`) |
+| Impressão digital do seed (dataset regenerado nunca chegava em prod) | **feito** (`184def4` + `0ea3dd9`) |
+| **Rota na URL** + atalho por cifra (`/cifra/base64`) | **feito** (`631d8b6` + `603cf24`) |
 | **1.5** Exemplo clicável | **feito dentro do guia novo** |
 | **3.1** Endereço dos lotes · **3.2** Eixos | em construção |
 | Onda 2 (senha, backup, `sync-data`) | **fora por decisão do dono** |
@@ -232,8 +236,25 @@ teste.
 
 ## Ordem, em uma linha
 
-**1.1 → 1.4 → 1.5 → 1.2/1.3 → 2.3 → 2.1/2.2 → 3.1 → 3.3 → 4 (leva 1) → 5.**
+~~1.1 → 1.4 → 1.5 → 1.2/1.3 → 2.3 → 2.1/2.2 → 3.1 → 3.3 → 4 (leva 1) → 5.~~
+
+**Executado em 18–19/08, menos a onda 2 (fora por decisão do dono).** O que
+resta está listado em "Ainda em aberto", logo abaixo.
 
 O critério: primeiro o que faz o produto **responder errado**, depois o que faz ele **mentir sobre
 si mesmo**, depois o que **não se recupera** (senha e backup), e só então o que acrescenta
 capacidade. Somar decoder a uma bancada que erra com nota alta é construir sobre chão que cede.
+
+
+---
+
+## Ainda em aberto — conferido em 19/08, fim do dia
+
+| item | estado | quem decide |
+|---|---|---|
+| **Onda 5 — nenhum teste de ponta a ponta** | aberto. Zero `*.spec.ts`, zero `playwright.config`, num produto que é **só navegador**. Testes de componente: dois (`matrix-panel`, `use-rota`). | eu, quando mandar |
+| **`pnpm build:data` quebra numa clonagem limpa** | aberto e CONFERIDO agora: `build:ceps` morre em `data-sources/ceps-sc.csv`, que é gitignored e ausente. Como ele fica no MEIO da cadeia, nada depois dele roda. | **o dono**: tirar `build:ceps` da cadeia, ou repor o CSV |
+| **Onda 2 — senha do Postgres, backup, PAT sem rotação** | **fora por decisão do dono**, registrado. O Postgres de produção segue em `trust` com hash de senha na tabela, e não há backup automatizado. Não é esquecimento: é escolha, e fica escrita. | o dono |
+| **F18 — compartilhar a ENTRADA por URL** | fora por decisão do dono ("não precisamos compartilhar resultados"). A navegação e o atalho de cifra saíram; o conteúdo da prova não vai para a barra de endereço. | o dono |
+| **F3 — 41 resoluções de 2024/2025 fora do índice do acervo** | aberto. É a única fase que produz EVIDÊNCIA nova, e é onde deve estar o gabarito das madrugadas que provariam o resto. | eu |
+| **F7 homóglifos · F8 marco quilométrico · F11 língua do P · F14 CNEFE · F16 NAC/S2 · F17 Morbit/Pollux/ADFGVX** | abertos, por ordem de retorno. | eu |
