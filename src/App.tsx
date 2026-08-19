@@ -13,6 +13,8 @@ import { PositionsPanel } from "@/features/positions/components/positions-panel"
 import { ReferencePanel } from "@/features/reference/components/reference-panel";
 import { TextExtractPanel } from "@/features/text-extract/components/text-extract-panel";
 import { cn } from "@/lib/cn";
+import type { RotaAba } from "@/lib/rota";
+import { useRota } from "@/lib/use-rota";
 import {
   BookOpen,
   Compass,
@@ -70,21 +72,16 @@ function PainelCarregando() {
   );
 }
 
-type TabId =
-  | "decoder"
-  | "arquivo"
-  | "text"
-  | "positions"
-  | "matrix"
-  | "diff"
-  | "anagram"
-  | "fonts"
-  | "reference"
-  | "geo"
-  | "triangulate"
-  | "postes"
-  | "library"
-  | "fleet";
+/**
+ * A lista de abas é a MESMA coisa que a lista de rotas — de propósito.
+ *
+ * Se fossem dois tipos separados, acrescentar uma aba e esquecer o apelido de
+ * URL compilaria, e o link daquela tela levaria para o Decodificador em
+ * silêncio. Sendo o mesmo tipo, o `Record<RotaAba, string>` de `lib/rota.ts`
+ * transforma o esquecimento em ERRO DE COMPILAÇÃO — que é onde este tipo de
+ * defeito custa menos.
+ */
+type TabId = RotaAba;
 
 const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { id: "decoder", label: "Decodificador", icon: Wand2 },
@@ -112,11 +109,27 @@ const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string
 // O painel de admin entra aqui, e não como aba: a lista de abas é visível para
 // todo mundo, e anunciar "Usuários" a quem não é admin só gera clique em porta
 // trancada. Pelo botão da topbar, ele nem existe para quem não pode entrar.
-type View = "app" | "help" | "roadmap" | "admin";
+// O tipo da rota (aba e painel) mora em `lib/rota.ts`, junto dos apelidos
+// públicos: quem muda um tem de mudar o outro, e um teste prende os dois.
 
 export function App() {
   const { usuario, carregando, sair } = useAuth();
-  const [tab, setTab] = useState<TabId>("decoder");
+  /**
+   * Aba e painel moram na URL, não em `useState`.
+   *
+   * O hook precisa vir ANTES dos `return` de carregando/login: hook não pode
+   * ficar atrás de condição, e há uma razão de produto junto — quem recebe
+   * `/usuarios` sem estar logado tem de cair no login e, depois de entrar,
+   * chegar onde o link mandava. Se a rota só nascesse depois do login, o
+   * endereço compartilhado se perderia exatamente na hora que mais importa.
+   */
+  const {
+    aba: tab,
+    painel: view,
+    irParaAba: setTab,
+    irParaPainel,
+    alternarPainel,
+  } = useRota(carregando ? null : usuario?.papel === "admin");
   /**
    * Menu recolhido vira coluna de ÍCONES, não some.
    *
@@ -125,17 +138,22 @@ export function App() {
    * no `title`, a navegação continua inteira em 3,5 rem.
    */
   const [menuAberto, setMenuAberto] = useState(true);
-  const [view, setView] = useState<View>("app");
-  const toggle = (v: Exclude<View, "app">) => setView((cur) => (cur === v ? "app" : v));
 
   // A grade pintada quase nunca é a resposta: ela produz uma string (os dígitos
   // de uma fonte 3×5, as células verdadeiras em ordem) que ainda precisa passar
   // por outra camada. Este é o mesmo encadeamento do botão "usar como entrada".
   const [semente, setSemente] = useState("");
-  const mandarParaDecodificador = useCallback((texto: string) => {
-    setSemente(texto);
-    setTab("decoder");
-  }, []);
+  const mandarParaDecodificador = useCallback(
+    (texto: string) => {
+      setSemente(texto);
+      setTab("decoder");
+    },
+    // `setTab` agora é o `irParaAba` da rota, e não o setter estável de um
+    // `useState`: ele muda quando a rota muda, e omiti-lo aqui congelaria a
+    // navegação numa versão velha. É a mesma pegadinha que a casa já registrou
+    // com `onSuccess`/`onError` em dependências de hook.
+    [setTab],
+  );
 
   // Enquanto o token guardado não é validado contra a API, não dá para escolher
   // entre a bancada e o login sem piscar uma das duas na cara de quem recarregou.
@@ -145,26 +163,26 @@ export function App() {
   return (
     <div className="min-h-screen bg-[var(--surface-page)]">
       <Topbar
-        onHelp={() => toggle("help")}
-        onRoadmap={() => toggle("roadmap")}
-        onAdmin={usuario.papel === "admin" ? () => toggle("admin") : undefined}
+        onHelp={() => alternarPainel("help")}
+        onRoadmap={() => alternarPainel("roadmap")}
+        onAdmin={usuario.papel === "admin" ? () => alternarPainel("admin") : undefined}
         onSair={sair}
       />
       {view === "help" ? (
         <HelpPage
-          onClose={() => setView("app")}
+          onClose={() => irParaPainel("app")}
           /* "na bancada" fecha a Ajuda e planta o exemplo no Decodificador: o
              guia mostra as três primeiras leituras offline, e o card completo
              — com mapa, consulta e cadeia — só existe lá. */
           aoTestar={(texto) => {
             mandarParaDecodificador(texto);
-            setView("app");
+            irParaPainel("app");
           }}
         />
       ) : view === "roadmap" ? (
-        <RoadmapPage onClose={() => setView("app")} />
+        <RoadmapPage onClose={() => irParaPainel("app")} />
       ) : view === "admin" ? (
-        <AdminPage onClose={() => setView("app")} />
+        <AdminPage onClose={() => irParaPainel("app")} />
       ) : (
         /**
          * Duas navegações, uma por largura — e a razão é aritmética.

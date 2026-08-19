@@ -908,6 +908,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         desc: "Mapa ao vivo dos celulares da equipe (Traccar): posição, status, bateria e quem está mais perto — o mesmo cálculo que aparece no cartão de localização.",
       },
       {
+        name: "Compartilhar a tela pela URL",
+        desc: "Cada aba e cada painel têm endereço próprio, em português: `/geolocalizacao`, `/biblioteca`, `/cola`, `/usuarios`, `/ajuda`. Mandar o link leva a pessoa direto na tela — e o VOLTAR do navegador passou a funcionar dentro da bancada, em vez de sair dela. Recarregar mantém onde você estava. Endereço desconhecido cai no Decodificador, sem tela de erro. Quem não é administrador que abrir `/usuarios` vai para a bancada, e o endereço se corrige sozinho.",
+        example: { in: "…/geolocalizacao", out: "abre a aba de Geolocalização" },
+      },
+      {
         name: "Entrar e aprovar acesso",
         desc: "O login é um campo só: apelido ou e-mail, o que você tiver. Quem se cadastrou antes do apelido continua entrando pelo e-mail de sempre, sem fazer nada; quem se cadastra agora escolhe um apelido (3 a 24 caracteres, sem acento e sem @) e o e-mail é opcional. Quem se cadastra entra como “aguardando aprovação” e só usa depois que um administrador liberar — não há confirmação por e-mail, a porta é a aprovação. Não existe recuperação automática de senha: quem esquece fala com o administrador, que redefine pelo painel de usuários — o mesmo lugar onde se aprova, bloqueia, define apelido e remove contas.",
       },

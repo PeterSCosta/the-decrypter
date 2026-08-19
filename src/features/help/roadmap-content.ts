@@ -59,9 +59,10 @@ export const ROADMAP: RoadGroup[] = [
         note: "Ficaram de fora porque só respondem “é válido”. Boleto, título de eleitor e placa entraram por esconderem um campo legível — vencimento, UF, país. A inscrição estadual é a exceção do grupo (a UF sai de qual das 27 regras fecha) e é a próxima candidata.",
       },
       {
-        title: "Compartilhar por URL",
-        status: "idea",
-        desc: "Link que já abre o decodificador com a entrada preenchida (útil pra mandar pista pra equipe). Vale mais agora que a bancada guarda chave, 2º campo, título e cadeia — tudo isso se perde ao recarregar.",
+        title: "Compartilhar a ENTRADA por URL",
+        status: "todo",
+        desc: "A tela já vai no endereço (/geolocalizacao, /usuarios…). Falta o conteúdo: chave, 2º campo, título e a cadeia se perdem ao recarregar e não viajam no link.",
+        note: "A navegação saiu em 19/08. O que sobrou é o mais delicado: a entrada pode ser longa e pode ser material de prova, então ela não vai para a barra de endereço a cada tecla — precisa de um botão explícito de “copiar link desta análise”.",
       },
       {
         title: "Runas e nyctográfico na Cola",
