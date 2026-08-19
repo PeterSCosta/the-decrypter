@@ -151,7 +151,16 @@ export function App() {
         onSair={sair}
       />
       {view === "help" ? (
-        <HelpPage onClose={() => setView("app")} />
+        <HelpPage
+          onClose={() => setView("app")}
+          /* "na bancada" fecha a Ajuda e planta o exemplo no Decodificador: o
+             guia mostra as três primeiras leituras offline, e o card completo
+             — com mapa, consulta e cadeia — só existe lá. */
+          aoTestar={(texto) => {
+            mandarParaDecodificador(texto);
+            setView("app");
+          }}
+        />
       ) : view === "roadmap" ? (
         <RoadmapPage onClose={() => setView("app")} />
       ) : view === "admin" ? (

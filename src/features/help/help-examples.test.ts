@@ -97,14 +97,26 @@ describe("os exemplos do guia funcionam", () => {
   it("todo exemplo do guia produz ao menos um candidato", () => {
     // Rede de segurança grosseira sobre TODOS os verbetes de cifra: um exemplo
     // que não move o motor é sinal de que a entrada não é digitável.
+    //
+    // ATENÇÃO ao mexer: este teste já ficou CEGO uma vez. Ele lia `e.example`, e
+    // a migração para `e.examples[]` deixou os verbetes de decoder de fora — o
+    // teste seguiu VERDE varrendo só as abas, que nem passam pelo motor. A
+    // asserção de contagem lá embaixo existe por causa disso.
     const mudos: string[] = [];
+    let conferidos = 0;
     for (const sec of HELP_SECTIONS) {
       if (sec.id === "ferramentas" || sec.id === "apis") continue;
       for (const e of sec.entries) {
-        if (e.example && rodar(e.example.in).length === 0)
-          mudos.push(`${e.name} ← "${e.example.in}"`);
+        for (const ex of e.examples ?? []) {
+          conferidos++;
+          if (rodar(ex).length === 0) mudos.push(`${e.name} ← "${ex}"`);
+        }
       }
     }
+    expect(
+      conferidos,
+      "a varredura parou de achar exemplo — o campo mudou de nome?",
+    ).toBeGreaterThan(100);
     expect(mudos, `exemplos que não produzem nada:\n${mudos.join("\n")}`).toEqual([]);
   });
 });
