@@ -132,8 +132,10 @@ const SYSTEM_RULES: Rule[] = [
     test: /plus ?code|open location code/,
     detail: "Plus Code completo, ou só a cauda assumindo Blumenau/Itajaí",
     suggests: [
-      { decoderId: "location", as: "Plus Code" },
-      { decoderId: "local-geocode", as: "cauda local" },
+      // O `location` cobre o Plus Code inteiro E a cauda local: o decoder
+      // `local-geocode` foi absorvido por ele, porque os dois liam as MESMAS
+      // funções e passaram a emitir o mesmo ponto duas vezes.
+      { decoderId: "location", as: "Plus Code (inteiro ou cauda)" },
     ],
   },
   {
@@ -141,10 +143,7 @@ const SYSTEM_RULES: Rule[] = [
     reading: "geohash",
     test: /\bgeohash\b/,
     detail: "geohash inteiro, ou só a cauda assumindo a cidade-âncora",
-    suggests: [
-      { decoderId: "location", as: "Geohash" },
-      { decoderId: "local-geocode", as: "cauda local" },
-    ],
+    suggests: [{ decoderId: "location", as: "Geohash (inteiro ou cauda)" }],
   },
   {
     id: "geohex",

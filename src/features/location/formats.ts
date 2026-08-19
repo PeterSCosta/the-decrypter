@@ -43,7 +43,28 @@ export interface DetectedLocation extends GeoPoint {
 }
 
 /** Os três degraus de confiança da cascata. Ver `DetectedLocation`. */
-export const CONFIANCA = { literal: 0.95, forma: 0.9, atalho: 0.75, frouxa: 0.5 } as const;
+export const CONFIANCA = {
+  literal: 0.95,
+  forma: 0.9,
+  atalho: 0.75,
+  /**
+   * Atalho de PORTÃO FRACO — hoje só a cauda de Geohash.
+   *
+   * Os outros atalhos exigem assinatura: o Plus Code tem o `+`, o MGRS e o
+   * GEOREF exigem maiúscula e forma própria, o GeoHex é numérico com prefixo.
+   * A cauda de Geohash é qualquer coisa de 4 a 8 caracteres alfanuméricos com
+   * ao menos uma letra — e ela dispara em cima de código de OUTRO sistema:
+   * medido, `MD2005` (um GEOREF legítimo) também sai como cauda de geohash em
+   * −27,01/−48,98. A leitura fica, pela regra da casa, mas não pode empatar com
+   * quem tem assinatura.
+   *
+   * 0,62 e não 0,50 porque o atalho AINDA se auto-valida (só emite dentro da
+   * caixa do Vale) — evidência que o Geohash global não tem. Com os dois em
+   * 0,50 dava empate e `g7rpj` voltava a sair na Islândia.
+   */
+  atalhoFraco: 0.62,
+  frouxa: 0.5,
+} as const;
 
 function valid(lat: number, lng: number): GeoPoint | null {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
@@ -599,22 +620,28 @@ export function detectLocations(raw: string): DetectedLocation[] {
   // Nem todos os atalhos devolvem o código reconstruído: MGRS, GEOREF e GeoHex
   // devolvem só o ponto. Por isso o tipo é o par com `full` OPCIONAL, e o
   // rótulo só cita a cauda quando ela existe.
-  const local: [string, (GeoPoint & Partial<LocalGeoHit>) | null][] = [
-    ["GeoHex", parseGeoHexBlumenau(input)],
-    ["MGRS/USNG", decodeMgrsLocal(input)],
-    ["GEOREF", decodeGeorefLocal(input)],
-    ["Plus Code", decodePlusCodeLocal(input)],
-    ["Geohash", decodeGeohashLocal(input)],
+  const local: [string, (GeoPoint & Partial<LocalGeoHit>) | null, number][] = [
+    ["GeoHex", parseGeoHexBlumenau(input), CONFIANCA.atalho],
+    ["MGRS/USNG", decodeMgrsLocal(input), CONFIANCA.atalho],
+    ["GEOREF", decodeGeorefLocal(input), CONFIANCA.atalho],
+    ["Plus Code", decodePlusCodeLocal(input), CONFIANCA.atalho],
+    // A cauda de geohash tem o portão mais fraco da lista — ver `atalhoFraco`.
+    ["Geohash", decodeGeohashLocal(input), CONFIANCA.atalhoFraco],
   ];
-  for (const [format, pt] of local) {
+  for (const [format, pt, confianca] of local) {
     if (pt) {
+      const cidade = scopeLabel(pt) ?? "Vale do Itajaí";
       saida.push({
         lat: pt.lat,
         lng: pt.lng,
+        // "assumindo" está no rótulo de propósito: é SUPOSIÇÃO de prefixo, não
+        // leitura inequívoca, e quem lê o card precisa saber disso sem abrir a
+        // Ajuda. A palavra vem do decoder `local-geocode`, que dizia isso e foi
+        // absorvido aqui.
         format: pt.full
-          ? `${format} (${scopeLabel(pt) ?? "Vale do Itajaí"} — cauda de ${pt.full})`
-          : `${format} (${scopeLabel(pt) ?? "Vale do Itajaí"})`,
-        confianca: CONFIANCA.atalho,
+          ? `${format} · cauda de ${pt.full}, assumindo ${cidade}`
+          : `${format} · assumindo ${cidade}`,
+        confianca,
       });
     }
   }

@@ -1,5 +1,5 @@
 import { cepByCode, formatCep } from "@/features/cep/types";
-import { detectLocation, detectWhat3Words } from "@/features/location/formats";
+import { detectLocations, detectWhat3Words } from "@/features/location/formats";
 import { detectMapcode } from "@/features/location/mapcode";
 import { defineDecoder } from "../define";
 import type { DecodeCandidate } from "../types";
@@ -51,8 +51,20 @@ export const decoders = defineDecoder({
   decode(input, ctx) {
     const out: DecodeCandidate[] = [];
 
-    const loc = detectLocation(input);
-    if (loc) {
+    /**
+     * TODAS as leituras, não só a melhor.
+     *
+     * Usava `detectLocation` (singular), e a leitura de baixo só chegava à tela
+     * porque o decoder `local-geocode` a emitia por fora. Quando ele foi
+     * absorvido — os dois liam as mesmas funções e duplicavam o card —, a
+     * segunda leitura sumiu junto: `MD2005` deixou de mostrar a cauda de
+     * geohash, e `g7rpj` deixou de mostrar a Islândia.
+     *
+     * A regra da casa é que **localização longe continua válida e não se
+     * apaga**. Quem decide qual serve é quem está jogando, olhando o mapa; o
+     * que a bancada deve é ordenar por evidência e mostrar as duas.
+     */
+    for (const loc of detectLocations(input)) {
       out.push(
         mapCandidate(
           {

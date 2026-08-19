@@ -43,7 +43,11 @@ describe("a nota segue a camada que resolveu", () => {
   it("o atalho local ganha do Geohash global — é o que a Ajuda promete", () => {
     // `g7rpj` saía na Islândia com 0,90, acima de Blumenau.
     const { results } = runDecoders("g7rpj", { key: "", streets: null } as DecodeContext);
-    const blumenau = results.find((r) => String(r.output).includes("Blumenau"));
+    // A cidade vive no NOME do card, não na saída: o `location` põe a
+    // coordenada em `output` e o formato ("Geohash · cauda de …, assumindo
+    // Blumenau") no nome. O decoder `local-geocode`, que punha na saída, foi
+    // absorvido — ver o comentário do array `local` em `formats.ts`.
+    const blumenau = results.find((r) => `${r.decoderName} ${r.output}`.includes("Blumenau"));
     expect(blumenau, "a leitura local sumiu").toBeTruthy();
     const islandia = results.find(
       (r) => r.decoderName === "Geohash" && !String(r.output).includes("Blumenau"),

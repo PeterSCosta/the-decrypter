@@ -70,4 +70,38 @@ describe("todas as leituras, a mais confiável em cima", () => {
     expect(r).toHaveLength(1);
     expect(r[0].format).toContain("Graus decimais");
   });
+
+  it("o mesmo ponto não aparece duas vezes no fan-out", () => {
+    // ── A REGRESSÃO QUE ISTO PRENDE ─────────────────────────────────────────
+    // Ao pôr os atalhos locais na cascata (para a ABA enxergá-los), eles
+    // passaram a ter DOIS emissores: o decoder `location`, que lê a cascata, e
+    // o `local-geocode`, que lia as mesmas funções direto. Resultado na tela,
+    // relatado pelo dono com print: `38HQ+J3` saindo duas vezes, mesma
+    // coordenada, cards #1 e #2.
+    //
+    // O `local-geocode` foi absorvido. Este teste garante que ninguém
+    // ressuscite o segundo emissor sem perceber — e o motor NÃO pegaria, porque
+    // ele deduplica por texto de saída, e os dois cards tinham textos
+    // diferentes para o mesmo lugar.
+    for (const entrada of ["38HQ+J3", "g7rpj", "3WJM+6H", "MD2005", "GR3221221631"]) {
+      const vistos = new Map<string, string[]>();
+      for (const d of detectLocations(entrada)) {
+        const chave = `${d.lat.toFixed(5)}|${d.lng.toFixed(5)}`;
+        vistos.set(chave, [...(vistos.get(chave) ?? []), d.format]);
+      }
+      for (const [ponto, formatos] of vistos) {
+        expect(
+          formatos,
+          `"${entrada}" repete o ponto ${ponto}: ${formatos.join(" / ")}`,
+        ).toHaveLength(1);
+      }
+    }
+  });
+
+  it("entrada que não é coordenada não ganha card de lugar nenhum", () => {
+    // O preço de mostrar TODAS as leituras seria pagar em ruído. Medido: não é.
+    for (const inocente of ["89010200", "bom dia", "3722", "SGVsbG8="]) {
+      expect(detectLocations(inocente), `"${inocente}" virou lugar`).toEqual([]);
+    }
+  });
 });

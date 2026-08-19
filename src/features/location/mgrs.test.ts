@@ -103,7 +103,7 @@ describe("MGRS / USNG", () => {
       expect(blu && inBBox(blu, BLUMENAU.bbox)).toBe(true);
       const ita = decodeMgrsLocal("GR3221221631");
       expect(ita && inBBox(ita, ITAJAI.bbox)).toBe(true);
-      expect(detectLocation("FR9203021024")?.format).toBe("MGRS/USNG (Blumenau)");
+      expect(detectLocation("FR9203021024")?.format).toBe("MGRS/USNG · assumindo Blumenau");
     });
 
     it("cauda que não cai no Vale é recusada (a caixa é o gate)", () => {

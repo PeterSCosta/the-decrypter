@@ -25,9 +25,13 @@ describe("dicas do título", () => {
     expect(targets("Mapcode")).toContain("location");
   });
 
-  it("reconhece Plus Code e Geohash, com a cauda local junto", () => {
-    expect(targets("Plus Code")).toEqual(expect.arrayContaining(["location", "local-geocode"]));
-    expect(targets("Geohash")).toEqual(expect.arrayContaining(["location", "local-geocode"]));
+  it("reconhece Plus Code e Geohash — o `location` cobre inteiro e cauda", () => {
+    // Apontavam também para `local-geocode`, que foi ABSORVIDO: os dois liam as
+    // mesmas funções de cauda e emitiam o mesmo ponto duas vezes na tela.
+    // O chip que aponta para dois donos do mesmo cálculo é chip que promete
+    // dois caminhos e entrega um.
+    expect(targets("Plus Code")).toEqual(["location"]);
+    expect(targets("Geohash")).toEqual(["location"]);
   });
 
   it("citação de cifra clássica é citação, não palpite — e não arrasta as vizinhas", () => {

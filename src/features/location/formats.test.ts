@@ -64,7 +64,7 @@ describe("GeoHex", () => {
 
   it("detectLocation identifica o formato GeoHex", () => {
     expect(detectLocation("Nb11458750330")?.format).toBe("GeoHex");
-    expect(detectLocation("11458750330")?.format).toBe("GeoHex (Blumenau)");
+    expect(detectLocation("11458750330")?.format).toBe("GeoHex · assumindo Blumenau");
   });
 });
 

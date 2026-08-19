@@ -108,6 +108,6 @@ describe("GEOREF", () => {
 
   it("detectLocation nomeia o formato", () => {
     expect(detectLocation("JELD5604")?.format).toBe("GEOREF");
-    expect(detectLocation("LD5604")?.format).toBe("GEOREF (Blumenau)");
+    expect(detectLocation("LD5604")?.format).toBe("GEOREF · assumindo Blumenau");
   });
 });
