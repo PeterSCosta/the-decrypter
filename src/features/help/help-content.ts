@@ -164,6 +164,20 @@ export const HELP_SECTIONS: HelpSection[] = [
         esperado: "texto (a,b)",
       },
       {
+        name: "Vigenère SEM chave (criptanálise)",
+        desc: "O Vigenère desta bancada sempre exigiu a chave — sem ela devolvia NADA, ou seja, só servia para quem já sabia a resposta. Este descobre a chave sozinho: acha o comprimento pelo índice de coincidência por coluna e pelo teste de Kasiski, e recupera cada letra por qui-quadrado da coluna contra o perfil do português. **A CHAVE sai no rótulo** — numa gincana ela costuma ser a resposta, não o texto. Medido em 576 tentativas: **100% de acerto da chave inteira a partir de 150 letras**, para chaves de 3 a 8, e ZERO chave errada acima do corte. Abaixo de 150 ele não emite — em 100 letras acerta 99,5% e mesmo assim entrega 4 chaves inventadas com nota de resposta, e chave quase certa não serve para nada. Cala em texto claro, em César, em Atbash e em texto invertido — e cala quando você preenche o campo de chave, porque aí quem responde é o Vigenère comum.",
+        examples: [
+          "p frltdggt htggt iioct ihhn xwrcawmso rffpwkh hp dbgxt rr yigfb jyt tvve esems so rlxpqnh gtbgkea rr upjargej s ihgt dexgxgn vschnk ujoamsh rrzvpif xbxggxq pzv trisf wi hstnmg dnke d dehbxab ischb ws gcgxmgc",
+        ],
+      },
+      {
+        name: "Substituição monoalfabética (solver)",
+        desc: "A cifra que o leque NUNCA quebraria por força bruta: são 26! alfabetos. Sobe a encosta com reinício semeado (determinístico — o mesmo texto dá sempre a mesma resposta), pontuando por quadrigrama do português. Medido em 40 textos por comprimento: 90% de decifra exata com 200 letras, 95% com 300, 100% com 400. Abaixo de 200 não emite — em 120 letras eram 12 leituras erradas em 40, com nota de resposta. Os erros que sobram são quase-acertos de 95 a 99,6% das letras (sai “bincana” por “gincana”), legíveis e corrigíveis a olho, e por isso o piso é 200 e não 400. **Ele devolve algo pronunciável SEMPRE, por construção** — é o candidato natural a mentir com confiança —, então só cruza o corte de “provável” com palavra real confirmada; sem isso fica na gaveta, e o card explica por quê. A tabela de quadrigramas (56 KB) só baixa quando um texto passa nos portões.",
+        examples: [
+          "q ktlhglzq rtlzq tzqhq tlzq tlegfrorq tdwqobg rq hgfzt rt ytkkg jxt yoeq htkzg rq tlzqeqg etfzkqs rt wsxdtfqx t cget hkteolq egfzqk jxqfzgl rtukqxl tbolztd qso qfztl rt ltuxok hqkq g hkgbodg hgfzg rg kgztokg",
+        ],
+      },
+      {
         name: "Vigenère / autokey / Beaufort / Gronsfeld",
         desc: "Cifras polialfabéticas com chave.",
         examples: ["Rijvs (chave KEY)"],

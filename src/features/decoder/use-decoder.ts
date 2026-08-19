@@ -27,6 +27,7 @@ import { decoders } from "./engine/registry";
 import { partition, runDecoders } from "./engine/run";
 import { setWordSet } from "./engine/score";
 import { type Hint, sniff } from "./engine/sniff";
+import { aoCarregarQuadgramas } from "./engine/substituicao";
 import { titleHints } from "./engine/title-hints";
 import { loadWordLookup } from "./engine/words";
 import { type TrailStep, popStep, pushStep, truncateTo } from "./trail";
@@ -67,6 +68,13 @@ export function useDecoder(entradaInicial = "") {
   // resolveria na tecla seguinte.
   const [h3Pronto, setH3Pronto] = useState(0);
   useEffect(() => aoCarregarH3(() => setH3Pronto((v) => v + 1)), []);
+  /**
+   * A tabela de quadrigramas do solver de substituição entra por `import()`
+   * quando o texto passa nos portões. Sem refazer a rodada aqui, a primeira
+   * entrada longa que chegasse ficaria sem card até a próxima tecla — o mesmo
+   * problema que o H3 já teve, e o mesmo conserto.
+   */
+  useEffect(() => aoCarregarQuadgramas(() => setH3Pronto((v) => v + 1)), []);
 
   // Vocabulário do realce de palavra real: carrega ocioso e alimenta o
   // singleton do score. Até chegar, `setWordSet` nunca é chamado e o ranking é

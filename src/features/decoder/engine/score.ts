@@ -343,7 +343,16 @@ function gluedCoverage(token: string, words: WordLookup): number {
 }
 
 /** Letras cobertas por palavra real, e o total de letras. */
-function coverage(text: string): { covered: number; total: number; hits: string[] } {
+/**
+ * Quanto do texto o dicionário reconhece — incluindo o caso COLADO.
+ *
+ * Exportada porque `realWords` sozinho não serve de portão para cifra sem
+ * espaços: ele só reporta token INTEIRO que está no dicionário, e texto colado
+ * é um token gigante. Medido: o `vigenere-crack` achava a chave CERTA de uma
+ * cifra colada de 267 letras e deixava o card em 0,34, na gaveta — a chave é a
+ * resposta da prova, e ela estava certa.
+ */
+export function coverage(text: string): { covered: number; total: number; hits: string[] } {
   const hits: string[] = [];
   let covered = 0;
   let total = 0;
