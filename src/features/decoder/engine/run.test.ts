@@ -1,7 +1,7 @@
 import type { StreetRow, StreetsData } from "@/features/street-guide/types";
 import { describe, expect, it } from "vitest";
 import { runDecoders } from "./run";
-import type { DecodeContext } from "./types";
+import type { DecodeContext, Decoder } from "./types";
 
 const streets: StreetsData = {
   source: "test",
@@ -110,5 +110,30 @@ describe("runDecoders", () => {
     expect(results.some((r) => r.category === "lookup" && r.decoderId !== "digit-count")).toBe(
       false,
     );
+  });
+});
+
+describe("dedup não gasta o topo com a mesma resposta", () => {
+  it("colapsa saídas que só diferem em caixa ou acento", () => {
+    // O caso medido na tela: `34 31 38 38 41` punha a MESMA leitura em #1, #2 e
+    // #3 — cíclico em minúscula, Aritmética escondida em maiúscula, e o painel.
+    // Três cards, todos 0,75, uma resposta só. O topo é o espaço mais escasso
+    // deste produto; três cópias parecem confirmação e não são.
+    const falso = (id: string, output: string): Decoder => ({
+      id,
+      name: id,
+      category: "classical",
+      decode: () => [
+        { decoderId: id, decoderName: id, category: "classical", output, forcedScore: 0.75 },
+      ],
+    });
+    const r = runDecoders("x", { key: "", streets: null } as unknown as DecodeContext, [
+      falso("a", "hello"),
+      falso("b", "HELLO"),
+      falso("c", "héllo"),
+      falso("d", "outra coisa"),
+    ]);
+    expect(r.results).toHaveLength(2);
+    expect(r.results.map((c) => c.output)).toContain("outra coisa");
   });
 });
