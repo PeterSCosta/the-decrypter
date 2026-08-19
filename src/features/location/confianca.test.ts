@@ -2,7 +2,7 @@ import { runDecoders } from "@/features/decoder/engine/run";
 import type { DecodeContext } from "@/features/decoder/engine/types";
 import type { EstacoesData } from "@/features/estacao/types";
 import { describe, expect, it } from "vitest";
-import { CONFIANCA, detectLocation } from "./formats";
+import { CONFIANCA, detectLocation, detectLocations } from "./formats";
 
 /**
  * A cascata do `detectLocation` sempre ordenou por confiança — os frouxos por
@@ -22,8 +22,12 @@ describe("a nota segue a camada que resolveu", () => {
   it("assinatura literal vale mais que forma própria, que vale mais que frouxo", () => {
     expect(detectLocation("geo:-26.9194,-49.0661")!.confianca).toBe(CONFIANCA.literal);
     expect(detectLocation("-26.9194, -49.0661")!.confianca).toBe(CONFIANCA.forma);
-    // `1400m` só casa como Geohash — a camada frouxa.
-    expect(detectLocation("1400m")!.confianca).toBe(CONFIANCA.frouxa);
+    // `1400m` só casa como Geohash, e em duas leituras: a cauda local
+    // (0,55 — prior de gincana do Vale, sem evidência na string) e a global
+    // (0,50 — a camada frouxa). A de baixo continua existindo.
+    const leituras = detectLocations("1400m");
+    expect(leituras[0].confianca).toBe(CONFIANCA.atalhoFraco);
+    expect(leituras.at(-1)!.confianca).toBe(CONFIANCA.frouxa);
   });
 
   it("uma estação REAL de Blumenau ganha do Geohash que cai na Antártida", () => {

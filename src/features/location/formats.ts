@@ -58,11 +58,30 @@ export const CONFIANCA = {
    * −27,01/−48,98. A leitura fica, pela regra da casa, mas não pode empatar com
    * quem tem assinatura.
    *
-   * 0,62 e não 0,50 porque o atalho AINDA se auto-valida (só emite dentro da
-   * caixa do Vale) — evidência que o Geohash global não tem. Com os dois em
-   * 0,50 dava empate e `g7rpj` voltava a sair na Islândia.
+   * ── E A AUTO-VALIDAÇÃO DELE É VAZIA — MEDIDO ─────────────────────────────
+   * A defesa dos atalhos é "só emite se o ponto cair na caixa da cidade". Para
+   * a cauda de geohash isso não filtra nada, e a conta mostra por quê:
+   *
+   *   célula do prefixo `6gjn`   34,9 × 19,6 km
+   *   caixa de Blumenau          26,1 × 52,3 km   ← MAIOR que a célula
+   *
+   * Todo sufixo de `6gjn` está dentro de `6gjn` por construção, e `6gjn` cabe
+   * na caixa. A checagem é circular. Medido: **82% de qualquer string base32
+   * de 4 a 8 caracteres acende a cauda.**
+   *
+   * (O Plus Code é o contrário e por isso funciona: a célula `585G` tem
+   * 99 × 111 km contra os 26 × 52 km da caixa — a caixa é oito vezes menor, e
+   * a checagem rejeita ~87% das caudas.)
+   *
+   * Então 0,55, e não 0,62: acima do Geohash global (0,50), porque numa
+   * gincana do Vale a leitura local É mais provável — mas isso é PRIOR, não
+   * evidência tirada da string. E abaixo de qualquer acerto pré-resolvido numa
+   * base real: medido, a 0,62 esta cauda ganhava da estação geodésica do IBGE
+   * (0,60), que só emite quando o código EXISTE entre as 491 do Vale. Palpite
+   * passando na frente de acerto confirmado é a inversão que esta bancada mais
+   * combate.
    */
-  atalhoFraco: 0.62,
+  atalhoFraco: 0.55,
   frouxa: 0.5,
 } as const;
 

@@ -94,7 +94,6 @@ export const SOURCES_INTRO =
   "Boa parte das provas não é cifra: é “que base é essa?”. Abaixo, as bases que a GIA e o Challenge já usaram — o que cada uma indexa, para que serve na cadeia e onde consultar.";
 
 export const SOURCES: DataSourceRef[] = [
-  // ── Abertas: já respondem dentro da bancada ────────────────────────────────
   {
     id: "ruas-blumenau",
     name: "Guia de ruas de Blumenau",
@@ -353,3 +352,63 @@ export function sourcesByStatus(list: DataSourceRef[] = SOURCES): SourceGroup[] 
   }
   return groups;
 }
+
+/**
+ * ── AS BANCADAS DE FORA ─────────────────────────────────────────────────────
+ * Lista PRÓPRIA, e não mais uma entrada em `SOURCES` — o teste daquela lista
+ * cobra que toda fonte "aberta" seja uma base que a bancada CONSULTA, e estas
+ * três não são: são ferramentas que uma pessoa abre à mão, noutra aba.
+ * Misturar as duas coisas quebraria a invariante que aquele teste protege, e
+ * ela é útil.
+ *
+ * Percorridas aba a aba em 19/08/2026, contando o que cada uma tem de verdade.
+ * Não estão aqui como concorrência: estão porque, numa prova, há momentos em
+ * que abrir uma delas é mais rápido do que esperar esta bancada crescer — e
+ * saber QUANDO é a informação que vale.
+ *
+ * A régua para o que não trazemos delas continua a mesma: cifra de catálogo,
+ * sem uso no acervo, não vira decoder aqui. O que elas têm de melhor é
+ * justamente o catálogo — e catálogo se consulta, não se copia.
+ */
+export interface BancadaExterna {
+  id: string;
+  name: string;
+  /** O tamanho real, contado — não "muitas ferramentas". */
+  size: string;
+  /** O gatilho concreto: em que situação de prova se abre esta, e não a nossa. */
+  use: string;
+  url: string;
+  urlLabel: string;
+  /** O que ela NÃO faz, ou onde ela engana. Obrigatório. */
+  note: string;
+}
+
+export const BANCADAS_EXTERNAS: BancadaExterna[] = [
+  {
+    id: "cyberchef",
+    name: "CyberChef (GCHQ)",
+    size: "549 operações em 17 categorias, encadeáveis numa “receita”.",
+    use: "Quando a prova vira COMPUTAÇÃO: cripto moderna (AES, DES, RSA, RC4), JWT, X.509, protocolo de rede, compressão exótica (LZMA, LZ4, XPRESS) e as máquinas de rotor — Enigma, Typex, Lorenz, SIGABA, mais o BOMBE, que quebra Enigma sem a chave. Tem também OCR e YARA.",
+    url: "https://gchq.github.io/CyberChef/",
+    urlLabel: "gchq.github.io/CyberChef",
+    note: "Não tem NADA de dado brasileiro: sem CEP, sem CNPJ, sem rua de Blumenau, sem geocódigo daqui. Se a prova pedir Enigma com a configuração dada — aconteceu no Challenge 2024 —, é aqui que se resolve: não vamos construir máquina de rotor.",
+  },
+  {
+    id: "boxentriq",
+    name: "Boxentriq",
+    size: "134 ferramentas em 10 seções, com foco em puzzle e escape room.",
+    use: "Quando a prova é CIFRA CLÁSSICA que esta bancada ainda não tem: ADFGX/ADFGVX, Four-Square, Trifid, Nihilist, Morbit, Pollux, Scytale, AMSCO, Grandpré, Route e Double Transposition, Book Cipher.",
+    url: "https://www.boxentriq.com/code-breaking",
+    urlLabel: "boxentriq.com/code-breaking",
+    note: "O mais útil ali não são as cifras: é a seção de ALFABETOS. Ela tem as bandeiras marítimas do Código Internacional de Sinais e as runas Elder Futhark — as duas mecânicas que o Challenge 2024 usou e para as quais a Cola ainda não tem legenda. Também Semáforo, Hexahue, Dancing Men e Pigpen.",
+  },
+  {
+    id: "dcode",
+    name: "dCode.fr",
+    size: "~1.000 ferramentas, o catálogo mais largo que existe.",
+    use: "Quando você não sabe NEM O NOME do que está olhando. É o único que cobre alfabeto de jogo, fonte simbólica e numeral histórico em volume — cistercienses, maia, babilônico, mais dezenas de alfabetos de ficção.",
+    url: "https://www.dcode.fr/tools-list",
+    urlLabel: "dcode.fr/tools-list",
+    note: "Largura tem preço: boa parte é solver de sudoku, gerador de anagrama e alfabeto de videogame. O identificador de cifra dele CHUTA um nome; o fan-out daqui resolve e ordena por evidência. E em geolocalização brasileira ele tem sete formatos contra os 26 desta bancada.",
+  },
+];

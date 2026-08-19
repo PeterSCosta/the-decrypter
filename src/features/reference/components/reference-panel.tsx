@@ -5,7 +5,7 @@ import { COLORS } from "../colors";
 import { COMPOUNDS } from "../compounds";
 import { DOC_FORMATS, lengthLabel } from "../digit-table";
 import { LIBRAS, LIBRAS_NOTES, PIGPEN_GROUPS, PIGPEN_NOTES } from "../glyphs";
-import { SOURCES_INTRO, sourcesByStatus } from "../sources";
+import { BANCADAS_EXTERNAS, SOURCES_INTRO, sourcesByStatus } from "../sources";
 
 // Documentos/códigos agrupados por quantidade de dígitos (ordem do gabarito).
 const DIGIT_GROUPS: [label: string, names: string[]][] = (() => {
@@ -234,6 +234,37 @@ export function ReferencePanel() {
 
       {/* Quem está numa gincana às 23h abre a Cola, não o Roadmap — então o mapa
           das bases (inclusive o que está bloqueado e por quê) mora aqui. */}
+      {/* As bancadas de fora vêm ANTES das bases: quem abre a Cola no meio de
+          uma prova quer saber "onde resolvo isto agora", e às vezes a resposta
+          honesta é outra aba. */}
+      <Section title="Outras bancadas — quando abrir">
+        <p className="mb-2 text-sm text-[var(--text-secondary)]">
+          Percorridas aba a aba em 19/08/2026. Não estão aqui como concorrência: estão porque há
+          momentos em que abrir uma delas é mais rápido que esperar esta crescer — e saber quando é
+          a informação que vale.
+        </p>
+        <div className="flex flex-col gap-2">
+          {BANCADAS_EXTERNAS.map((b) => (
+            <Card key={b.id} className="p-3">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className="font-display text-sm text-[var(--text-primary)]">{b.name}</span>
+                <span className="font-mono text-xs text-[var(--text-muted)]">{b.size}</span>
+                <a
+                  href={b.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="ml-auto shrink-0 text-xs text-[var(--text-secondary)] underline decoration-dotted underline-offset-2 hover:text-[var(--text-primary)]"
+                >
+                  {b.urlLabel}
+                </a>
+              </div>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">{b.use}</p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">{b.note}</p>
+            </Card>
+          ))}
+        </div>
+      </Section>
+
       <Section title="Bases e onde consultar">
         <p className="mb-2 text-sm text-[var(--text-secondary)]">{SOURCES_INTRO}</p>
         <div className="flex flex-col gap-3">

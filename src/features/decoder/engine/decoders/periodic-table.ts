@@ -234,6 +234,57 @@ export const decoders = defineDecoder({
               forcedScore: 0.7,
             }),
           );
+        } else if (!dec && w >= 1 && w <= 300) {
+          /**
+           * ── O MODO "MAIS PRÓXIMO", QUE UMA PROVA REAL EXIGIU ──────────────
+           * A busca acima é por peso que ARREDONDA para o valor. Ela não acha
+           * nada em boa parte da tabela: entre a Paládio (106,42 → 106) e a
+           * Prata (107,87 → 108) não existe elemento que arredonde para 107.
+           *
+           * ITC 2024, p14: somam-se cinco massas (12+15+24+26+30 = 107) e a
+           * prova pede "o elemento que MAIS SE APROXIMA" — Prata. Antes disto,
+           * `107` caía no modo de número atômico e a bancada respondia Bóhrio,
+           * que é outro elemento e outra resposta.
+           *
+           * Nota menor que a do acerto exato (0,55 contra 0,70) porque
+           * "próximo" é sempre verdade para algum elemento: sem acerto redondo,
+           * isto é uma leitura possível, não uma confirmação. E o card diz a
+           * distância, para quem lê julgar — 107 → Prata com 0,87 de diferença
+           * é convincente; um número a 3,0 de distância não é.
+           */
+          /**
+           * DOIS vizinhos, não um — e a razão é a própria prova.
+           *
+           * Com 107, o mais próximo por massa real é o Paládio (106,42 · 0,58)
+           * e o segundo é a Prata (107,87 · 0,87). **A resposta da prova é
+           * Prata**, porque ela somou massas ARREDONDADAS, onde Pd=106 e Ag=108
+           * ficam à mesma distância e o enunciado desempata.
+           *
+           * A bancada não sabe qual tabela a prova usou, e escolher seria
+           * decidir pelo jogador com base num critério que não é o dele.
+           * Mostrar os dois vizinhos custa uma linha e devolve a decisão a quem
+           * tem o enunciado na mão.
+           */
+          const ordenados = E.map((e, n) => ({ n, d: Math.abs(e[2] - w) }))
+            .filter((x) => x.n >= 1 && x.d <= 2)
+            .sort((a, b) => a.d - b.d)
+            .slice(0, 2);
+          if (ordenados.length) {
+            const els = ordenados.map((x) => info(x.n));
+            out.push(
+              cand({
+                label: `massa somada ${w} → vizinho${els.length > 1 ? "s" : ""}`,
+                output: ordenados
+                  .map(
+                    (x, i) =>
+                      `${els[i].name} (${els[i].sym}) — massa ${E[x.n][2]}, ${x.d.toFixed(2)} de diferença`,
+                  )
+                  .join(" · "),
+                els,
+                forcedScore: 0.55,
+              }),
+            );
+          }
         }
       }
     }

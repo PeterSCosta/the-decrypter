@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BLUMENAU, ITAJAI, inBBox } from "./anchors";
-import { detectLocation } from "./formats";
+import { detectLocation, detectLocations } from "./formats";
 import { decodeGars, parseGars } from "./gars";
 
 /**
@@ -77,7 +77,15 @@ describe("GARS", () => {
 
     it("minúscula não é GARS (protege o Geohash)", () => {
       expect(parseGars("262fg49")).toBeNull();
-      expect(detectLocation("262fg49")?.format).toBe("Geohash");
+      // Continua sendo Geohash — mas hoje a cascata devolve TODAS as leituras,
+      // e a cauda local (assumindo Blumenau) vem antes da global, porque numa
+      // gincana do Vale ela é mais provável. As duas são Geohash.
+      expect(detectLocation("262fg49")?.format).toContain("Geohash");
+      const todas = detectLocations("262fg49").map((d) => d.format);
+      expect(
+        todas.some((f) => f === "Geohash"),
+        "a leitura global sumiu",
+      ).toBe(true);
     });
 
     it("não dispara em CEP, CPF, telefone, NCM, data nem prosa", () => {

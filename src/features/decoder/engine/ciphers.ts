@@ -231,6 +231,35 @@ const NATO: Record<string, string> = {
   "x-ray": "X",
   yankee: "Y",
   zulu: "Z",
+
+  /**
+   * ── OS DÍGITOS FALTAVAM, E UMA PROVA REAL PRECISOU DELES ─────────────────
+   * A tabela tinha 29 chaves, todas LETRAS. A p12-E3 do Itajaí Challenge 2024
+   * dita por rádio `TWO FIVE JULIET ROMEO PLUS PAPA EIGHT`, que é o Plus Code
+   * `25JR+P8` — e a bancada devolvia nada: 3 acertos em 7 palavras = 43%,
+   * abaixo do portão de 60%. A cifra mais previsível de uma prova de rádio.
+   *
+   * `niner` entra junto porque é a forma que se usa no ar de verdade: "nine"
+   * confunde com "five" em rádio ruim, e a aviação padronizou o alongamento.
+   * `PLUS` não é do alfabeto fonético — é o separador do Plus Code, ditado como
+   * palavra, e sem ele a leitura do código quebra no meio.
+   */
+  zero: "0",
+  one: "1",
+  two: "2",
+  three: "3",
+  tree: "3",
+  four: "4",
+  fower: "4",
+  five: "5",
+  fife: "5",
+  six: "6",
+  seven: "7",
+  eight: "8",
+  ait: "8",
+  nine: "9",
+  niner: "9",
+  plus: "+",
 };
 const nato = mapDecoder({
   id: "nato",

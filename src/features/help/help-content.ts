@@ -215,7 +215,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Alfabeto fonético (NATO)",
-        desc: "Alfa, Bravo, Charlie… → letras.",
+        desc: "Palavras do alfabeto fonético → letras. **Também lê os dígitos**: ZERO a NINE, com as formas de rádio (NINER, TREE, FOWER, FIFE, AIT), e o PLUS — que não é do alfabeto, é o separador do Plus Code ditado como palavra. Sem os dígitos, `TWO FIVE JULIET ROMEO PLUS PAPA EIGHT` (o Plus Code 25JR+P8 de uma prova de 2024) devolvia nada, porque só 3 das 7 palavras batiam e o portão exige 60%.",
         examples: ["Alfa Bravo Charlie"],
         esperado: "ABC",
       },
@@ -319,6 +319,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         desc: "Cifra anglo (C D E…) ou solfejo (Dó Ré Mi…) → letras e números.",
         examples: ["Dó Ré Mi Fá"],
         esperado: "CDEF",
+      },
+      {
+        name: "Leet ao contrário (letra → dígito)",
+        desc: "O caminho de volta do leet: uma palavra só de LETRAS lida como número, porque as letras se parecem com dígitos (B=8, E=3, O=0, A=4, S=5, I=1, T=7, G=6, Z=2). É como uma prova esconde um CEP dentro de uma palavra — em 2024, as letras em negrito de um texto formavam BBEOEOAO, que é 88303040, o CEP da Rua Almirante Barroso. Não tem assinatura, então o portão é o comprimento (6+) e a exigência de que TODA letra seja convertível: palavra comum tem R, N ou M e cai fora sozinha.",
+        examples: ["BBEOEOAO"],
       },
       {
         name: "Leetspeak",
