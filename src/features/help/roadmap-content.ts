@@ -29,7 +29,7 @@ export const STATUS_LABEL: Record<RoadStatus, string> = {
 };
 
 export const ROADMAP_INTRO =
-  "O que queremos melhorar no The Decrypter e as ideias que já conversamos mas ainda não entraram. “Em estudo” = depende de algo externo (dado oficial, chave de API, backend). Saíram desta lista porque já estão na bancada: as cores como decoder (nome ↔ HEX/RGB/HSL, faixas de resistor, catálogo Faber-Castell), a barra de Cadeia (“usar como entrada”), o campo de título, a faixa de dicas, o selo de “palavra real”, o detector de placa de carro (antiga ↔ Mercosul, com a UF pela faixa de letras), o número por extenso, a CID-10 inteira (14.233 códigos, nos dois sentidos), a aba de Geolocalização e o reconhecimento de vídeo do YouTube pelo ID.";
+  "O que queremos melhorar no The Decrypter e as ideias que já conversamos mas ainda não entraram. “Em estudo” = depende de algo externo (dado oficial, chave de API, backend). Saíram desta lista porque já estão na bancada: as cores como decoder (nome ↔ HEX/RGB/HSL, faixas de resistor, catálogo Faber-Castell), a barra de Cadeia (“usar como entrada”), o campo de título, a faixa de dicas, o selo de “palavra real”, o detector de placa de carro (antiga ↔ Mercosul, com a UF pela faixa de letras), o número por extenso, a CID-10 inteira (14.233 códigos, nos dois sentidos), a aba de Geolocalização e o reconhecimento de vídeo do YouTube pelo ID. Em 18–19/08 saíram também: as bases grandes por consulta (CNAE, FIPE e votação do TSE), o endereço de porta dos lotes de Blumenau (57.273 lotes que o cadastro não trazia) com o lote de esquina mostrando os dois, a quadra pelas ruas que a cercam, sete geocódigos novos (Geo URI, ISO 6709, link do OSM, Placekey, C-squares, estação geodésica do IBGE e CAR), o A1Z26 cíclico, os caracteres invisíveis em quatro famílias e a carta topográfica ao milionésimo com o número MI.";
 
 export const ROADMAP: RoadGroup[] = [
   {
@@ -46,11 +46,6 @@ export const ROADMAP: RoadGroup[] = [
   {
     title: "Ideias rápidas (sem depender de terceiros)",
     items: [
-      {
-        title: "SAMAE nos 5 dígitos",
-        status: "idea",
-        desc: "Completar a tabela de Quantidade de dígitos — o gabarito também põe SAMAE no tamanho 5.",
-      },
       {
         title: "Datas ao contrário",
         status: "idea",
@@ -114,16 +109,10 @@ export const ROADMAP: RoadGroup[] = [
         note: "Não há API gratuita; os provedores exigem token pago. Dá pra ligar igual fizemos com o what3words se você criar uma chave.",
       },
       {
-        title: "Bases grandes por consulta (CNAE, FIPE, TSE)",
+        title: "Arquivo — microfone e o miolo do documento",
         status: "todo",
-        desc: "Código de atividade econômica, de veículo ou uma votação → o nome correspondente.",
-        note: "Saiu de “ideia” para “a fazer”: a objeção era o peso de EMBARCAR centenas de KB, e a investigação de agosto/2026 mostrou que as três se resolvem por CONSULTA, sem embarcar nada. Endpoints verificados na mão: CNAE pela API do IBGE (mesmo host dos municípios), FIPE pela API do próprio site (do navegador, nunca do backend — o WAF de lá bloqueia IP de datacenter), TSE por JSON estático com CORS liberado. Os três caminhos estão escritos na Cola, com as armadilhas. O CID-10 saiu desta linha por outro motivo: sem API, o ZIP do DATASUS era o único caminho — e ele virou acervo, com os 14.233 códigos respondendo dentro da bancada.",
-      },
-      {
-        title: "Aba Arquivo — imagem, documento, vídeo",
-        status: "todo",
-        desc: "Soltar QUALQUER arquivo e descobrir o que ele esconde: metadados, sobra depois do fim, arquivo colado dentro de outro, espectrograma, LSB, EXIF, planos de bit, quadro de vídeo em segundo específico.",
-        note: "NO AR desde agosto/2026 as duas primeiras camadas: identidade pelos bytes, sobra depois do fim declarado, arquivo embutido recortado byte a byte, texto, entropia, hexdump ancorado, ficha com metadados e hashes — mais o painel de áudio (espectrograma com as três vistas de canal, Morse por tom, LSB, recorte por trecho e canal). Falta imagem (planos de bit, EXIF, QR), documento (ZIP/OOXML, PDF), vídeo (quadro em segundo específico), YouTube e microfone. Engoliu o antigo “Inspetor de imagem” por uma razão de desenho: a primeira pergunta quando um arquivo chega não é “o que faço com esta imagem”, é “o que é isto de verdade”, e isso se responde nos bytes. Plano completo em docs/PLANO-ARQUIVO.md.",
+        desc: "Capturar áudio ao vivo pelo microfone, e ler o CONTEÚDO de PDF, SVG e do miolo dos OOXML (hoje o ZIP mostra os nomes, não o que há dentro).",
+        note: "O resto da aba Arquivo saiu: identidade pelos bytes, sobra depois do fim, arquivo embutido recortado, texto, entropia, hexdump ancorado, o painel de áudio inteiro (espectrograma, Morse por tom, LSB, recorte por trecho e canal), imagem com planos de bit, canais, EXIF com miniatura e leitura de QR/código de barras da foto, e vídeo com quadro por instante. Este item é só o que sobrou.",
       },
       {
         title: "Engine esperto",

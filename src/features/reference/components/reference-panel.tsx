@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { GRUPOS_GEO } from "@/features/geo/formatos";
 import type { ReactNode } from "react";
 import { COLORS } from "../colors";
 import { COMPOUNDS } from "../compounds";
@@ -24,18 +25,18 @@ const ALPHABET = Array.from({ length: 26 }, (_, i) => ({
   rev: 26 - i,
 }));
 
-const COORD_FORMATS: [name: string, example: string][] = [
-  ["Graus decimais (DD)", "-26.9906, -48.6356"],
-  ["Graus/min/seg (DMS)", `26°59'26"S 48°38'08"W`],
-  ["Graus e minutos (DDM)", "26°59.4'S 48°38.1'W"],
-  ["UTM", "22J 734643E 7012408N"],
-  ["Geohash", "6gjqmq88k7k"],
-  ["Plus Code", "585H2957+QQ6"],
-  ["Maidenhead", "GG53qa32"],
-  ["Quadkey", "210311232332101222"],
-  ["H3 (hexágonos)", "89a835d5acbffff"],
-  ["what3words", "///palavra.palavra.palavra"],
-];
+/**
+ * Os formatos de coordenada, DERIVADOS da aba de Geolocalização.
+ *
+ * Aqui havia uma lista de dez escrita à mão, e ela envelheceu: `geo/formatos.ts`
+ * se declara a fonte única e tem 26 fichas. Quem abria a Cola sob pressão não
+ * via MGRS, GEOREF, GARS, carta e grade do IBGE, Mapcode, GeoTude, Placekey,
+ * C-squares, Geo URI, ISO 6709, link do OSM nem a estação geodésica — metade do
+ * que a bancada lê. Duas listas do mesmo assunto sempre divergem; agora é uma.
+ */
+const COORD_FORMATS: [name: string, example: string][] = GRUPOS_GEO.flatMap((g) =>
+  g.formatos.map((f): [string, string] => [f.nome, f.exemplo.entrada]),
+);
 
 const CHECKLIST: { title: string; items: string[] }[] = [
   {
