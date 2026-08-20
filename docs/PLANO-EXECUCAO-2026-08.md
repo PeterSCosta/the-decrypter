@@ -494,12 +494,12 @@ Pedir, com a procedência de cada um:
 | # | decisão | onde trava |
 |---|---|---|
 | D1 | `build:ceps` sai da cadeia `build:data`, ou o CSV volta | item **0.11** |
-| D2 | Liberar a primeira leva e2e | item **6.G** — as Ondas 2, 7 e 8 entram sem rede se não |
+| **D2** | Liberar a primeira leva e2e | item **6.G** — e o argumento ficou MAIS forte: desde então entraram a aba Lote (que mexe em rede, cancelamento e posse de consulta), o card de filme e quatro cifras. Hoje são 4 testes de componente e **zero** e2e |
 | D3 | O veredito de cada argumento falso nas 5 superfícies, e a decisão sobre as 41 resoluções | item **0.9** |
 | D4 | A **exceção declarada** da cauda de geohash (rejeição 0,0% contra o piso de 79,8%) fica escrita como exceção, e não como precedente | §4/R1 |
 | D5 | A área azul entra como **dado**, e o eixo número→vaga **não** entra — ou é uma segunda exceção declarada | item **5.7** |
-| D6 | Corte de votos do recorte IMDb: **≥5.000** (19.000 filmes, 384 KB gzip, padrão proposto) ou ≥25.000 (7.254 filmes, 152 KB) | item **7.1** — o pior caso da prova real tem 414.791 votos, 83× o corte |
-| D7 | Profundidade 3 da cadeia como **segundo botão**, depois, com o mesmo portão — ou nunca | Onda 8 |
+| ~~D6~~ | ~~Corte de votos do recorte IMDb~~ — **PREJUDICADA em 20/08**: o dono cancelou o recorte local (item 7.1) e escolheu só API. Não há recorte para cortar. |
+| ~~D7~~ | ~~Profundidade 3 da cadeia~~ — **PREJUDICADA**: a Onda 8 inteira foi cancelada pelo dono em 19/08. |
 | D8 | Fazer o OCR/transcrição do acervo (item **8.0**), que é o que destrava o acerto real da cadeia e os gatilhos de reabertura de três recusas | Onda 8 |
 
 ### 3.3 · De terceiro, fora do nosso alcance
