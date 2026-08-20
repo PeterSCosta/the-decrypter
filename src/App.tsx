@@ -9,7 +9,6 @@ import { decoders } from "@/features/decoder/engine/registry";
 import { DiffPanel } from "@/features/diff/components/diff-panel";
 import { FontsPanel } from "@/features/fonts/components/fonts-panel";
 import { HelpPage } from "@/features/help/components/help-page";
-import { RoadmapPage } from "@/features/help/components/roadmap-page";
 import { LotePanel } from "@/features/lote/components/lote-panel";
 import { useLoteEmAndamento } from "@/features/lote/use-lote";
 import { MatrixPanel } from "@/features/matrix/components/matrix-panel";
@@ -138,7 +137,6 @@ export function App() {
     <div className="min-h-screen bg-[var(--surface-page)]">
       <Topbar
         onHelp={() => alternarPainel("help")}
-        onRoadmap={() => alternarPainel("roadmap")}
         onAdmin={usuario.papel === "admin" ? () => alternarPainel("admin") : undefined}
         onSair={sair}
       />
@@ -153,8 +151,6 @@ export function App() {
             irParaPainel("app");
           }}
         />
-      ) : view === "roadmap" ? (
-        <RoadmapPage onClose={() => irParaPainel("app")} />
       ) : view === "admin" ? (
         <AdminPage onClose={() => irParaPainel("app")} />
       ) : (

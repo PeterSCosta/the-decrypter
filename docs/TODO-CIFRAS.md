@@ -31,7 +31,7 @@
 > tabela mecânica ↔ bancada (reescrita) — é para isso que se abre este arquivo. **O que não vale
 > mais:** a priorização (Alta/Média/Baixa) e as notas de implementação que dizem "hoje só dá pra
 > fazer contando no dedo". A vitrine voltada ao usuário é o Roadmap in-app
-> (`src/features/help/roadmap-content.ts`); o backlog técnico é o `PLANO-CIFRAS.md`; este é o
+> (`src/features/help/roadmap-content.ts` (**REMOVIDO em 20/08/2026**)); o backlog técnico é o `PLANO-CIFRAS.md`; este é o
 > catálogo do acervo.
 
 **Origem.** Este arquivo é destilado do acervo de provas das gincanas (Itajaí Challenge 2016–2026 +

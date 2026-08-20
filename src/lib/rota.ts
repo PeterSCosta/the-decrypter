@@ -42,7 +42,7 @@ export type RotaAba =
   | "fleet";
 
 /** Os painéis que substituem a bancada inteira. */
-export type RotaPainel = "app" | "help" | "roadmap" | "admin";
+export type RotaPainel = "app" | "help" | "admin";
 
 /**
  * O Decodificador é a raiz, e não `/decodificador`.
@@ -74,7 +74,6 @@ const ABAS: Record<RotaAba, string> = {
 
 const PAINEIS: Record<Exclude<RotaPainel, "app">, string> = {
   help: "ajuda",
-  roadmap: "roadmap",
   admin: "usuarios",
 };
 

@@ -10,9 +10,11 @@
  * entrada numérica, e ainda sumiria no dedup do motor. O que resolve a prova
  * não é decodificar: é **saber que aquela base existe e abrir o link certo**.
  *
- * POR QUE NA COLA, E NÃO NO ROADMAP: quem está numa gincana às 23h abre a
- * Cola. O Roadmap é sobre o que a bancada vai fazer; isto é sobre o que a
- * equipe faz agora, à mão, quando a bancada não pode fazer por ela.
+ * POR QUE NA COLA: quem está numa gincana às 23h abre a Cola. Isto é sobre o
+ * que a equipe faz AGORA, à mão, quando a bancada não pode fazer por ela — e é
+ * por isso que mora numa tela de consulta, e não num documento de planejamento.
+ * (Houve uma tela de Roadmap no app até 20/08/2026; ela saiu porque duplicava,
+ * divergindo, o plano que vive em `docs/`.)
  *
  * REGRA QUE ESTA LISTA REGISTRA: base com captcha ou login de terceiro fica
  * `bloqueada` — não se burla nem um nem outro. Base que só existe em arquivo

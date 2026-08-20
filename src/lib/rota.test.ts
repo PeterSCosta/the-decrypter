@@ -25,7 +25,7 @@ describe("rota", () => {
   });
 
   it("ida e volta: todo painel volta para o próprio painel", () => {
-    for (const painel of Object.keys(APELIDOS_DE_PAINEL) as ("help" | "roadmap" | "admin")[]) {
+    for (const painel of Object.keys(APELIDOS_DE_PAINEL) as ("help" | "admin")[]) {
       const caminho = escreverCaminho({ painel, aba: "decoder" });
       expect(lerCaminho(caminho).painel).toBe(painel);
     }

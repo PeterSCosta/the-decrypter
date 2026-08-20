@@ -1,4 +1,4 @@
-import { HelpCircle, KeyRound, ListTodo, LogOut, Users } from "lucide-react";
+import { HelpCircle, KeyRound, LogOut, Users } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 
 const BOTAO =
@@ -6,12 +6,10 @@ const BOTAO =
 
 export function Topbar({
   onHelp,
-  onRoadmap,
   onAdmin,
   onSair,
 }: {
   onHelp: () => void;
-  onRoadmap: () => void;
   /** Só chega preenchido para admin — o botão nem existe para os demais. */
   onAdmin?: () => void;
   onSair?: () => void;
@@ -41,15 +39,6 @@ export function Topbar({
               <Users className="h-4 w-4" />
             </button>
           ) : null}
-          <button
-            type="button"
-            onClick={onRoadmap}
-            aria-label="Roadmap e melhorias"
-            title="Roadmap e melhorias"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] text-[var(--text-on-chrome)]/70 transition-colors hover:bg-white/10 hover:text-[var(--text-on-chrome)]"
-          >
-            <ListTodo className="h-4 w-4" />
-          </button>
           <button
             type="button"
             onClick={onHelp}

@@ -204,7 +204,7 @@ describe("decisões registradas — não regredir", () => {
    * dos três. O selo passou a mentir na cara de quem lê.
    *
    * O selo descreve o que a bancada FAZ, não o que a fonte PERMITE. As duas
-   * coisas divergem, e é justamente essa divergência que vira item de roadmap.
+   * coisas divergem, e é justamente essa divergência que vira item de plano.
    */
   it("fonte consultável mas não implementada NÃO é aberta — o selo é sobre nós", () => {
     // O CNAE SAIU desta lista em ago/2026, e por ter mudado o fato, não a

@@ -33,8 +33,8 @@ const TOM: Record<SituacaoUsuario, "success" | "pulse" | "neutral"> = {
 
 /**
  * Painel do admin: aprovar quem se cadastrou, criar conta direto, bloquear e
- * remover. Entra pela união `View` do `App.tsx`, ao lado de Ajuda e Roadmap —
- * e não como aba, para não anunciar a própria existência a quem não é admin.
+ * remover. Entra pela união `View` do `App.tsx`, ao lado da Ajuda — e não como
+ * aba, para não anunciar a própria existência a quem não é admin.
  */
 export function AdminPage({ onClose }: { onClose: () => void }) {
   const { usuario: eu } = useAuth();

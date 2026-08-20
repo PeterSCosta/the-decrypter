@@ -115,7 +115,7 @@ Medido agora com `git -C /Users/peter/Repos/the-decrypter diff --stat` — 6 arq
 **Ressalva que rebaixa a prioridade, e é minha, contra a leitura da Frente C:** `base36.ts` emite com `forcedScore: 0.3`, e o corte do `partition` é **0,35** (`src/features/decoder/engine/run.ts:73`). Ou seja, ele cai na gaveta, não no topo. Reprova a R1 e por isso entra — mas **não** é "resposta errada com nota alta", é ruído na cauda. Resolvi pelo lado conservador: o item fica na Onda 0 porque a régua vale para o acervo existente, e não só para decoder novo; e fica **atrás** de qualquer item que ponha resposta errada acima de 0,35.
 
 **0.9 · A vitrine e os argumentos falsos** — P · `PC-0.7` + `PC-0.9` · **veredito é decisão do dono**
-**Onde:** `src/features/help/roadmap-content.ts`, `docs/PLANO-2026-08.md` (`:119`, `:437`, `:458`), `docs/TODO-CIFRAS.md` (`:155`, `:8-9`, `:399`, `:51`), `docs/PLANO-CIFRAS.md` (`:180`, `:429`, `:447`). **Portão:** cada veredito virado vira **linha de documento com data**; decisão que não vira linha volta como proposta na próxima passada. **Verifica:** `grep` pelos argumentos mortos não devolve mais nada nas cinco superfícies. **Por quê:** a vitrine é o único desses cinco lugares que o usuário lê.
+**Onde:** `src/features/help/roadmap-content.ts` (**REMOVIDO em 20/08/2026**), `docs/PLANO-2026-08.md` (`:119`, `:437`, `:458`), `docs/TODO-CIFRAS.md` (`:155`, `:8-9`, `:399`, `:51`), `docs/PLANO-CIFRAS.md` (`:180`, `:429`, `:447`). **Portão:** cada veredito virado vira **linha de documento com data**; decisão que não vira linha volta como proposta na próxima passada. **Verifica:** `grep` pelos argumentos mortos não devolve mais nada nas cinco superfícies. **Por quê:** a vitrine é o único desses cinco lugares que o usuário lê.
 **Acréscimo desta passada:** a §2.3 já pode ser fechada com a decisão escrita, e o verbete da cauda de geohash na vitrine tem de acompanhar o que já mudou na Cola hoje.
 
 **0.10 · Corrigir a §1c e a §1a do `ARROMBA-INVENTARIO`** — P · `C-1` + `B-7` + `B-10`
@@ -367,6 +367,27 @@ plural). **Esforço:** não estimado — a investigação vem antes.
 **9.3 · LSB de imagem** — ✅ `arquivo/imagem/lsb.ts` + card no painel de imagem. 20 interpretações (canais × varredura × ordem dos bits), reusando o `corteMinimo` do LSB de áudio em vez de recalcular — o corte sobe com o tamanho da busca, porque testar 20 interpretações é colher 20 vezes mais acaso, e o número **vai para a tela**. **O card se desliga em JPEG e WebP** e diz por quê: formato com perda descarta justamente o bit baixo, e rodar ali devolveria ruído indistinguível de "não achei". Decidido pelos BYTES, não pela extensão. Sob botão, e com teto de 64 KB por interpretação, em vez de worker — quem esconde texto numa imagem começa do primeiro pixel, porque é o único ponto de partida que o outro lado sabe achar. **Um erro meu, pego pelo teste:** a varredura ordenava por `maiorCorrida`, que não passa pelo filtro de variedade, e o canal alfa opaco produzia uma corrida de `UUUU…` que vencia a mensagem de verdade. Quem ordena o resultado tem de ordenar pelo mesmo critério que decidiu o que é resultado.
 
 **9.5 · Mesa de substituição manual** — ❌ **NÃO FEITA, e a recusa está medida.** O plano mandava reavaliar antes de começar, e a reavaliação derrubou o item. Das cinco metades de uma mesa clássica, quatro já estão entregues: a contagem de frequência ao lado do texto (aba Retrato), a leitura da estatística (régua do IC na Cola), a busca por forma de palavra (Anagramas) e agora aplicar o alfabeto (9.1). Sobra **uma** — o mapa parcial ao vivo —, e ela custaria ~950 linhas, 5 arquivos novos e a 17ª aba. **E uma proibição que fica escrita:** preenchimento automático de mapa por posto de frequência é PROIBIDO, agora ou depois. Medido sobre 86.332 letras de prosa real do acervo: 17,8% de acerto em 40 letras, 19,5% em 60, com pior caso 0,0% nos cinco tamanhos. É literalmente o card de "análise de frequência" da Equipe Arromba que este plano já recusou.
+
+### Fora de onda — a tela de Roadmap saiu (20/08/2026)
+
+`/roadmap` foi removida a pedido do dono, com a superfície inteira: `roadmap-content.ts`,
+`roadmap-page.tsx`, o botão da topbar, o painel na união de rotas e os quatro comentários que
+apontavam para ela.
+
+**O que se perde: nada.** Antes de apagar, conferi item a item — os treze grupos dela (setor
+censitário do IBGE, Faber-Castell, microfone no Arquivo, mais códigos com dígito verificador,
+grades nacionais de fora do Brasil…) já vivem nos documentos de `docs/`, e em mais detalhe.
+
+**O que se ganha é o que os próprios planos já registravam como defeito.** O `PLANO-CIFRAS.md`
+anotava que existia "um **segundo roadmap, visível ao usuário**, com itens que os dois não se
+referenciam e divergem", e o `PLANO-CATALOGOS.md` tinha um item inteiro (0.7) só para consertar
+três afirmações falsas dessa vitrine — "Engine esperto" ainda como *ideia* com três coisas já
+entregues, e um item que o dono já havia matado ainda listado como *a fazer*. Um backlog público
+que envelhece sozinho não é documentação: é uma segunda fonte da verdade que contradiz a primeira,
+e o custo dela é de quem lê.
+
+**Link velho não quebra:** `lerCaminho` já devolvia a bancada para caminho desconhecido, de
+propósito — quem tiver `/roadmap` salvo cai no Decodificador, e não num erro.
 
 ### Onda 10 — a aba de fichas · **AVALIADA, 2026-08-20 · veredito: versão menor**
 

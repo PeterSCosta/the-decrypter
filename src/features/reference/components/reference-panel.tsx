@@ -255,8 +255,8 @@ export function ReferencePanel() {
         </div>
       </Section>
 
-      {/* Quem está numa gincana às 23h abre a Cola, não o Roadmap — então o mapa
-          das bases (inclusive o que está bloqueado e por quê) mora aqui. */}
+      {/* Quem está numa gincana às 23h abre a Cola — então o mapa das bases,
+          inclusive o que está bloqueado e por quê, mora aqui. */}
       {/* As bancadas de fora vêm ANTES das bases: quem abre a Cola no meio de
           uma prova quer saber "onde resolvo isto agora", e às vezes a resposta
           honesta é outra aba. */}
