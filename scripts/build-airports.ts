@@ -2,7 +2,7 @@
  * build-airports.ts — gera a base de aeroportos (códigos IATA + ICAO → nome,
  * cidade, país e coordenada) a partir do OpenFlights (domínio aberto/ODbL).
  *
- * Saída: public/data/airports.json
+ * Saída: seed-data/airports.json
  * Run: pnpm build:airports
  */
 import { writeFileSync } from "node:fs";
@@ -10,7 +10,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const SRC = "https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat";
-const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "public/data/airports.json");
+const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "seed-data/airports.json");
 
 /** Parser simples de uma linha CSV com campos entre aspas (formato OpenFlights). */
 function parseCsvLine(line: string): string[] {

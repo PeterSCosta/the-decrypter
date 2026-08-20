@@ -26,6 +26,26 @@ export const wordsPerParagraph = (text: string): number[] => splitParagraphs(tex
 
 export const wordsPerLine = (text: string): number[] => splitLines(text).map(countWords);
 
+/**
+ * LETRAS por linha — e ela não é `countWords` com outro nome.
+ *
+ * `RE_WORD` casa `\p{L}` **e** `\p{N}`, então "palavras por linha" conta um
+ * número como palavra e um token como "1400" entra na série. Para a leitura
+ * A1Z26 isso é ruído: o que a prova esconde é a CONTAGEM DE LETRAS, e um dígito
+ * no meio da linha desloca tudo.
+ *
+ * ── A ÂNCORA ───────────────────────────────────────────────────────────────
+ * p04/2024: as linhas têm 20, 5, 14, 5 e 20 letras, e a leitura A1Z26 dá TENET.
+ * A bancada tinha as quatro séries de contagem e **nenhuma contava letras**, então
+ * essa prova era invisível para ela.
+ *
+ * O `fold` resolve o acento (`ç` e `ã` contam como letra, que é o certo), e
+ * `\p{L}` sozinho já exclui dígito e pontuação sem precisar de lista.
+ */
+const RE_LETRA = /\p{L}/gu;
+export const countLetters = (s: string): number => (s.match(RE_LETRA) ?? []).length;
+export const lettersPerLine = (text: string): number[] => splitLines(text).map(countLetters);
+
 /** Itens de uma lista dentro do bloco (vírgula, ponto-e-vírgula, marcador). */
 const splitItems = (block: string): string[] =>
   block
@@ -85,6 +105,16 @@ export function countSeries(text: string, char?: string): CountSeries[] {
   } else {
     out.push({ id: "words-paragraph", label: "palavras por parágrafo", counts: paras });
     out.push({ id: "words-line", label: "palavras por linha", counts: lines });
+  }
+
+  /**
+   * Letras por linha entra logo depois das palavras, e só quando difere delas:
+   * numa lista de uma palavra por linha as duas séries seriam a mesma leitura
+   * dita duas vezes, e o `count-key` emitiria dois cards idênticos.
+   */
+  const letras = lettersPerLine(text);
+  if (letras.some((n) => n > 0) && !out.some((s) => same(s.counts, letras))) {
+    out.push({ id: "letters-line", label: "letras por linha", counts: letras });
   }
 
   const items = itemsPerParagraph(text);

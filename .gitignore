@@ -30,3 +30,6 @@ data-sources/*.pdf
 data-sources/*.jsonl
 data-sources/postes-state*.json
 public/_dev/
+
+# Acervo baixado do dashboard da equipe (100 MB) — material de referência, não versionado.
+acervo-arromba/

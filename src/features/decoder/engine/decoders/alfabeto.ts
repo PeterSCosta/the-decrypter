@@ -11,6 +11,7 @@ import {
 import type { CodeHit } from "@/features/reference/phone-codes";
 import { defineDecoder } from "../define";
 import type { DecodeCandidate } from "../types";
+import { pareceHomoglifo } from "./confusaveis";
 
 /**
  * Alfabetos do mundo como tabela de índice. Faz duas coisas:
@@ -151,6 +152,23 @@ function panel(a: Alphabet): DecodeCandidate {
 function byScript(input: string): DecodeCandidate | null {
   const det = detectScript(input);
   if (!det) return null;
+
+  /**
+   * ── QUANDO A TRANSLITERAÇÃO FONÉTICA É A RESPOSTA ERRADA ────────────────
+   * Este ramo lê por SOM, e para texto de verdade em outra escrita isso está
+   * certo: `Привет мир` → `Privet mir`, e assim tem de continuar.
+   *
+   * Mas quando alguém esconde uma letra cirílica DENTRO de uma palavra
+   * portuguesa, o que foi escondido é um DESENHO, não um som. Medido antes do
+   * conserto: `a рorta рreta` saía aqui no topo do leque, a 0,62, como
+   * `"a rorta rreta"` — resposta errada com confiança, que é o pior defeito
+   * desta bancada.
+   *
+   * O `confusaveis` responde esse caso, e responde certo. Aqui a saída não
+   * some: ela desce para baixo do corte de exibição, para quem quiser conferir
+   * ainda achar — mas para de disputar o topo com a leitura correta.
+   */
+  const disfarce = pareceHomoglifo(input);
   // Uma letra solta só vale quando é a entrada inteira ("Ω", "한"); no meio de
   // prosa, um π perdido é notação matemática, não texto em grego.
   if (det.letters.length < 2 && [...input.trim()].length > 1) return null;
@@ -171,7 +189,7 @@ function byScript(input: string): DecodeCandidate | null {
     label: `${a.name} — ${a.letters.length} letras`,
     output: out,
     notes: `transliterado${overflow(det.letters.length)} · ${a.note}`,
-    forcedScore: 0.62,
+    forcedScore: disfarce ? 0.3 : 0.62,
     chainValue: out,
     render: "code-list",
     data,

@@ -2,17 +2,21 @@ import { PARECE_ESTRUTURA } from "@/features/bridge/match";
 import type { BridgesData } from "@/features/bridge/types";
 import { type EixosData, PARECE_QUADRA } from "@/features/eixos/types";
 import type { EstacoesData } from "@/features/estacao/types";
+import type { ArticulacaoData } from "@/features/location/articulacao";
+import { PARECE_FOLHA } from "@/features/location/articulacao";
 import { aoCarregarH3 } from "@/features/location/formats";
 import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
 import type { VotacoesData } from "@/features/votacao/types";
 import {
+  getArticulacao,
   getBridges,
   getEixos,
   getEstacoes,
   getPix,
   getStreets,
   getVotacoes,
+  loadArticulacao,
   loadBridges,
   loadEixos,
   loadEstacoes,
@@ -20,7 +24,14 @@ import {
   loadStreets,
   loadVotacoes,
 } from "@/lib/data";
-import { type LookupHits, cancelarSuperadas, consultar, valeConsultar } from "@/lib/lookup-cache";
+import { normalizaDigitos } from "@/lib/digitos";
+import {
+  type LookupHits,
+  cancelarSuperadas,
+  consultar,
+  motivoSemConsulta,
+  valeConsultar,
+} from "@/lib/lookup-cache";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { decoders } from "./engine/registry";
@@ -73,8 +84,14 @@ export function useDecoder(
   const [votacoes, setVotacoes] = useState<VotacoesData | null>(getVotacoes);
   const [estacoes, setEstacoes] = useState<EstacoesData | null>(getEstacoes);
   const [eixos, setEixos] = useState<EixosData | null>(getEixos);
+  const [articulacao, setArticulacao] = useState<ArticulacaoData | null>(getArticulacao);
 
-  const debInput = useDebouncedValue(input, 160);
+  // A entrada passa por UMA normalização antes de qualquer decoder ver: dígito
+  // decimal não-ASCII vira `0`..`9`. Sem isso, `replace(/\D/g, "")` — que este
+  // repositório usa em 17 lugares — **apaga** o dígito estrangeiro em vez de
+  // deixá-lo de fora, e todo decoder numérico cala sem motivo visível. Ver
+  // `lib/digitos.ts`. Entrada já em ASCII volta idêntica.
+  const debInput = normalizaDigitos(useDebouncedValue(input, 160));
   const debKey = useDebouncedValue(key, 160);
   const debAux = useDebouncedValue(aux, 160);
   const debTitle = useDebouncedValue(title, 250);
@@ -172,9 +189,24 @@ export function useDecoder(
     };
   }, [pareceVotacao, votacoes]);
 
-  // Estações geodésicas: dígitos com uma letra opcional (`1400M`, `9Z`). Forma
-  // fraquíssima, então quem decide é a base — e ela tem 49 KB.
-  const pareceEstacao = /^[A-Za-z]?\d{1,4}[A-Za-z]?$/.test(debInput.trim());
+  /**
+   * Estações geodésicas: dígitos com uma letra opcional (`1400M`, `8121288`).
+   * Forma fraquíssima, então quem decide é a base — e ela tem 49 KB.
+   *
+   * ── DOIS PORTÕES, E ELES TÊM DE CONCORDAR ──────────────────────────────────
+   * Este aqui decide se o DADO carrega; o do `estacao-ibge.ts` decide se o
+   * decoder emite. Alargar só o segundo não serve de nada: a Onda 0 levou o
+   * portão do decoder de 4 para 7 dígitos e mediu "100% da base alcançável",
+   * mas este continuou em `\d{1,4}` — então `8121288`, que EXISTE na base,
+   * seguia sem card, porque o arquivo nunca era buscado. Conferido no navegador.
+   *
+   * ── E A COORDENADA TAMBÉM CARREGA ──────────────────────────────────────────
+   * O card de mapa mostra os marcos geodésicos por perto (ver
+   * `LocationData.perto`), e para isso a base precisa estar na memória quando a
+   * entrada é uma COORDENADA — que não se parece nada com um código de estação.
+   */
+  const t0 = debInput.trim();
+  const pareceEstacao = /^[A-Za-z]?\d{1,7}[A-Za-z]?$/.test(t0) || /-?\d{1,3}[.,]\d{3,}/.test(t0);
   useEffect(() => {
     if (!pareceEstacao || estacoes) return;
     let alive = true;
@@ -185,6 +217,23 @@ export function useDecoder(
       alive = false;
     };
   }, [pareceEstacao, estacoes]);
+
+  /**
+   * Articulação municipal de Blumenau (70 KB). O portão é a FORMA da folha —
+   * ela estende a nomenclatura nacional, então começa igual e vai mais fundo.
+   * Quem decide é o casamento exato, dentro do decoder.
+   */
+  const pareceFolha = PARECE_FOLHA.test(debInput.trim());
+  useEffect(() => {
+    if (!pareceFolha || articulacao) return;
+    let alive = true;
+    loadArticulacao()
+      .then((d) => alive && setArticulacao(d))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [pareceFolha, articulacao]);
 
   // Eixos (quadra de Blumenau): o gate é a FORMA — quatro grupos de números na
   // grade do cadastro (`3-4-10-3`). É a base preguiçosa mais cara (197 KB gz),
@@ -224,7 +273,7 @@ export function useDecoder(
   const [hits, setHits] = useState<LookupHits | null>(null);
   const [hitsCarregando, setHitsCarregando] = useState(false);
   const [hitsErro, setHitsErro] = useState<string | null>(null);
-  const debLookup = useDebouncedValue(input, 300);
+  const debLookup = normalizaDigitos(useDebouncedValue(input, 300));
 
   useEffect(() => {
     const q = debLookup.trim();
@@ -234,10 +283,10 @@ export function useDecoder(
       setHitsErro(null);
       return;
     }
-    cancelarSuperadas(q);
+    cancelarSuperadas(q, "bancada");
     let vivo = true;
     setHitsCarregando(true);
-    consultar(q)
+    consultar(q, "bancada")
       .then((r) => {
         if (!vivo) return;
         setHits(r);
@@ -274,6 +323,7 @@ export function useDecoder(
       votacoes,
       estacoes,
       eixos,
+      articulacao,
     }),
     [
       debKey,
@@ -288,6 +338,7 @@ export function useDecoder(
       votacoes,
       estacoes,
       eixos,
+      articulacao,
     ],
   );
 
@@ -385,11 +436,45 @@ export function useDecoder(
           },
         ]
       : [];
+
+    /**
+     * O OUTRO jeito de a metade online sumir — e este era CALADO.
+     *
+     * O portão do `lookup-cache` recusa entrada com quebra de linha ou acima de
+     * 64 caracteres. É um portão de custo legítimo, mas o efeito na tela era
+     * indistinguível de "não encontrei nada": colar uma lista desligava CEP,
+     * município, aeroporto, poste e CID de uma vez, sem uma palavra.
+     *
+     * O aviso diz o motivo E o que fazer, porque as duas saídas existem hoje:
+     * uma linha por vez resolve, e o texto longo tem a Extração.
+     */
+    const motivo = motivoSemConsulta(debLookup);
+    const doPortao: Hint[] =
+      motivo === "lista"
+        ? [
+            {
+              id: "consulta-lista",
+              label: "Consultas online pausadas: isto é uma lista",
+              detail:
+                "Enquanto houver mais de uma linha, CEP, município, aeroporto e poste não são consultados aqui — as cifras seguem rodando normalmente. A aba Lote consulta as N linhas de uma vez e devolve uma resposta por linha.",
+              tone: "warn" as const,
+            },
+          ]
+        : motivo === "longo"
+          ? [
+              {
+                id: "consulta-longa",
+                label: "Consultas online pausadas: texto longo",
+                detail: `Acima de 64 caracteres a bancada não consulta CEP, município, aeroporto nem poste (são ${debLookup.trim().length}). As cifras seguem rodando; para isolar um código dentro do texto, a aba Texto separa números e padrões.`,
+                tone: "warn" as const,
+              },
+            ]
+          : [];
     // O título pode repetir o que a entrada já disse por caminho independente
     // ("Ask Me" e "84 79 80 79" apontam ambos para ASCII) — uma dica só.
     const seen = new Set(fromInput.map((h) => h.id));
-    return [...daRede, ...fromInput, ...fromTitle.filter((h) => !seen.has(h.id))];
-  }, [debInput, debTitle, ctx, hitsErro]);
+    return [...daRede, ...doPortao, ...fromInput, ...fromTitle.filter((h) => !seen.has(h.id))];
+  }, [debInput, debTitle, ctx, hitsErro, debLookup]);
 
   return {
     input,

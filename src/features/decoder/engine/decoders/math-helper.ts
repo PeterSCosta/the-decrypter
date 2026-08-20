@@ -45,6 +45,14 @@ const HINTS: { op: MathOpId; re: RegExp }[] = [
   { op: "mmc", re: /\bmmc\b|\bmultiplos?\b|minimo multiplo/ },
   { op: "kaprekar", re: /kaprekar/ },
   { op: "resto", re: /\brestos?\b|\bmodulo\b|\bmodular\b/ },
+  // Onda 6.8 — as duas entram sob a MESMA regra de dica que as de cima: número
+  // solto não tem assinatura, e fatorar todo número acenderia em toda entrada
+  // numérica da bancada.
+  { op: "fatores", re: /\bprimos?\b|\bfator\w*|\bfatora\w*/ },
+  {
+    op: "sequencia",
+    re: /\bfibonacci\b|\btriangulares?\b|\bsequencias?\b|\bquadrados?\s+perfeitos?\b/,
+  },
 ];
 
 /**
@@ -71,7 +79,18 @@ export const decoders = defineDecoder({
   decode(input, ctx) {
     const blocks = parseBlocks(input);
     const flat = blocks.flat();
-    if (flat.length < MIN_VALUES || flat.length > MAX_VALUES) return [];
+    /**
+     * O piso de dois números existe porque quase toda operação deste painel é
+     * ENTRE números — MDC, MMC, divisão, resto. A fatoração é a exceção: "quantos
+     * fatores primos tem 1400" é uma pergunta legítima sobre um número só, e a
+     * palavra-dica já provou a intenção. Sem esta ressalva o único caso de uso
+     * de número solto do painel ficava de fora.
+     */
+    const dicaDeUmSo = /\bprimos?\b|\bfator\w*|\bfatora\w*/.test(
+      stripDiacritics(input).toLowerCase(),
+    );
+    const piso = dicaDeUmSo ? 1 : MIN_VALUES;
+    if (flat.length < piso || flat.length > MAX_VALUES) return [];
 
     const solo = ctx.only === ID;
     const bare = BARE_LIST.test(input.trim()) && tokenCount(input) >= 2;

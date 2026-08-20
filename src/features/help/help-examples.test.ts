@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { runDecoders } from "@/features/decoder/engine/run";
 import type { DecodeContext } from "@/features/decoder/engine/types";
 import { prepararDeteccao } from "@/features/location/formats";
@@ -33,7 +35,53 @@ import { HELP_SECTIONS } from "./help-content";
  * verbete novo que roda sem rede, acrescente a linha — é barato, e é o que
  * mantém a Ajuda honesta.
  */
+const arquivo = (nome: string) =>
+  JSON.parse(readFileSync(resolve(process.cwd(), `public/data/${nome}`), "utf8"));
+const ESTACOES = arquivo("estacoes-ibge.json");
+const ARTICULACAO = arquivo("articulacao-blumenau.json");
+
 const OFFLINE: { entrada: string; decoder: string; contem: string; primeiro?: boolean }[] = [
+  // Sem `primeiro`: nestas duas o `leetspeak` fica acima, porque ele deixa a
+  // PROSA passar intacta e só troca os dígitos — herdando a legibilidade de um
+  // texto que não decodificou. Está anotado em docs/PENDENCIAS.md §0.5-C; o
+  // math-helper aparece em 2º, que é onde ele de fato está.
+  { entrada: "Fatore em primos: 60 84 210", decoder: "math-helper", contem: "2 × 2 × 3 × 5" },
+  {
+    entrada: "Os numeros sao triangulares: 3 6 10 15 21",
+    decoder: "math-helper",
+    contem: "triangulares",
+  },
+  { entrada: "1723680000", decoder: "timestamp", contem: "14/08/2024" },
+  { entrada: "Ιησους", decoder: "numerais-antigos", contem: "888", primeiro: true },
+  { entrada: "שלום", decoder: "numerais-antigos", contem: "376", primeiro: true },
+  // Onda 6 — os quatro de assinatura literal, cada um medido antes de entrar.
+  {
+    entrada: "xn--brasil-gva.com.br",
+    decoder: "punycode",
+    contem: "brasilé.com.br",
+    primeiro: true,
+  },
+  { entrada: "xn--80akhbyknj4f", decoder: "punycode", contem: "испытание", primeiro: true },
+  {
+    entrada: "A resposta esta na pra=C3=A7a",
+    decoder: "quoted-printable",
+    contem: "A resposta esta na praça",
+    primeiro: true,
+  },
+  {
+    entrada: "=?UTF-8?B?QSByZXNwb3N0YSBlc3TDoSBuYSBwcmHDp2E=?=",
+    decoder: "mime-word",
+    contem: "A resposta está na praça",
+    primeiro: true,
+  },
+  // Onda 3 — cada um medido antes de entrar aqui.
+  { entrada: "692000 7021000", decoder: "location", contem: "-26.9", primeiro: true },
+  {
+    entrada: "P de Pipa, O de Ouro, N de Navio, T de Tatu, E de Estrela",
+    decoder: "soletracao",
+    contem: "PONTE",
+    primeiro: true,
+  },
   // Os corrigidos em 18/08 — cada um estava errado no guia publicado.
   { entrada: "Hloel", decoder: "railfence", contem: "Hello" },
   { entrada: "10110 11000 01100 10000 00001", decoder: "baudot", contem: "PONTE", primeiro: true },
@@ -70,11 +118,42 @@ const OFFLINE: { entrada: string; decoder: string; contem: string; primeiro?: bo
 
   // O verbete que faltava: a segunda leitura de uma entrada binária.
   { entrada: "100101010", decoder: "binary-number", contem: "dec 298", primeiro: true },
+  // As duas portas da estação geodésica: código e inscrição da chapa. A
+  // segunda foi acrescentada ao guia na Onda 5.2, e é justamente a que ninguém
+  // adivinharia estar quebrada — ela nasceu barrada pelo portão de forma.
+  { entrada: "8121288", decoder: "estacao-ibge", contem: "Blumenau" },
+  { entrada: "MR-103", decoder: "estacao-ibge", contem: "chapa MR-103" },
+  { entrada: "1400M", decoder: "estacao-ibge", contem: "Blumenau" },
+  // A Onda 9. Cada um destes já foi escrito ERRADO uma vez neste mesmo arquivo:
+  // os três primeiros exemplos que eu redigi à mão não decodificavam nada, e foi
+  // este teste que mostrou. É a razão de ele existir.
+  { entrada: "a рorta рreta", decoder: "confusaveis", contem: "a porta preta", primeiro: true },
+  {
+    entrada: "informaÃ§Ã£o importante sobre a praÃ§a central",
+    decoder: "mojibake",
+    contem: "informação importante sobre a praça central",
+    primeiro: true,
+  },
+  // A inscrição que só existe na PROSA da descrição — o pedaço do 5.2 que
+  // ninguém adivinharia estar quebrado, porque não vem de campo nenhum.
+  { entrada: "RN2004H", decoder: "estacao-ibge", contem: "chapa RN2004H" },
+  // A folha municipal, que a carta nacional não calcula.
+  // A escala vive no `label`, não no `output` — quem confere a escala é o
+  // `articulacao.test.ts`. Aqui o que se confere é que a folha vira PONTO.
+  { entrada: "SG-22-Z-B-IV-4-SE-D-IV", decoder: "folha-blumenau", contem: "centro em -26.9" },
 ];
 
 const rodar = (entrada: string) =>
   (
-    runDecoders(entrada, { key: "", streets: null } as unknown as DecodeContext) as unknown as {
+    runDecoders(entrada, {
+      key: "",
+      streets: null,
+      // As bases de ARQUIVO entram: elas rodam sem rede, e sem elas o guia
+      // podia prometer `MR-103` sem ninguém conferir. O que fica de fora é o
+      // que depende de `ctx.hits` — aquilo é resposta de API.
+      estacoes: ESTACOES,
+      articulacao: ARTICULACAO,
+    } as unknown as DecodeContext) as unknown as {
       results: { decoderId: string; output: string }[];
     }
   ).results;

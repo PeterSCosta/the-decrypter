@@ -4,13 +4,22 @@ import { describe, expect, it } from "vitest";
 import {
   ANCHORS,
   BLUMENAU,
+  FUSO_DO_VALE,
   ITAJAI,
   VALE_BBOX,
+  ZONA_UTM_DO_VALE,
   anchorForPoint,
   inBBox,
   scopeLabel,
 } from "./anchors";
-import { decodeGeohashLocal, decodePlusCode, decodePlusCodeLocal } from "./formats";
+import {
+  decodeGeohashLocal,
+  decodePlusCode,
+  decodePlusCodeLocal,
+  encodeGeohash,
+  geohashPrefixes,
+  parseUTMLocal,
+} from "./formats";
 
 describe("âncoras locais", () => {
   it("o centro de cada cidade cai na própria caixa e no Vale, e não na caixa da outra", () => {
@@ -63,10 +72,53 @@ describe("atalhos de cauda local", () => {
   });
 
   it("cauda de Geohash recupera a cidade pelo prefixo regional", () => {
-    // "6gjng7rpj" é Blumenau; a cauda "g7rpj" + prefixo "6gjn" deve voltar p/ lá
-    const hit = decodeGeohashLocal("g7rpj");
-    expect(hit?.anchor).toBe("Blumenau");
-    expect(hit && inBBox(hit, BLUMENAU.bbox)).toBe(true);
+    // "6gjng7rpj" é Blumenau; a cauda "g7rpj" deve produzir uma leitura lá.
+    const hits = decodeGeohashLocal("g7rpj");
+    expect(hits.some((h) => h.anchor === "Blumenau")).toBe(true);
+    for (const h of hits) {
+      const a = h.anchor === "Blumenau" ? BLUMENAU.bbox : ITAJAI.bbox;
+      expect(inBBox(h, a)).toBe(true);
+    }
+  });
+
+  /**
+   * A REGRESSÃO QUE ESTE TESTE PRENDE
+   *
+   * A cauda de geohash antepunha UM prefixo por cidade e parava no primeiro
+   * acerto. Blumenau se parte em quatro células, então em 62,6% dos pontos a
+   * bancada devolvia a leitura de OUTRA célula — dentro da caixa, com nota, e
+   * com 27 km de erro médio. Zero rejeição: ela nunca calava.
+   *
+   * Este teste refaz a conta no ponto que o antigo `geohashCity` não alcança.
+   */
+  it("cauda de Geohash não perde o ponto que cai fora da célula declarada", () => {
+    // Norte de Blumenau — célula "6gjp", não "6gjn".
+    const alvo = { lat: -26.7183, lng: -49.2127 };
+    const cauda = encodeGeohash(alvo.lat, alvo.lng, 8).slice(4);
+    const hits = decodeGeohashLocal(cauda);
+
+    const achou = hits.some(
+      (h) => Math.abs(h.lat - alvo.lat) < 0.02 && Math.abs(h.lng - alvo.lng) < 0.02,
+    );
+    expect(achou).toBe(true);
+  });
+
+  it("os prefixos vêm da caixa, não de um literal — Blumenau não cabe em um só", () => {
+    const p = geohashPrefixes(BLUMENAU.bbox);
+    expect(p.length).toBeGreaterThan(1);
+    expect(p).toContain("6gjn");
+    expect(p).toContain("6gjp");
+  });
+
+  /**
+   * A ambiguidade é IRREDUTÍVEL e o número está aqui para não ser esquecido:
+   * a célula de 4 chars (~39 × 19,5 km) é MENOR que a caixa (52 × 26 km), então
+   * a caixa não desempata. Se algum dia isto voltar a 1, alguém estreitou a
+   * caixa ou trocou a precisão — e aí a leitura volta a mentir.
+   */
+  it("uma cauda de geohash não identifica ponto: sempre mais de uma leitura", () => {
+    const hits = decodeGeohashLocal(encodeGeohash(-26.9, -49.07, 8).slice(4));
+    expect(hits.length).toBeGreaterThan(1);
   });
 });
 
@@ -120,5 +172,65 @@ describe("a caixa contém o município", () => {
     expect(separadas, "as caixas se sobrepõem: a atribuição de cidade vira sorteio").toBe(true);
     expect(dentroDeMargem(BLUMENAU.lat, BLUMENAU.bbox.latMin, BLUMENAU.bbox.latMax)).toBe(true);
     expect(dentroDeMargem(ITAJAI.lat, ITAJAI.bbox.latMin, ITAJAI.bbox.latMax)).toBe(true);
+  });
+});
+
+/**
+ * A CAUDA DE UTM — o oposto exato da cauda de geohash.
+ *
+ * A de geohash não valida nada porque a célula do prefixo é MENOR que a caixa
+ * da cidade. A de UTM valida com folga porque a célula do fuso 22J tem
+ * 590 × 885 km contra os 89 × 89 km da caixa do Vale — 66 vezes maior.
+ */
+describe("cauda de UTM", () => {
+  it("lê o par E/N sem o fuso e cai em Blumenau", () => {
+    const p = parseUTMLocal("692000 7021000");
+    expect(p).toBeTruthy();
+    expect(p && inBBox(p, BLUMENAU.bbox)).toBe(true);
+  });
+
+  it("aceita as formas que uma prova escreve", () => {
+    for (const s of [
+      "692000 7021000",
+      "692000E 7021000N",
+      "692000, 7021000",
+      " 692000  7021000 ",
+    ]) {
+      expect(parseUTMLocal(s), s).toBeTruthy();
+    }
+  });
+
+  it("recusa o que não tem a forma — seis dígitos e sete, nessa ordem", () => {
+    for (const s of ["69200 7021000", "692000 702100", "692000", "abc def", "6920000 7021000"]) {
+      expect(parseUTMLocal(s), s).toBeNull();
+    }
+  });
+
+  /**
+   * A rejeição é o número que autoriza o atalho a existir. Medida sobre pares
+   * sorteados dentro do próprio fuso 22J — o caso difícil, não sobre lixo.
+   */
+  it("rejeita mais de 95% dos pares válidos do fuso 22J", () => {
+    let x = 88675123;
+    const r = () => {
+      x ^= x << 13;
+      x ^= x >>> 17;
+      x ^= x << 5;
+      return (x >>> 0) / 4294967296;
+    };
+    const N = 60_000;
+    let acende = 0;
+    for (let i = 0; i < N; i++) {
+      const e = Math.floor(166_000 + r() * (834_000 - 166_000));
+      const n = Math.floor(6_400_000 + r() * (7_500_000 - 6_400_000));
+      if (parseUTMLocal(`${e} ${n}`)) acende++;
+    }
+    // Medido em 300.000 pares: 1,06% acende, ou seja 98,94% de rejeição.
+    expect(acende / N).toBeLessThan(0.05);
+  });
+
+  it("o fuso vem da âncora, não de um literal solto no código", () => {
+    expect(ZONA_UTM_DO_VALE).toBe(BLUMENAU.utmZone);
+    expect(FUSO_DO_VALE).toBe(22);
   });
 });

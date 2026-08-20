@@ -1,4 +1,4 @@
-import { type CepHit, formatCep } from "@/features/cep/types";
+import { type CepCuringaData, type CepHit, formatCep } from "@/features/cep/types";
 import { type StreetRow, type StreetsData, nomeCompleto } from "@/features/street-guide/types";
 import type { Decoder } from "./types";
 import { stripDiacritics } from "./util";
@@ -222,8 +222,8 @@ const cepWildcard: Decoder = {
           .map((h) => `${formatCep(h.cep)} ${h.logradouro || h.localidade}, ${h.municipio}`)
           .join("; "),
         forcedScore: 0.7,
-        render: "cep",
-        data: hits,
+        render: "cep-curinga",
+        data: { padrao: q, total, hits } satisfies CepCuringaData,
       },
     ];
   },

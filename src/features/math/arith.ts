@@ -140,7 +140,16 @@ function snap(n: number): number {
   return Math.abs(n - r) < 1e-6 * Math.max(1, Math.abs(r)) ? r : n;
 }
 
-export type MathOpId = "mdc" | "mmc" | "raiz" | "divisao" | "soma" | "kaprekar" | "resto";
+export type MathOpId =
+  | "mdc"
+  | "mmc"
+  | "raiz"
+  | "divisao"
+  | "soma"
+  | "kaprekar"
+  | "resto"
+  | "fatores"
+  | "sequencia";
 
 export const OP_LABEL: Record<MathOpId, string> = {
   mdc: "MDC",
@@ -150,10 +159,22 @@ export const OP_LABEL: Record<MathOpId, string> = {
   soma: "Soma",
   kaprekar: "Kaprekar",
   resto: "Resto",
+  fatores: "Fatoração em primos",
+  sequencia: "Sequências conhecidas",
 };
 
 /** Ordem fixa do painel — previsível de ler e de testar. */
-const OP_ORDER: MathOpId[] = ["mdc", "mmc", "raiz", "divisao", "soma", "kaprekar", "resto"];
+const OP_ORDER: MathOpId[] = [
+  "mdc",
+  "mmc",
+  "raiz",
+  "divisao",
+  "soma",
+  "kaprekar",
+  "resto",
+  "fatores",
+  "sequencia",
+];
 
 export interface MathLine {
   op: MathOpId;
@@ -350,6 +371,113 @@ function lineResto(nums: ParsedNumber[]): MathLine | null {
  * Roda as operações sobre os blocos. `ops` restringe ao que a dica do texto
  * pediu — sem ele, o painel completo. Nada aqui decide se DEVE rodar.
  */
+/**
+ * FATORAÇÃO EM PRIMOS — e por que ela é linha de painel, e não decoder.
+ *
+ * Um número solto não tem assinatura nenhuma: `1400` é plaqueta de poste, código
+ * de rua, ano, quantia. Um decoder que fatorasse todo número acenderia em toda
+ * entrada numérica da bancada, que é a definição de ruído.
+ *
+ * Aqui ela entra sob a MESMA regra de palavra-dica que o resto deste painel já
+ * usa: sem "primo", "fator" ou "fatoração" no texto, a linha não existe. É a
+ * dica que prova a intenção — e é ela que preserva a assinatura que o número
+ * sozinho não tem.
+ */
+function fatorar(n: number): number[] {
+  const out: number[] = [];
+  let x = n;
+  for (let d = 2; d * d <= x; d++) {
+    while (x % d === 0) {
+      out.push(d);
+      x /= d;
+    }
+  }
+  if (x > 1) out.push(x);
+  return out;
+}
+
+function lineFatores(nums: ParsedNumber[]): MathLine | null {
+  const alvos = nums
+    .map((n) => n.value)
+    .filter((v) => Number.isInteger(v) && v >= 2 && v <= 10_000_000);
+  if (alvos.length === 0) return null;
+
+  const partes: string[] = [];
+  const primos: number[] = [];
+  for (const v of alvos.slice(0, 8)) {
+    const f = fatorar(v);
+    primos.push(f.length);
+    partes.push(f.length === 1 ? `${v} é primo` : `${v} = ${f.join(" × ")}`);
+  }
+  return {
+    op: "fatores",
+    label: OP_LABEL.fatores,
+    text: `Fatoração: ${partes.join(" · ")}`,
+    values: primos,
+    chain: alvos
+      .slice(0, 8)
+      .map((v) => fatorar(v).join("×"))
+      .join(" "),
+  };
+}
+
+/**
+ * SEQUÊNCIAS CONHECIDAS — a posição de cada número em Fibonacci, triangulares e
+ * quadrados. A posição é o que vira letra: se os números da prova são todos
+ * triangulares, a lista de posições costuma ser a resposta.
+ *
+ * Mesma regra de dica. E só emite quando **todos** os números pertencem à mesma
+ * sequência — um acerto isolado é coincidência, a lista inteira não é.
+ */
+const FIBONACCI = (() => {
+  const f = [1, 2];
+  while (f[f.length - 1] < 10_000_000) f.push(f[f.length - 1] + f[f.length - 2]);
+  return f;
+})();
+
+/** `n` é o k-ésimo triangular? Devolve k, ou null. */
+function posTriangular(n: number): number | null {
+  const k = (Math.sqrt(8 * n + 1) - 1) / 2;
+  return Number.isInteger(k) && k >= 1 ? k : null;
+}
+
+function posQuadrado(n: number): number | null {
+  const k = Math.sqrt(n);
+  return Number.isInteger(k) && k >= 1 ? k : null;
+}
+
+function lineSequencia(nums: ParsedNumber[]): MathLine | null {
+  const alvos = nums.map((n) => n.value).filter((v) => Number.isInteger(v) && v >= 1);
+  if (alvos.length < 2) return null;
+
+  const testes: [string, (n: number) => number | null][] = [
+    [
+      "Fibonacci",
+      (n) => {
+        const i = FIBONACCI.indexOf(n);
+        return i >= 0 ? i + 1 : null;
+      },
+    ],
+    ["triangulares", posTriangular],
+    ["quadrados", posQuadrado],
+  ];
+
+  for (const [nome, pos] of testes) {
+    const posicoes = alvos.map(pos);
+    // Ver o cabeçalho: um acerto isolado é coincidência; a lista inteira não é.
+    if (posicoes.some((p) => p === null)) continue;
+    const vals = posicoes as number[];
+    return {
+      op: "sequencia",
+      label: OP_LABEL.sequencia,
+      text: `Todos são ${nome} — posições: ${vals.join(" ")}`,
+      values: vals,
+      chain: vals.join(" "),
+    };
+  }
+  return null;
+}
+
 export function analyzeArithmetic(blocks: ParsedNumber[][], ops?: MathOpId[]): MathReport {
   const wanted = ops ? new Set(ops) : null;
   const numeric = blocks.map((b) => b.map((n) => n.value));
@@ -363,6 +491,8 @@ export function analyzeArithmetic(blocks: ParsedNumber[][], ops?: MathOpId[]): M
     soma: () => lineSoma(flat),
     kaprekar: () => lineKaprekar(flat),
     resto: () => lineResto(flat),
+    fatores: () => lineFatores(flat),
+    sequencia: () => lineSequencia(flat),
   };
 
   const lines: MathLine[] = [];

@@ -31,7 +31,8 @@
     "build:estacoes": "tsx scripts/build-estacoes-ibge.ts",
     "build:eixos": "tsx scripts/build-eixos-blumenau.ts",
     "enrich:streets": "tsx scripts/enrich-streets-eixos.ts",
-    "build:quadgramas": "tsx scripts/build-quadgramas.ts"
+    "build:quadgramas": "tsx scripts/build-quadgramas.ts",
+    "build:articulacao": "tsx scripts/build-articulacao-blumenau.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

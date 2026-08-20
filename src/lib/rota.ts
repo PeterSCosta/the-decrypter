@@ -26,6 +26,7 @@
 export type RotaAba =
   | "decoder"
   | "arquivo"
+  | "lote"
   | "text"
   | "positions"
   | "matrix"
@@ -33,6 +34,7 @@ export type RotaAba =
   | "anagram"
   | "fonts"
   | "reference"
+  | "retrato"
   | "geo"
   | "triangulate"
   | "postes"
@@ -54,6 +56,7 @@ const ABA_PADRAO: RotaAba = "decoder";
 const ABAS: Record<RotaAba, string> = {
   decoder: "decodificador",
   arquivo: "arquivo",
+  lote: "lote",
   text: "texto",
   positions: "posicoes",
   matrix: "matriz",
@@ -61,6 +64,7 @@ const ABAS: Record<RotaAba, string> = {
   anagram: "anagramas",
   fonts: "fontes",
   reference: "cola",
+  retrato: "retrato",
   geo: "geolocalizacao",
   triangulate: "triangulacao",
   postes: "postes",

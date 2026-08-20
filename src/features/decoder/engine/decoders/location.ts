@@ -1,10 +1,18 @@
 import { cepByCode, formatCep } from "@/features/cep/types";
+import { proximas } from "@/features/estacao/types";
 import { detectLocations, detectWhat3Words } from "@/features/location/formats";
 import { detectMapcode } from "@/features/location/mapcode";
 import { defineDecoder } from "../define";
 import type { DecodeCandidate } from "../types";
 
 export interface LocationData {
+  /**
+   * Estações geodésicas do IBGE mais próximas — enriquecimento do card que já
+   * ganhou nota por outro motivo. Não cria card novo nem portão novo: é a
+   * resposta a "o que há neste ponto", que a prova costuma perguntar em
+   * seguida. Calculado local, sobre 491 linhas, sem rede.
+   */
+  perto?: { codigo: string; municipio: string; descricao: string; km: number }[];
   lat: number | null;
   lng: number | null;
   label: string;
@@ -72,6 +80,15 @@ export const decoders = defineDecoder({
             lng: loc.lng,
             label: `${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}`,
             format: loc.format,
+            // Enriquecimento, não card novo — ver `LocationData.perto`.
+            perto: proximas(ctx.estacoes ?? null, loc.lat, loc.lng, 3)
+              .filter((e) => e.km <= 15)
+              .map((e) => ({
+                codigo: e.codigo,
+                municipio: e.municipio,
+                descricao: e.descricao,
+                km: e.km,
+              })),
           },
           // A nota vem da CAMADA que resolveu, não é fixa: um Geohash frouxo
           // não pode empatar com um Plus Code completo, e muito menos ganhar

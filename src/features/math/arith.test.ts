@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { ParsedNumber } from "./arith";
 import {
   a1z26,
   analyzeArithmetic,
@@ -108,5 +109,59 @@ describe("relatório", () => {
     const r = analyzeArithmetic(parseBlocks("15.586.677,75 e 17,5%"), ["divisao"]);
     expect(r.lines[0].text).toBe("15.586.677,75 ÷ 17,5% = 89066730 · CEP 89066-730");
     expect(r.lines[0].chain).toBe("89066730");
+  });
+});
+
+/**
+ * ONDA 6.8 — fatoração e sequências, sob a MESMA regra de palavra-dica.
+ *
+ * Um número solto não tem assinatura: `1400` é plaqueta de poste, código de rua,
+ * ano e quantia. Um decoder que fatorasse todo número acenderia em toda entrada
+ * numérica da bancada. A dica é o que prova a intenção.
+ */
+describe("fatoração em primos", () => {
+  const linha = (nums: number[]) =>
+    analyzeArithmetic([nums.map((v) => ({ value: v }) as ParsedNumber)], ["fatores"]).lines[0];
+
+  it("fatora e mostra a conta", () => {
+    expect(linha([60]).text).toContain("60 = 2 × 2 × 3 × 5");
+  });
+
+  it("diz quando o número é primo, em vez de mostrar a fatoração dele mesmo", () => {
+    expect(linha([97]).text).toContain("97 é primo");
+  });
+
+  it("os valores são a CONTAGEM de fatores — é o que vira letra", () => {
+    expect(linha([60, 84]).values).toEqual([4, 4]);
+  });
+});
+
+describe("sequências conhecidas", () => {
+  const linha = (nums: number[]) =>
+    analyzeArithmetic([nums.map((v) => ({ value: v }) as ParsedNumber)], ["sequencia"]).lines[0];
+
+  it("reconhece triangulares e devolve as posições", () => {
+    expect(linha([3, 6, 10, 15, 21]).text).toContain("triangulares");
+    expect(linha([3, 6, 10, 15, 21]).values).toEqual([2, 3, 4, 5, 6]);
+  });
+
+  it("reconhece Fibonacci", () => {
+    expect(linha([2, 3, 5, 8, 13]).text).toContain("Fibonacci");
+  });
+
+  it("reconhece quadrados perfeitos", () => {
+    expect(linha([4, 9, 16, 25]).text).toContain("quadrados");
+  });
+
+  /**
+   * Só emite quando TODOS pertencem à mesma sequência. Um acerto isolado é
+   * coincidência — 4 é quadrado, mas `4 7 11` não é sequência nenhuma.
+   */
+  it("um acerto isolado no meio da lista não conta", () => {
+    expect(linha([4, 7, 11])).toBeUndefined();
+  });
+
+  it("um número só não é sequência", () => {
+    expect(linha([8])).toBeUndefined();
   });
 });

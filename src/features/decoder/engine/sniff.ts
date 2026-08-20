@@ -1,6 +1,7 @@
 import { gs1CheckDigit } from "@/features/codes/barcode";
 import { isValidCnpj, isValidCpf, onlyDigits } from "@/features/documents/validate";
 import { lookupDDD } from "@/features/reference/phone-codes";
+import { pareceHomoglifo } from "./decoders/confusaveis";
 import type { DecodeContext } from "./types";
 
 /**
@@ -162,6 +163,33 @@ function sniffGeoShapes(input: string, out: Hint[]): void {
     });
   }
 
+  /**
+   * ADFGVX / ADFGX — o chip DIZ O NOME e não decifra, de propósito.
+   *
+   * ── POR QUE SÓ O CHIP ──────────────────────────────────────────────────────
+   * A cifra exige DUAS chaves (o quadrado de Polibio e a permutação colunar), e
+   * o acervo mostra que cifra clássica que precisa de chave sem entregá-la
+   * **zera** — a Scotland Yard fez 0 de 4 em seis horas. Decifrar sem as chaves
+   * é busca combinatória, que a régua da casa mantém fora do leque.
+   *
+   * ── E POR QUE O CHIP VALE MESMO ASSIM ─────────────────────────────────────
+   * Medido: num ADFGVX de verdade a bancada emite **5 cards acima do corte,
+   * todos errados** (`affine` 0,49, `caesar` 0,46…) e **nenhum nomeia a cifra**.
+   * Trocar cinco respostas erradas por uma frase certa custa este bloco.
+   *
+   * O portão é literal — só as seis letras, comprimento par e ≥8 — e acende em
+   * **0 de 30.000** strings alfanuméricas sorteadas.
+   */
+  const adfg = t.replace(/\s+/g, "").toUpperCase();
+  if (/^[ADFGVX]+$/.test(adfg) && adfg.length >= 8 && adfg.length % 2 === 0) {
+    const temV = adfg.includes("V");
+    out.push({
+      id: "adfgvx-shape",
+      label: `tem cara de ${temV ? "ADFGVX" : "ADFGX"}`,
+      detail: `só as letras A D F G${temV ? " V" : ""} X, em número par. A bancada NÃO decifra: são duas chaves (o quadrado de Polibio e a permutação colunar), e sem elas não há o que tentar. Se a prova der as chaves, o Boxentriq e o cryptii resolvem.`,
+    });
+  }
+
   if (/^(?:\/\/\/)?[\p{L}]+\.[\p{L}]+\.[\p{L}]+$/u.test(t)) {
     out.push({
       id: "w3w-shape",
@@ -204,5 +232,26 @@ export function sniff(input: string, _ctx: DecodeContext): Hint[] {
   sniffCheckDigits(input, out);
   sniffGeoShapes(input, out);
   sniffCoordinateBlocks(input, out);
+  sniffHomoglifos(input, out);
   return out;
+}
+
+/**
+ * Letra de outra escrita escondida dentro de palavra latina.
+ *
+ * O chip existe porque o disfarce é INVISÍVEL na tela: `a рorta рreta` e
+ * `a porta preta` se desenham igual, e quem não souber que existe a
+ * possibilidade não vai procurar. O card do `confusaveis` resolve; o chip é o
+ * que faz alguém reparar que havia o que resolver.
+ */
+function sniffHomoglifos(input: string, out: Hint[]): void {
+  if (!pareceHomoglifo(input)) return;
+  out.push({
+    id: "homoglifo",
+    label: "letra de outra escrita disfarçada de latina",
+    detail:
+      "Há caractere grego ou cirílico dentro de palavra latina — ele se desenha igual e não aparece na tela. O card “Letra de outra escrita” mostra o texto limpo e em que posições estavam.",
+    decoderId: "confusaveis",
+    tone: "warn",
+  });
 }

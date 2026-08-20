@@ -4,6 +4,7 @@ import type { CepsData } from "@/features/cep/types";
 import type { EixosData } from "@/features/eixos/types";
 import type { EstacoesData } from "@/features/estacao/types";
 import type { MunicipiosData } from "@/features/ibge/types";
+import type { ArticulacaoData } from "@/features/location/articulacao";
 import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
 import type { VotacoesData } from "@/features/votacao/types";
@@ -78,6 +79,8 @@ export interface DecodeContext {
   votacoes?: VotacoesData | null;
   /** Estações geodésicas do Vale (IBGE). Preguiçosa, como as votações. */
   estacoes?: EstacoesData | null;
+  /** Articulação municipal de Blumenau (1:5.000 e 1:1.000). Ver `articulacao.ts`. */
+  articulacao?: ArticulacaoData | null;
   /**
    * Eixos de logradouro de Blumenau — quadra e CEP de cada lado de cada trecho.
    *
@@ -109,6 +112,7 @@ export interface DecodeCandidate {
     | "text"
     | "street"
     | "cep"
+    | "cep-curinga"
     | "caesar-table"
     | "documento"
     | "map"
@@ -127,7 +131,8 @@ export interface DecodeCandidate {
     | "cnae"
     | "fipe"
     | "votacao"
-    | "youtube";
+    | "youtube"
+    | "filme";
   /** Structured payload for custom renderers. */
   data?: unknown;
 }

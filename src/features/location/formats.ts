@@ -4,7 +4,7 @@
  * e devolve o primeiro que casar, com o nome do formato.
  */
 import { getCellByCode, getCellByLocation } from "geohex";
-import { ANCHORS, VALE_BBOX, inBBox, scopeLabel } from "./anchors";
+import { ANCHORS, type BBox, FUSO_DO_VALE, VALE_BBOX, inBBox, scopeLabel } from "./anchors";
 import { cartaScaleLabel, decodeCartaIbge } from "./carta-ibge";
 import { decodeCSquares } from "./csquares";
 import { decodeGars, garsCellLabel } from "./gars";
@@ -47,6 +47,19 @@ export const CONFIANCA = {
   literal: 0.95,
   forma: 0.9,
   atalho: 0.75,
+  /**
+   * Atalho que devolveu MAIS DE UMA leitura — hoje só a cauda de Geohash, que é
+   * ambígua por construção (2 ou 3 pontos, nunca 1 — ver `decodeGeohashLocal`).
+   *
+   * Por que 0,52 e não 0,50: as 2-3 leituras caem todas no Vale, e numa gincana
+   * daqui isso ainda é mais provável que o Geohash global, que para `g7rpj`
+   * aponta a Islândia. Então continua acima de `frouxa` — a promessa da Ajuda de
+   * que o atalho local vem antes segue valendo.
+   *
+   * Por que abaixo de `atalhoFraco`: quem devolve três pontos acertou no máximo
+   * um. A nota tem de separar "li isto" de "é um destes três".
+   */
+  atalhoAmbiguo: 0.52,
   /**
    * Atalho de PORTÃO FRACO — hoje só a cauda de Geohash.
    *
@@ -243,6 +256,44 @@ export function plusCodeEhCompleto(raw: string): boolean {
  * A conta mora em `utm.ts` porque o MGRS é a mesma projeção com outra grafia e
  * precisa dela sem importar este módulo de volta (ciclo).
  */
+/**
+ * Cauda de UTM — o par E/N sem o fuso, completado com o do Vale.
+ *
+ * ── POR QUE ELA ENTRA, E COM QUAL NÚMERO ───────────────────────────────────
+ * É o atalho de cauda MAIS SELETIVO do conjunto, e por larga margem. Medido em
+ * 300.000 pares E/N sorteados dentro do fuso 22J:
+ *
+ *   | atalho | rejeição |
+ *   |---|---:|
+ *   | **cauda de UTM (contra a VALE_BBOX)** | **98,67%** |
+ *   | cauda de UTM (contra caixa de cidade) | 99,62% |
+ *   | Plus Code curto | 79,8% |
+ *   | cauda de geohash | 18,3% |
+ *
+ * A razão é geométrica: a célula do fuso 22J tem 590 × 885 km e a caixa do Vale
+ * tem 89 × 89 km — **66 vezes menor**. É o oposto exato da cauda de geohash,
+ * cuja célula é MENOR que a caixa e por isso não valida nada (ver
+ * `decodeGeohashLocal`).
+ *
+ * ── A ASSINATURA, QUE NÃO É PALPITE ────────────────────────────────────────
+ * O Vale inteiro cabe em `E 653.868..744.044` e `N 6.978.196..7.067.846`. Ou
+ * seja: seis dígitos começando em 65..74, e sete começando em 697..706. Isso é
+ * forma, não estatística — e é o que impede o atalho de disparar em qualquer
+ * par de números grandes.
+ *
+ * ── E O CAMPO MORTO QUE ELA RESSUSCITA ─────────────────────────────────────
+ * `anchors.ts` declara `utmZone: "22J"` desde sempre, e até aqui **nenhum
+ * código de decodificação o lia** — os dois únicos leitores eram texto de tela.
+ * O `decodeMgrsLocal` reconstrói com a string `"22J"` escrita no próprio
+ * arquivo. Agora a âncora é a fonte, e o literal sai de lá.
+ */
+export function parseUTMLocal(raw: string, bbox: BBox = VALE_BBOX): GeoPoint | null {
+  const m = raw.trim().match(/^(\d{6})\s*E?[\s,]+(\d{7})\s*N?$/);
+  if (!m) return null;
+  const pt = utmToLatLng(FUSO_DO_VALE, false, Number(m[1]), Number(m[2]));
+  return pt && inBBox(pt, bbox) ? pt : null;
+}
+
 export function parseUTM(raw: string): GeoPoint | null {
   const m = raw
     .trim()
@@ -412,22 +463,125 @@ export function decodePlusCodeLocal(raw: string): LocalGeoHit | null {
   return null;
 }
 
+/** Geohash de um ponto, `precisao` caracteres. Inverso do `decodeGeohash`. */
+export function encodeGeohash(lat: number, lng: number, precisao: number): string {
+  let even = true;
+  let latMin = -90;
+  let latMax = 90;
+  let lngMin = -180;
+  let lngMax = 180;
+  let bit = 0;
+  let ch = 0;
+  let out = "";
+  while (out.length < precisao) {
+    if (even) {
+      const mid = (lngMin + lngMax) / 2;
+      if (lng >= mid) {
+        ch = ch * 2 + 1;
+        lngMin = mid;
+      } else {
+        ch *= 2;
+        lngMax = mid;
+      }
+    } else {
+      const mid = (latMin + latMax) / 2;
+      if (lat >= mid) {
+        ch = ch * 2 + 1;
+        latMin = mid;
+      } else {
+        ch *= 2;
+        latMax = mid;
+      }
+    }
+    even = !even;
+    if (++bit === 5) {
+      out += GEOHASH_B32[ch];
+      bit = 0;
+      ch = 0;
+    }
+  }
+  return out;
+}
+
 /**
- * Cauda de Geohash (ex.: "g7rpj"): antepõe o prefixo da cidade ("6gjn" Blumenau
- * / "6gjq" Itajaí) e aceita o que cair dentro dela. Auto-validante: só passa a
- * cauda que de fato cai na caixa da cidade.
+ * TODOS os prefixos de geohash que tocam uma caixa — não "o" prefixo dela.
+ *
+ * A célula de 4 caracteres mede ~39 × 19,5 km e a caixa de Blumenau, 52 × 26 km:
+ * **a cidade não cabe numa célula**, ela se parte em quatro. Cantos bastam para
+ * enumerar, porque a caixa nunca chega a dois comprimentos de célula em nenhum
+ * eixo — mas varremos uma grade pequena de propósito, para que a lista continue
+ * certa se a caixa crescer. É calculado, não escrito à mão: mexer na `bbox`
+ * corrige os prefixos sozinho.
  */
-export function decodeGeohashLocal(raw: string): LocalGeoHit | null {
+export function geohashPrefixes(b: BBox, precisao = 4): string[] {
+  const vistos = new Set<string>();
+  const N = 8;
+  for (let i = 0; i <= N; i++) {
+    for (let j = 0; j <= N; j++) {
+      const lat = b.latMin + ((b.latMax - b.latMin) * i) / N;
+      const lng = b.lonMin + ((b.lonMax - b.lonMin) * j) / N;
+      vistos.add(encodeGeohash(lat, lng, precisao));
+    }
+  }
+  return [...vistos];
+}
+
+/**
+ * Cauda de Geohash (ex.: "g7rpj") — devolve TODAS as leituras possíveis.
+ *
+ * ── POR QUE UMA LISTA, E NÃO UMA RESPOSTA ────────────────────────────────────
+ * Este atalho devolvia UM ponto: antepunha o prefixo único declarado na âncora
+ * (`6gjn` Blumenau) e parava no primeiro acerto. Medido sobre 250.000 pontos da
+ * caixa de Blumenau, isso é uma resposta errada em **62,6% dos casos**, com
+ * **27 km de erro médio** e 39 km no pior — e **0,0% de rejeição**: a bancada
+ * nunca calava, porque o ponto errado cai dentro da caixa do mesmo jeito.
+ *
+ * A causa não é o prefixo estar errado, é ele ser *um*. Blumenau se parte em
+ * quatro células (`6gjp` 37,5% · `6gjn` 37,3% · `6gm0` 23,8% · `6gjj` 1,5%) e a
+ * âncora declarava só a segunda.
+ *
+ * E **não há conserto por escolher melhor**. Enumerando as quatro e ficando com
+ * as que caem na caixa, o ponto certo está entre os candidatos em **100%** dos
+ * casos — mas os candidatos são **2 ou 3, nunca 1** (2 em 24,5%, 3 em 75,5%).
+ * Uma cauda de geohash com cidade assumida **não identifica ponto**, por
+ * construção: a célula é menor que a caixa, então a caixa não desempata.
+ *
+ * Então a função devolve o que a matemática permite — todas as leituras — e
+ * quem chama as apresenta como alternativas. Pela regra da casa, N leituras
+ * honestas valem mais que uma errada com nota alta.
+ *
+ * (O Plus Code não tem esse defeito e foi conferido pelo mesmo teste: a célula
+ * `585G` é OITO vezes maior que a caixa, e 0,00% das caudas valem nas duas
+ * cidades. Ele continua devolvendo uma resposta só.)
+ *
+ * ── DECISÃO DO DONO, 2026-08-19: A CAUDA FICA NO LEQUE ───────────────────────
+ * Foi posta a alternativa de tirá-la do leque automático e deixá-la só na aba
+ * Geolocalização — a régua de admissão do `docs/PLANO-CATALOGOS.md` §5/R1 pediria
+ * isso, porque a rejeição medida é ~0%. **O dono decidiu manter no leque.**
+ *
+ * A razão é a regra da casa que vale mais aqui: *localização existente, mesmo
+ * longe, é válida e não se apaga*. O preço está medido e aceito — `1400m` produz
+ * cinco cards de 0,52 no topo. Se alguém quiser reabrir, o gatilho é o custo do
+ * espaço, nunca a correção: com o rótulo "(1 de 5)" e a nota `atalhoAmbiguo` a
+ * leitura não mente mais.
+ */
+export function decodeGeohashLocal(raw: string): LocalGeoHit[] {
   const s = raw.trim().toLowerCase();
   // exige ≥1 letra (lookahead) p/ não colidir com entradas puramente numéricas
   // (CEP, NCM, códigos de rua, etc.), que são as colisões mais comuns.
-  if (!/^(?=.*[bcdefghjkmnpqrstuvwxyz])[0-9bcdefghjkmnpqrstuvwxyz]{4,8}$/.test(s)) return null;
+  if (!/^(?=.*[bcdefghjkmnpqrstuvwxyz])[0-9bcdefghjkmnpqrstuvwxyz]{4,8}$/.test(s)) return [];
+  const hits: LocalGeoHit[] = [];
+  const vistos = new Set<string>();
   for (const a of ANCHORS) {
-    const full = a.geohashCity + s;
-    const pt = decodeGeohash(full);
-    if (pt && inBBox(pt, a.bbox)) return { ...pt, anchor: a.name, full };
+    for (const prefixo of geohashPrefixes(a.bbox)) {
+      const full = prefixo + s;
+      if (vistos.has(full)) continue;
+      vistos.add(full);
+      const pt = decodeGeohash(full);
+      if (pt && inBBox(pt, a.bbox)) hits.push({ ...pt, anchor: a.name, full });
+    }
   }
-  return null;
+  return hits;
 }
 
 /**
@@ -639,17 +793,25 @@ export function detectLocations(raw: string): DetectedLocation[] {
   // Nem todos os atalhos devolvem o código reconstruído: MGRS, GEOREF e GeoHex
   // devolvem só o ponto. Por isso o tipo é o par com `full` OPCIONAL, e o
   // rótulo só cita a cauda quando ela existe.
-  const local: [string, (GeoPoint & Partial<LocalGeoHit>) | null, number][] = [
-    ["GeoHex", parseGeoHexBlumenau(input), CONFIANCA.atalho],
-    ["MGRS/USNG", decodeMgrsLocal(input), CONFIANCA.atalho],
-    ["GEOREF", decodeGeorefLocal(input), CONFIANCA.atalho],
-    ["Plus Code", decodePlusCodeLocal(input), CONFIANCA.atalho],
+  // Cada atalho devolve uma LISTA porque a cauda de geohash é ambígua por
+  // construção (ver `decodeGeohashLocal`). Os outros devolvem zero ou um.
+  const local: [string, (GeoPoint & Partial<LocalGeoHit>)[], number][] = [
+    ["GeoHex", umOuNenhum(parseGeoHexBlumenau(input)), CONFIANCA.atalho],
+    ["MGRS/USNG", umOuNenhum(decodeMgrsLocal(input)), CONFIANCA.atalho],
+    ["GEOREF", umOuNenhum(decodeGeorefLocal(input)), CONFIANCA.atalho],
+    // A cauda de UTM é o atalho MAIS seletivo do conjunto (rejeita 98,67% contra
+    // a caixa do Vale, medido em 300.000 pares) — ver `parseUTMLocal`.
+    ["UTM", umOuNenhum(parseUTMLocal(input)), CONFIANCA.atalho],
+    ["Plus Code", umOuNenhum(decodePlusCodeLocal(input)), CONFIANCA.atalho],
     // A cauda de geohash tem o portão mais fraco da lista — ver `atalhoFraco`.
     ["Geohash", decodeGeohashLocal(input), CONFIANCA.atalhoFraco],
   ];
-  for (const [format, pt, confianca] of local) {
-    if (pt) {
+  for (const [format, pts, confianca] of local) {
+    for (const pt of pts) {
       const cidade = scopeLabel(pt) ?? "Vale do Itajaí";
+      // Uma cauda que produz mais de uma leitura NÃO identifica ponto. O rótulo
+      // diz isso na cara — "1 de 3" — em vez de deixar o card parecer resposta.
+      const deN = pts.length > 1 ? ` (${pts.indexOf(pt) + 1} de ${pts.length})` : "";
       saida.push({
         lat: pt.lat,
         lng: pt.lng,
@@ -658,9 +820,11 @@ export function detectLocations(raw: string): DetectedLocation[] {
         // Ajuda. A palavra vem do decoder `local-geocode`, que dizia isso e foi
         // absorvido aqui.
         format: pt.full
-          ? `${format} · cauda de ${pt.full}, assumindo ${cidade}`
-          : `${format} · assumindo ${cidade}`,
-        confianca,
+          ? `${format} · cauda de ${pt.full}, assumindo ${cidade}${deN}`
+          : `${format} · assumindo ${cidade}${deN}`,
+        // Leitura ambígua não pode valer o mesmo que leitura única: quem devolve
+        // 3 pontos acertou no máximo um deles, e a nota tem de dizer isso.
+        confianca: pts.length > 1 ? CONFIANCA.atalhoAmbiguo : confianca,
       });
     }
   }
@@ -684,6 +848,11 @@ export function detectLocations(raw: string): DetectedLocation[] {
   // `sort` é estável no JS moderno, então dentro da mesma camada a ordem da
   // cascata é preservada — e ela carrega a razão de MGRS vir antes de Geohash.
   return unicas.sort((a, b) => (b.confianca ?? 0) - (a.confianca ?? 0));
+}
+
+/** `null` vira lista vazia — para os atalhos que devolvem no máximo um ponto. */
+function umOuNenhum<T>(x: T | null): T[] {
+  return x ? [x] : [];
 }
 
 /** A melhor leitura. Existe porque quase todo chamador quer uma só. */

@@ -96,6 +96,19 @@ export const ITAJAI: LocalAnchor = {
 export const ANCHORS: LocalAnchor[] = [BLUMENAU, ITAJAI];
 
 /**
+ * O fuso UTM do Vale, derivado das âncoras em vez de escrito de novo.
+ *
+ * As duas cidades estão inteiras em 22J (medido: 5.268/5.268 dos CEPs com
+ * coordenada). O campo `utmZone` existia desde sempre e **nenhum código de
+ * decodificação o lia** — o `mgrs.ts` reconstruía com a string `"22J"` escrita
+ * nele mesmo, e a ficha de tela era o único outro leitor. Derivar aqui é o que
+ * impede o número de existir em três lugares e um deles envelhecer sozinho.
+ */
+export const ZONA_UTM_DO_VALE = BLUMENAU.utmZone;
+export const FUSO_DO_VALE = Number.parseInt(ZONA_UTM_DO_VALE, 10);
+export const BANDA_DO_VALE = ZONA_UTM_DO_VALE.replace(/\d/g, "");
+
+/**
  * Caixa que cobre as DUAS cidades (e o trecho entre elas: Gaspar, Ilhota,
  * Navegantes, Balneário Camboriú). Usada pelos atalhos que compartilham prefixo
  * regional (GeoHex "Nb", Geohash "6gj") e aceitam tanto Blumenau quanto Itajaí.

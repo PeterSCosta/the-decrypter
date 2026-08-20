@@ -1,3 +1,4 @@
+import { ORDEM, TABS } from "@/app-tabs";
 import { Topbar } from "@/components/layout/topbar";
 import { AdminPage } from "@/features/admin/components/admin-page";
 import { AnagramPanel } from "@/features/anagram/components/anagram-panel";
@@ -9,33 +10,18 @@ import { DiffPanel } from "@/features/diff/components/diff-panel";
 import { FontsPanel } from "@/features/fonts/components/fonts-panel";
 import { HelpPage } from "@/features/help/components/help-page";
 import { RoadmapPage } from "@/features/help/components/roadmap-page";
+import { LotePanel } from "@/features/lote/components/lote-panel";
+import { useLoteEmAndamento } from "@/features/lote/use-lote";
 import { MatrixPanel } from "@/features/matrix/components/matrix-panel";
 import { PositionsPanel } from "@/features/positions/components/positions-panel";
 import { ReferencePanel } from "@/features/reference/components/reference-panel";
+import { RetratoPanel } from "@/features/retrato/components/retrato-panel";
 import { TextExtractPanel } from "@/features/text-extract/components/text-extract-panel";
 import { cn } from "@/lib/cn";
-import { type RotaAba, lerCaminho } from "@/lib/rota";
+import { lerCaminho } from "@/lib/rota";
 import { useRota } from "@/lib/use-rota";
-import {
-  BookOpen,
-  Compass,
-  Eye,
-  FileSearch,
-  GitCompare,
-  Grid3x3,
-  Hash,
-  KeyRound,
-  Library,
-  Lightbulb,
-  MapPinned,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Shuffle,
-  Triangle,
-  Type,
-  Wand2,
-} from "lucide-react";
-import { type ComponentType, Suspense, lazy, useCallback, useState } from "react";
+import { KeyRound, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Suspense, lazy, useCallback, useState } from "react";
 
 /**
  * As duas abas com mapa entram sob demanda: juntas elas arrastam Leaflet +
@@ -72,40 +58,6 @@ function PainelCarregando() {
     />
   );
 }
-
-/**
- * A lista de abas é a MESMA coisa que a lista de rotas — de propósito.
- *
- * Se fossem dois tipos separados, acrescentar uma aba e esquecer o apelido de
- * URL compilaria, e o link daquela tela levaria para o Decodificador em
- * silêncio. Sendo o mesmo tipo, o `Record<RotaAba, string>` de `lib/rota.ts`
- * transforma o esquecimento em ERRO DE COMPILAÇÃO — que é onde este tipo de
- * defeito custa menos.
- */
-type TabId = RotaAba;
-
-const TABS: { id: TabId; label: string; icon: ComponentType<{ className?: string }> }[] = [
-  { id: "decoder", label: "Decodificador", icon: Wand2 },
-  // Logo depois do Decodificador: é a segunda porta de entrada mais provável
-  // quando a prova chega, porque a primeira pergunta sobre um arquivo é "o que
-  // é isto de verdade" — e essa se responde nos bytes, antes de saber o tipo.
-  { id: "arquivo", label: "Arquivo", icon: FileSearch },
-  { id: "text", label: "Texto", icon: Type },
-  { id: "positions", label: "Posições", icon: Hash },
-  { id: "matrix", label: "Matriz", icon: Grid3x3 },
-  { id: "diff", label: "Diferenças", icon: GitCompare },
-  { id: "anagram", label: "Anagramas", icon: Shuffle },
-  { id: "fonts", label: "Fontes", icon: Eye },
-  { id: "reference", label: "Cola", icon: BookOpen },
-  // Antes da Triangulação: ela é a porta do assunto (o que é cada formato, o
-  // que fazer com um código pela metade), e a Triangulação é uma ferramenta
-  // específica de dentro dele.
-  { id: "geo", label: "Geolocalização", icon: Compass },
-  { id: "triangulate", label: "Triangulação", icon: Triangle },
-  { id: "postes", label: "Postes", icon: Lightbulb },
-  { id: "library", label: "Biblioteca", icon: Library },
-  { id: "fleet", label: "Frota", icon: MapPinned },
-];
 
 // O painel de admin entra aqui, e não como aba: a lista de abas é visível para
 // todo mundo, e anunciar "Usuários" a quem não é admin só gera clique em porta
@@ -153,6 +105,13 @@ export function App() {
    * no `title`, a navegação continua inteira em 3,5 rem.
    */
   const [menuAberto, setMenuAberto] = useState(true);
+
+  /**
+   * A rodada do Lote sobrevive à troca de aba — e é isso que o botão "na
+   * bancada" de cada linha faz. O preço é uma rodada correndo com o "Parar"
+   * fora de alcance; o ponto é o que devolve o alcance a quem saiu.
+   */
+  const loteRodando = useLoteEmAndamento();
 
   // A grade pintada quase nunca é a resposta: ela produz uma string (os dígitos
   // de uma fonte 3×5, as células verdadeiras em ordem) que ainda precisa passar
@@ -219,7 +178,8 @@ export function App() {
             className="mb-6 flex gap-1 overflow-x-auto border-b border-[var(--border-subtle)] lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             role="tablist"
           >
-            {TABS.map((t) => {
+            {ORDEM.map((id) => {
+              const t = { id, ...TABS[id] };
               const active = tab === t.id;
               const Icon = t.icon;
               return (
@@ -238,6 +198,12 @@ export function App() {
                 >
                   <Icon className="h-4 w-4 shrink-0" />
                   {t.label}
+                  {t.id === "lote" && loteRodando ? (
+                    <span
+                      className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--pulse)]"
+                      aria-label="rodada em andamento"
+                    />
+                  ) : null}
                 </button>
               );
             })}
@@ -287,7 +253,8 @@ export function App() {
                 )}
               </button>
 
-              {TABS.map((t) => {
+              {ORDEM.map((id) => {
+                const t = { id, ...TABS[id] };
                 const active = tab === t.id;
                 const Icon = t.icon;
                 return (
@@ -310,6 +277,12 @@ export function App() {
                   >
                     <Icon className="h-4 w-4 shrink-0" />
                     {menuAberto ? t.label : null}
+                    {t.id === "lote" && loteRodando ? (
+                      <span
+                        className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--pulse)]"
+                        aria-label="rodada em andamento"
+                      />
+                    ) : null}
                   </button>
                 );
               })}
@@ -326,6 +299,7 @@ export function App() {
                 aoTrocarCifra={irParaCifra}
               />
             )}
+            {tab === "lote" && <LotePanel onDecodificador={mandarParaDecodificador} />}
             {tab === "text" && <TextExtractPanel />}
             {tab === "positions" && <PositionsPanel />}
             {tab === "matrix" && <MatrixPanel onDecodificador={mandarParaDecodificador} />}
@@ -333,6 +307,7 @@ export function App() {
             {tab === "fonts" && <FontsPanel />}
             {tab === "anagram" && <AnagramPanel />}
             {tab === "reference" && <ReferencePanel />}
+            {tab === "retrato" && <RetratoPanel />}
             <Suspense fallback={<PainelCarregando />}>
               {tab === "arquivo" && <ArquivoPanel onDecodificador={mandarParaDecodificador} />}
               {tab === "geo" && (

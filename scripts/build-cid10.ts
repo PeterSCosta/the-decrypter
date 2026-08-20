@@ -24,6 +24,7 @@ import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { inflateRawSync } from "node:zlib";
+import { comFonteDeRede } from "./lib/fonte-ausente";
 
 const SRC = "http://www2.datasus.gov.br/cid10/V2008/downloads/CID10CSV.zip";
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "seed-data/cid10.json");
@@ -165,4 +166,10 @@ async function main() {
   );
 }
 
-main();
+comFonteDeRede({
+  saida: OUT,
+  passo: "build:cid10",
+  comoObter:
+    "www2.datasus.gov.br — CID10CSV.zip (V2008). O servidor cai com frequência; tente de novo mais tarde.",
+  gerar: main,
+});

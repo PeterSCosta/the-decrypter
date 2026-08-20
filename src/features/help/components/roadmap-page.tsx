@@ -7,6 +7,8 @@ const STATUS_TONE: Record<RoadStatus, BadgeProps["tone"]> = {
   todo: "brand",
   idea: "info",
   blocked: "pulse",
+  done: "success",
+  wont: "neutral",
 };
 
 export function RoadmapPage({ onClose }: { onClose: () => void }) {

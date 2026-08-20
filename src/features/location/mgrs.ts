@@ -15,7 +15,7 @@
  * GeographicLib e o pacote npm `mgrs` devolvem "22JFR9203021024" para
  * -26.9194,-49.0661 (Blumenau), nas 6 precisões.
  */
-import { type BBox, VALE_BBOX, inBBox } from "./anchors";
+import { type BBox, VALE_BBOX, ZONA_UTM_DO_VALE, inBBox } from "./anchors";
 import type { GeoPoint } from "./formats";
 import { utmToLatLng } from "./utm";
 
@@ -121,6 +121,6 @@ export function mgrsPrecisionLabel(digits: number): string {
 export function decodeMgrsLocal(raw: string, bbox: BBox = VALE_BBOX): GeoPoint | null {
   const s = raw.trim().replace(/\s+/g, "");
   if (!/^[A-HJ-NP-Z][A-HJ-NP-V]\d{2,10}$/.test(s)) return null;
-  const pt = parseMgrs(`22J${s}`);
+  const pt = parseMgrs(`${ZONA_UTM_DO_VALE}${s}`);
   return pt && inBBox(pt, bbox) ? pt : null;
 }

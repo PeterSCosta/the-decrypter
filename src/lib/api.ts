@@ -75,8 +75,12 @@ export class ApiError extends Error {
  *
  * Antes disto cada módulo montava o seu próprio `fetch` e lia o erro do seu
  * jeito — com o login no meio, isso viraria seis lugares para esquecer o header.
+ *
+ * Devolve a `Response` crua porque nem toda resposta é JSON: quem quer o corpo
+ * decodificado usa `apiFetch`, quem quer arquivo usa `apiFetchArquivo`. O que
+ * não pode é existir um segundo lugar que fale com a API sem passar por aqui.
  */
-export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function requisitar(path: string, init: RequestInit = {}): Promise<Response> {
   const token = getToken();
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
@@ -119,5 +123,51 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
         : `Consulta indisponível (HTTP ${res.status}).`;
     throw new ApiError(res.status, corpo?.message ?? padrao);
   }
+  return res;
+}
+
+export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await requisitar(path, init);
   return res.status === 204 ? (undefined as T) : ((await res.json()) as T);
+}
+
+/** O arquivo que o servidor mandou, com o nome que ele deu. */
+export interface ApiArquivo {
+  blob: Blob;
+  nome: string;
+}
+
+/**
+ * `apiFetch` para respostas que são ARQUIVO, não JSON.
+ *
+ * Passa pelo mesmo `requisitar` de propósito: é lá que mora o `Authorization`
+ * (por isso um `<a href download>` não serve — navegação não leva header, e o
+ * download voltaria 401), a derrubada de sessão no 401 e o texto próprio do 429.
+ * Duplicar esse miolo seria o segundo lugar para esquecer de atualizar.
+ *
+ * O NOME VEM DO SERVIDOR, lido do `Content-Disposition` (a API o expõe no CORS).
+ * O `padrao` só cobre a resposta sem o cabeçalho — não é a regra do nome escrita
+ * de novo aqui, é o que sobra quando ela não chegou.
+ */
+export async function apiFetchArquivo(
+  path: string,
+  padrao: string,
+  init: RequestInit = {},
+): Promise<ApiArquivo> {
+  const res = await requisitar(path, init);
+  return {
+    blob: await res.blob(),
+    nome: nomeDoCabecalho(res.headers.get("Content-Disposition")) ?? padrao,
+  };
+}
+
+/** `attachment; filename="ceps-88xxx500.csv"` → `ceps-88xxx500.csv`. */
+function nomeDoCabecalho(cabecalho: string | null): string | null {
+  if (!cabecalho) return null;
+  // `filename*=UTF-8''…` (RFC 5987) vem primeiro quando existe: é a forma que
+  // carrega acento sem depender da codificação do cabeçalho.
+  const estendido = /filename\*=UTF-8''([^;]+)/i.exec(cabecalho);
+  if (estendido) return decodeURIComponent(estendido[1].trim());
+  const simples = /filename="?([^";]+)"?/i.exec(cabecalho);
+  return simples ? simples[1].trim() : null;
 }

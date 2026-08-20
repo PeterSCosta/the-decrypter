@@ -92,7 +92,12 @@ describe("runDecoders", () => {
       (r) => r.decoderId === "cep-wildcard",
     );
     expect(hit).toBeDefined();
-    expect((hit?.data as { cep: string }[])[0].cep).toBe("88010500");
+    const curinga = hit?.data as { padrao: string; total: number; hits: { cep: string }[] };
+    expect(curinga.hits[0].cep).toBe("88010500");
+    // O padrão vai no payload porque é ele que o botão de baixar CSV manda ao
+    // servidor — o `output` do card é prosa, não serve para pedir arquivo.
+    expect(curinga.padrao).toBe("880105x0");
+    expect(curinga.total).toBe(1);
     // O rótulo mostra o total REAL do banco, não o tamanho da lista trazida.
     expect(hit?.label).toContain("1 CEP(s)");
     // sem curinga, o decoder de curinga não dispara (fica com o cep-exact)

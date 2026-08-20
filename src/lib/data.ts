@@ -1,6 +1,7 @@
 import type { BridgesData } from "@/features/bridge/types";
 import type { EixosData } from "@/features/eixos/types";
 import type { EstacoesData } from "@/features/estacao/types";
+import type { ArticulacaoData } from "@/features/location/articulacao";
 import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
 import type { VotacoesData } from "@/features/votacao/types";
@@ -132,6 +133,16 @@ export function getEixos(): EixosData | null {
 
 // Estações geodésicas do Vale (IBGE). 49 KB, preguiçosa pelo mesmo motivo.
 const estacoes: Slot<EstacoesData> = { promise: null, value: null };
+const articulacao: Slot<ArticulacaoData> = { promise: null, value: null };
+
+/** Articulação municipal de Blumenau — 1.031 folhas, 70 KB. Ver `articulacao.ts`. */
+export function loadArticulacao(): Promise<ArticulacaoData> {
+  return loadOnce(articulacao, dataUrl("articulacao-blumenau.json"), asJson<ArticulacaoData>);
+}
+
+export function getArticulacao(): ArticulacaoData | null {
+  return articulacao.value;
+}
 
 export function loadEstacoes(): Promise<EstacoesData> {
   return loadOnce(estacoes, dataUrl("estacoes-ibge.json"), asJson<EstacoesData>);

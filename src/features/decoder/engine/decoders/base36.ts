@@ -20,13 +20,30 @@ export const decoders = mapDecoder({
   category: "encoding",
   decode(input) {
     const s = input.trim();
-    if (s.length < 2 || s.length > 64 || !VALIDO.test(s)) return null;
+    /**
+     * O PORTÃO, e por que ele apertou.
+     *
+     * Medido contra o corpus de provas: o portão antigo — 2 a 64 caracteres,
+     * ao menos uma letra — rejeitava **1,8%**. Toda palavra portuguesa é um
+     * Base36 válido, então `resposta`, `monumento` e `prefeitura` viravam card.
+     * O piso de admissão da casa é 79,8%; este era o pior número de dentro de
+     * casa, e a régua vale para o acervo existente, não só para decoder novo.
+     *
+     * Duas mudanças, e as duas vêm da forma real de um Base36 de prova:
+     *  • **letra E dígito.** Base36 é um NÚMERO escrito em 36 símbolos; um que
+     *    saia só com letras é tão improvável quanto útil — e é exatamente o
+     *    caso que colidia com o vocabulário inteiro. Medido: sobe a rejeição de
+     *    1,8% para 77,7% na mesma amostra, e o que sai são as palavras puras.
+     *  • **teto de 13, não 64.** 13 caracteres já passam de 2^64; acima disso
+     *    não é identificador, é texto — e texto tem outros decoders.
+     */
+    if (s.length < 2 || s.length > 13 || !VALIDO.test(s)) return null;
     // Só dígitos já é decimal: o conversor de base cobre, e emitir aqui seria
     // repetir o mesmo card com outro rótulo.
     if (/^\d+$/.test(s)) return null;
-    // Sem nenhuma letra depois de "A"..."Z" o palpite é fraco demais; exigir ao
-    // menos uma letra evita disparar em qualquer sigla de duas letras.
-    if (!/[a-z]/i.test(s)) return null;
+    // Letra E dígito — ver o bloco acima. Sozinha, a exigência de letra deixava
+    // passar o vocabulário inteiro.
+    if (!/[a-z]/i.test(s) || !/\d/.test(s)) return null;
 
     let n = 0n;
     for (const c of s.toLowerCase()) {

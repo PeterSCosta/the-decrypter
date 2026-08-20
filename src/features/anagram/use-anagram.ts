@@ -99,9 +99,27 @@ export function useAnagram() {
     setTwoWords(true);
   }, []);
 
+  /**
+   * O vocabulário carregado, achatado uma vez só.
+   *
+   * A busca por padrão (`padrao.ts`) precisa varrer as palavras, e elas já estão
+   * na memória dentro do índice de anagramas — achatar de novo a cada render
+   * seria alocar 451 mil strings por tecla. O `useMemo` depende só de `indexes`,
+   * que muda quando um idioma termina de carregar.
+   */
+  const palavras = useMemo(() => {
+    const out: string[] = [];
+    for (const idx of Object.values(indexes)) {
+      if (!idx) continue;
+      for (const grupo of idx.byKey.values()) out.push(...grupo);
+    }
+    return out;
+  }, [indexes]);
+
   return {
     input,
     setInput,
+    palavras,
     source,
     setSource,
     maxLeftover,

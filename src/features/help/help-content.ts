@@ -39,7 +39,7 @@ export interface HelpSection {
 }
 
 export const HELP_INTRO = [
-  "O The Decrypter é uma oficina de cifras: você cola UMA entrada (texto, números, um código) e ele tenta TODAS as interpretações ao mesmo tempo — 112 cifras, codificações, tabelas e bases de dados — e mostra os resultados ranqueados por “o que faz sentido”.",
+  "O The Decrypter é uma oficina de cifras: você cola UMA entrada (texto, números, um código) e ele tenta TODAS as interpretações ao mesmo tempo — 133 cifras, codificações, tabelas e bases de dados — e mostra os resultados ranqueados por “o que faz sentido”.",
   "Os mais prováveis aparecem em cima; o resto fica em “pouco provável”, recolhido. Cada resultado tem um selo (codificação, cifra, transformação, base de dados), um botão de copiar e, quando a saída bate no dicionário pt/en, o selo “palavra real”. Quando há chave (Vigenère, índices, deslocamentos), use o campo de chave; o 2º campo guarda a fonte a indexar ou a lista.",
   "Acima da entrada ficam os chips do sniffer (“isto tem cara de…”) e a barra de Cadeia, que empurra um resultado de volta para a entrada e registra a trilha. O campo de título lê o nome da prova como pista — ele só levanta chips, nunca mexe no ranking.",
   "Tudo roda no navegador. As consultas externas (CNPJ, CEP, ISBN, NCM, PIX, produto pelo código de barras, what3words, geocodificação) passam pelo backend do projeto, e os mapas vêm do OpenStreetMap. O único caso em que um ARQUIVO SEU sai do navegador é o botão “Identificar música” da aba Arquivo, que envia o trecho de áudio recortado — com clique explícito, e nunca sozinho.",
@@ -52,6 +52,30 @@ export const HELP_SECTIONS: HelpSection[] = [
     intro:
       "Representações reversíveis de texto/bytes — detectadas e revertidas automaticamente. Ao escolher uma na barra lateral, um segundo campo também CODIFICA o texto naquela cifra.",
     entries: [
+      {
+        name: "Punycode (xn--)",
+        desc: "O nome de domínio internacionalizado — `xn--brasil-gva.com.br` é `brasilé.com.br`. Assinatura literal: o prefixo `xn--` não aparece em mais nada, e a rejeição medida é 100,00% nos dois corpora. Decodifica rótulo a rótulo, então um domínio misto sai certo. **Cuidado que a bancada toma e outras não tomam:** o prefixo sozinho (`xn--`, sem nada depois) NÃO vira card — um cartão em branco no topo é pior que cartão nenhum, porque quem lê acha que a bancada resolveu e não mostrou.",
+        examples: ["xn--brasil-gva.com.br", "xn--80akhbyknj4f"],
+        esperado: "brasilé.com.br · испытание",
+      },
+      {
+        name: "Quoted-Printable",
+        desc: "O e-mail cru, como sai de um cabeçalho salvo: `=C3=A7` é `ç`. Junta a quebra suave de linha (`=` no fim). **Decodifica sobre BYTES, e isso importa:** a forma ingênua (`charCodeAt & 0xff`) corrompe todo não-ASCII que já estava certo na entrada — `Blumenau é =C3=B3timo` sairia com o primeiro acento quebrado.",
+        examples: ["A resposta esta na pra=C3=A7a"],
+        esperado: "A resposta esta na praça",
+      },
+      {
+        name: "MIME encoded-word",
+        desc: "O assunto de e-mail codificado: `=?UTF-8?B?…?=` (Base64) ou `=?UTF-8?Q?…?=` (Quoted-Printable, com `_` valendo espaço). Vem no mesmo papel colado que o Quoted-Printable — as duas formas aparecem juntas num cabeçalho, e separá-las seria entregar meia leitura.",
+        examples: ["=?UTF-8?B?QSByZXNwb3N0YSBlc3TDoSBuYSBwcmHDp2E=?="],
+        esperado: "A resposta está na praça",
+      },
+      {
+        name: "Escapes de código-fonte",
+        desc: "`\\uXXXX`, `\\xNN` e `%uXXXX` — o que aparece quando alguém copia uma string de dentro de um JS ou de um log. Entra de carona: a forma é literal e o valor é pequeno, mas custa nada e evita que a entrada pareça lixo.",
+        examples: ["\\u0050\\u006f\\u006e\\u0074\\u0065"],
+        esperado: "Ponte",
+      },
       {
         name: "Base64",
         desc: "Texto em Base64.",
@@ -272,6 +296,38 @@ export const HELP_SECTIONS: HelpSection[] = [
     title: "Transformações e tabelas",
     intro: "Conversões e tabelas de referência aplicadas à entrada.",
     entries: [
+      {
+        name: "Conferir hash",
+        desc: "A prova dá um hash, você digita o candidato no campo principal e cola o hash no **2º campo**. A bancada diz **bate ou não bate** — é a única família daqui com risco ZERO de resposta errada: não há nota, não há palpite, há sim ou não. Conhece CRC-32 (8 hex), MD5 (32), SHA-1 (40) e SHA-256 (64), e **escolhe o algoritmo pelo comprimento** — pedir para você escolher seria pedir que soubesse o que está tentando descobrir. Quando não bate, mostra o hash calculado, para você comparar caractere a caractere em vez de só ouvir “não”. Sem hash no 2º campo, não emite: é o que o mantém fora do caminho a cada tecla.",
+        example: {
+          in: "PONTE DE FERRO  +  2º campo: 5d41402abc4b2a76b9719d911017c592",
+          out: "MD5 · BATE — ou o MD5 calculado, se não bater",
+        },
+      },
+      {
+        name: "Aritmética: fatoração e sequências",
+        desc: "Duas linhas novas no painel de aritmética, sob a **mesma regra de palavra-dica** do resto dele: sem “primo”, “fator”, “Fibonacci”, “triangulares” ou “quadrados perfeitos” no texto, elas não existem. É a dica que prova a intenção — um número solto não tem assinatura nenhuma (`1400` é plaqueta de poste, código de rua, ano e quantia), e fatorar todo número acenderia em toda entrada numérica da bancada. As **sequências** só emitem quando TODOS os números pertencem à mesma: um acerto isolado é coincidência, a lista inteira não é. E devolvem as POSIÇÕES, que é o que vira letra.",
+        examples: ["Fatore em primos: 60 84 210", "Os numeros sao triangulares: 3 6 10 15 21"],
+        esperado: "60 = 2 × 2 × 3 × 5 …  ·  Todos são triangulares — posições: 2 3 4 5 6",
+      },
+      {
+        name: "Timestamp Unix → data",
+        desc: "Dez dígitos (ou treze, em milissegundos) que são uma data. Mostra **Brasília e UTC**, porque uma prova do Vale escreve a hora local e mostrar só UTC faria a bancada dizer 21h quando o enunciado diz 18h. Traz o dia da semana, que é o que costuma ser pedido. **Assinatura fraca, e o card sabe disso:** dez dígitos também são protocolo, matrícula e código truncado. O que segura é a FAIXA — só passa o que cai entre 2001 e 2033, o que rejeita 99,02% no corpus real — e um teto de nota que o mantém fora do topo.",
+        examples: ["1723680000"],
+        esperado: "14/08/2024 21:00 · quarta (Brasília) · 15/08/2024 00:00 · quinta (UTC)",
+      },
+      {
+        name: "Isopsefia e gematria (grego e hebraico)",
+        desc: "A letra como NÚMERO — e é outro número que a posição no alfabeto. ρ é a 17ª letra grega e vale **100**; σ é a 18ª e vale **200**. Os dois sistemas são unidades, dezenas e centenas, com três letras arcaicas gregas (digama 6, koppa 90, sampi 900) ocupando os buracos. O portão já estava pago pelo bloco Unicode: um CEP ou prosa em português nunca têm caractere fora do latim. No hebraico, quando há letra FINAL (sofit) o card mostra **as duas contas** — a padrão trata a final como a letra base, e o *mispar gadol* dá 500 a 900 —, porque escolher uma seria decidir pela prova.",
+        examples: ["Ιησους", "שלום"],
+        esperado: "888 · 376 (padrão) e 936 (mispar gadol)",
+      },
+      {
+        name: "Soletração (X de Palavra)",
+        desc: "“P de Pipa, O de Ouro, N de Navio, T de Tatu, E de Estrela” → PONTE. Lê a forma acrofônica e devolve as iniciais. **Não usa tabela de propósito**: o levantamento não achou norma brasileira em palavras portuguesas — a ANATEL só permite o Código Fonético Internacional (e a resolução está revogada), o DECEA publica o ICAO em inglês, e o manual de comunicações do Exército não trata do assunto. A lista brasileira mais citada não tem fonte primária. O que a bancada faz é conferir a ACROFONIA: a palavra tem de começar pela letra ditada, e isso se autoverifica sem lista nenhuma. Exige três pares adjacentes — medido em 262 mil tokens de prosa portuguesa, cadeias de dois pares seguidos aparecem **zero** vezes; as ocorrências isoladas (“é de expectativa”, “s de silêncio”) são armadilha do idioma e não passam. As tabelas ICAO, corrente BR e ICAO-1947 estão na Cola, como consulta.",
+        examples: ["P de Pipa, O de Ouro, N de Navio, T de Tatu, E de Estrela"],
+        esperado: "PONTE",
+      },
       {
         name: "Binário → número",
         desc: "A MESMA entrada tem duas leituras, e a bancada oferece as duas: `01001000 01001001` lido de 8 em 8 vira o texto “HI”, e lido como um número só vira 18.505. Este verbete é a segunda leitura — quando os bits não formam texto legível, quase sempre é porque são um número (um ano, um CEP, uma quantia).",
@@ -495,21 +551,88 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Atalho local: cauda de Geohash",
-        desc: "Cauda de Geohash (com letra): antepõe o prefixo da cidade — Blumenau 6gjn / Itajaí 6gjq.",
+        desc: "Cauda de Geohash (com letra): a bancada antepõe TODOS os prefixos que tocam Blumenau e Itajaí e mostra cada leitura que cai na cidade. Ela devolve várias de propósito — uma cauda não identifica ponto: a célula do prefixo (~39 × 19,5 km) é menor que a caixa da cidade (52 × 26 km), então a caixa não desempata. O ponto certo está entre as leituras; qual delas é, quem decide é você, olhando o mapa. Compare com a cauda de Plus Code, que devolve uma só porque a célula dela é oito vezes MAIOR que a caixa.",
         examples: ["g7rpj"],
-        esperado: "Blumenau (6gjng7rpj)",
+        esperado: "3 leituras: 6gjn / 6gjp em Blumenau, 6gjq em Itajaí",
+      },
+      {
+        name: "Letra de outra escrita (homóglifo)",
+        desc: "Uma letra grega ou cirílica escondida dentro de palavra latina — `а`, `е`, `о`, `р`, `с` se desenham **igual** às nossas, e não aparecem na tela. A bancada devolve o texto limpo e, num segundo card, **as posições** de cada intrusa, prontas para entrar na Letra por posição. **A parte difícil não é achar: é não confundir com texto de verdade em outra escrita.** `Привет мир` é russo legítimo, e ali a leitura certa é a transliteração por SOM (`Privet mir`) — que a bancada continua dando. O que separa os dois casos não é o caractere, é o contexto: o portão olha TOKEN a token e só acende quando a intrusa está cercada de latinas. Por isso `β-caroteno`, `Δt = 5 s`, `1000 Ω`, `partícula α` e `το κείμενο` ficam calados. Rejeição medida: **100,0000%** sobre as 463.438 palavras dos dois vocabulários — o portão ingênuo (“tem caractere fora de a-z”) rejeitaria só 64% do português, porque 92 mil palavras nossas têm acento.",
+        examples: ["a рorta рreta"],
+        esperado: "a porta preta · posições 3 9",
+      },
+      {
+        name: "Substituição com alfabeto dado (K1/K2/K3)",
+        desc: "Quando a prova **entrega a chave** e o trabalho é só aplicar. O solver de substituição recusa abaixo de 200 letras — e com razão, porque quebrar por estatística sem texto devolve lixo com cara de resposta —, então entre 22 e 199 letras a bancada não tinha nada. Aceita a chave de dois jeitos: o **alfabeto inteiro** (26 letras distintas, a chave já é a tabela) ou uma **palavra-chave**, e aí ela tenta as três construções clássicas: **K1** (embaralhado no claro), **K2** (embaralhado no cifrado) e **K3** (nos dois). Não é palpite entre três: quem desempata é o vocabulário, e a que não produz português não vira card. Escreva a chave no campo **Chave** — sem ela, este decoder não existe.",
+        examples: ["g imgve estg esidpjbjg pg qdpte je keffd sdhfe d fbd"],
+        esperado:
+          "com a chave `limoeiro` no campo Chave: “a chave esta escondida na ponte de ferro sobre o rio”",
+      },
+      {
+        name: "Pollux (Morse em dígitos)",
+        desc: "Cada dígito 0–9 vale ponto, traço ou separador — o mapeamento é a chave, e são 59.049 possíveis. A bancada **não pede a chave**: ela busca, e ordena as leituras pelo vocabulário. **O piso de 80 dígitos é o item inteiro, e o preço dele está dito:** o espaço numérico daqui é povoado (CEP, plaqueta, IBGE, telefone, CPF, timestamp, lista de A1Z26 colada), e com piso baixo o CEP `88353537` devolvia `CETETE` com cobertura total — resposta errada com nota de resposta certa. Falsos positivos medidos por piso, sobre 43 mil números reais: 8 dígitos → 132 · 30 → 2 · 80 → **zero**. A conta: no leque ela só responde onde é menos provável (uma palavra não chega a 80 dígitos). Para cifra curta, use o modo **uma cifra só**, onde o piso sai porque você já escolheu.",
+        examples: [
+          "0863862507564863867361837824894361830127067301590893812394260864594394237127512804894193597364290527067504290597514391860867062804834127862391894123814307234864817507267124",
+        ],
+        esperado: "ENCONTRE A CHAVE ESCONDIDA NA PRACA CENTRAL DE BLUMENAU",
+      },
+      {
+        name: "Morbit (Morse em dígitos, aos pares)",
+        desc: "Prima do Pollux: cada dígito 1–9 vale um **par** de símbolos de Morse, numa bijeção — 362.880 chaves. **Ela existe apenas no modo “uma cifra só”**, e as duas razões estão medidas. Custo: 49 a 66 ms por entrada, contra 0,4 a 1,0 ms do leque inteiro em texto numérico. Colisão: o portão natural dela é “dígitos sem zero”, e isso deixa passar 622 de 3.000 CEPs, 664 de 1.000 plaquetas e **554 de 600 listas de A1Z26 coladas** — a cifra número um do acervo. No leque ela seria cara e errada; escolhida a dedo, é exatamente o que se quer. **E um erro de papel morre aqui:** dizem por aí que Morbit tem comprimento par. Não tem — a paridade é do Morse, e o último dígito completa o par com um separador.",
+        examples: ["2944713271637718768329248583638179147747485"],
+        esperado: "escolhendo “Morbit” em uma cifra só: “A CHAVE ESTA NA PONTE DE FERRO”",
+      },
+      {
+        name: "Mojibake (UTF-8 lido como Latin-1)",
+        desc: "`informaÃ§Ã£o` de volta para `informação`. É o que sai quando texto acentuado é colado de um PDF, de uma planilha ou de um sistema antigo que leu os bytes com a tabela errada. A assinatura é literal (`Ã` ou `Â` seguidos de pontuação alta, ou `â€`), e há uma segunda porta: a volta **precisa ganhar português que o original não tinha** — senão não é conserto, é outra corrupção.",
+        examples: ["informaÃ§Ã£o importante sobre a praÃ§a central"],
+        esperado: "informação importante sobre a praça central",
+      },
+      {
+        name: "Faixa de dicas: consultas online pausadas",
+        desc: "O Decodificador só consulta CEP, município, aeroporto, poste, CID e filme quando a entrada é **uma linha de até 64 caracteres** — é um portão de custo, e ele é legítimo. O que não era legítimo é o portão fechar calado: colar uma lista, ou um parágrafo, desligava a metade online inteira sem uma palavra na tela, e o resultado ficava indistinguível de “não encontrei nada”. Agora aparece um chip que diz **qual** dos dois motivos foi e para onde ir: lista tem a **aba Lote**, que consulta as N linhas de uma vez; texto longo tem a aba Texto, para isolar o código de dentro dele. As cifras, o realce de palavra real e os anagramas nunca dependeram disso e seguem rodando.",
+        examples: ["89010000\n89020000"],
+        esperado: "chip “isto é uma lista” — as cifras seguem, e a aba Lote resolve as N linhas",
+      },
+      {
+        name: "Faixa de dicas: ADFGVX / ADFGX",
+        desc: "Um chip que **diz o nome da cifra e não a decifra** — de propósito. O ADFGVX exige DUAS chaves (o quadrado de Polibio e a permutação colunar), e o acervo mostra que cifra clássica que precisa de chave sem entregá-la zera: a Scotland Yard fez 0 de 4 em seis horas. Sem as chaves, decifrar é busca combinatória, que fica fora do leque por regra. **O que o chip vale, medido:** num ADFGVX de verdade a bancada emitia cinco cards acima do corte, todos errados (Afim 0,49, César 0,46…) e nenhum nomeava a cifra. Trocar cinco respostas erradas por uma frase certa custa vinte linhas. O portão acende em 0 de 30.000 strings alfanuméricas sorteadas.",
+        example: {
+          in: "DFFGDDAFVDAAVFAAAXDAGXDAAVGDAAGDXAFV",
+          out: "“tem cara de ADFGVX” — a bancada não decifra; se a prova der as chaves, o Boxentriq resolve",
+        },
+      },
+      {
+        name: "Folha cartográfica de Blumenau (1:5.000 e 1:1.000)",
+        desc: "A carta topográfica nacional a bancada já lia e vai bem até **1:25.000** (`SG-22-Z-B-VI-1-NE`), porque cada nível é uma divisão regular do anterior e se calcula. Abaixo disso ela calava — e calava certo: o desdobramento municipal foi ESCOLHIDO pela prefeitura, não deduzido, e inventar um nome plausível seria o pior resultado possível. Agora as duas escalas municipais entram pela **articulação de voo de 2022 do geoportal**: 93 folhas em 1:5.000 e 938 em 1:1.000, de um ArcGIS aberto, sem chave. Casamento exato — folha fora da articulação continua sem resposta. A data em que a articulação foi baixada aparece no card, porque se a prefeitura republicar a nossa cópia envelhece em silêncio.",
+        examples: ["SG-22-Z-B-IV-4-SE-D-IV"],
+        esperado: "1:5.000 · 2319 × 3101 m · articulação de voo 2026-08-20",
+      },
+      {
+        name: "Marcos geodésicos por perto",
+        desc: "Todo card de coordenada passa a mostrar as estações geodésicas do IBGE num raio de 15 km, com a distância. Não é card novo nem portão novo — é enriquecimento de um card que já ganhou nota por outro motivo. **Por que vale:** a descrição de uma estação costuma ser enunciado pronto (“chapa cravada na cabeceira da ponte de concreto sobre o Rio Perequê”), e é o tipo de referência física que a organização usa como âncora. Roda local, sobre as 491 linhas da base — sem rede, sem espera, e continua funcionando com o backend fora do ar.",
+        example: {
+          in: "-26.9194, -49.0661",
+          out: "1400A · 0,0 km · Chapa padrão IBGE  ·  8121263 · 0,2 km · Estação não materializada",
+        },
+      },
+      {
+        name: "Atalho local: cauda de UTM",
+        desc: "O par E/N sem o fuso — do jeito que sai de um GPS ou de uma carta topográfica quando alguém copia só os números. A bancada completa com o 22J do Vale e só aceita o que cai na região. É o atalho de cauda MAIS seletivo que existe aqui: **rejeita 98,94%** dos pares sorteados dentro do próprio fuso 22J, contra 79,8% do Plus Code curto e 18,3% da cauda de geohash. A razão é geométrica — a célula do fuso tem 590 × 885 km e a caixa do Vale tem 89 × 89 km, 66 vezes menor. É o oposto exato da cauda de geohash, cuja célula é MENOR que a caixa e por isso não valida nada.",
+        examples: ["692000 7021000"],
+        esperado: "UTM · assumindo Blumenau — −26,91962 / −49,06640",
       },
       {
         name: "Atalho local: cauda de MGRS",
         desc: "MGRS sem a zona: completa com a 22J do Vale do Itajaí e só aceita o que cai na região.",
         examples: ["FR9203021024"],
-        esperado: "Blumenau (22JFR9203021024)",
+        esperado: "MGRS/USNG · assumindo Blumenau — −26,91940 / −49,06610",
       },
       {
         name: "Atalho local: cauda de GEOREF",
         desc: "GEOREF sem o par de 15° inicial: completa com o “JE” do Vale do Itajaí.",
         examples: ["LD5604"],
-        esperado: "Blumenau (JELD5604)",
+        esperado: "GEOREF · assumindo Blumenau — −26,92500 / −49,05833",
       },
       {
         name: "what3words",
@@ -539,13 +662,15 @@ export const HELP_SECTIONS: HelpSection[] = [
         name: "Link curto do OpenStreetMap",
         desc: "O que sai ao compartilhar um ponto no OSM. É o par lat/lng entrelaçado bit a bit num base64 próprio — e cada hífen no fim NÃO é enchimento: desce um nível de zoom.",
         examples: ["https://osm.org/go/0EEQjE--"],
-        esperado: "Londres · zoom 9",
+        esperado:
+          "Link do OSM · zoom 9 — 51,51077 / 0,05493 (o nome da cidade não sai; o ponto, sim)",
       },
       {
         name: "Placekey",
         desc: "Identificador de LUGAR em duas metades separadas por `@`. Só a de trás vira ponto — ela é um hexágono H3 escrito num alfabeto sem vogais, para não formar palavra. Sem o `@` a bancada não aceita: três trios alfanuméricos soltos têm a forma de meio mundo (e disparam o leitor de ID do YouTube).",
         examples: ["zzw-22y@5vg-7gt-qzz"],
-        esperado: "Ferry Building, São Francisco",
+        esperado:
+          "Placekey · 37,79527 / −122,39396 — o ponto, no mapa (a bancada não devolve o nome do lugar)",
       },
       {
         name: "C-squares",
@@ -555,8 +680,8 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Estação geodésica do IBGE",
-        desc: "A chapa de bronze cravada em ponte, calçada ou rocha, com código gravado. São 491 no Vale do Itajaí, e a descrição do cadastro costuma ser enunciado pronto — “chapa cravada na cabeceira da ponte sobre o Rio Perequê”. O código não tem forma própria, então só responde quando existe de verdade na base.",
-        examples: ["1400M", "2149D"],
+        desc: "A chapa de bronze cravada em ponte, calçada ou rocha. São 491 no Vale do Itajaí, e a descrição do cadastro costuma ser enunciado pronto — “chapa cravada na cabeceira da ponte sobre o Rio Perequê”. Entra por **duas portas**: o código (`1400M`, `8121288`) e a **inscrição da chapa** (`MR-103`), que é o que está de fato gravado no bronze e não se parece nada com o código — sem ela, esse texto terminava num palpite de César. A cobertura da chapa é fina de propósito: 70 das 491 — 57 vêm do campo do cadastro e 13 da própria descrição, que às vezes diz em prosa o que está gravado (“…estampada: RN 2004-R”). Nenhuma das duas tem forma própria, então só respondem quando existem de verdade na base. O card diz o que a estação é pelo **tema** do cadastro (referência de nível, gravimétrica, vértice de triangulação, GPS, Doppler) — e quando a sigla não tem fonte, mostra a sigla e avisa que é sigla, em vez de inventar um nome parecido.",
+        examples: ["1400M", "8121288", "MR-103", "RN2004H"],
         esperado: "estação em Blumenau, no mapa",
       },
       {
@@ -564,6 +689,12 @@ export const HELP_SECTIONS: HelpSection[] = [
         desc: "UF, geocódigo do IBGE com dígito verificador e 32 hexadecimais. É a assinatura mais forte que a bancada tem, e o município sai do próprio número, sem consulta. A coordenada NÃO sai: o polígono vive no SICAR, atrás de captcha — e a tela diz isso em vez de fingir.",
         examples: ["SC-4202404-D9ADE9A8B4C24E5FA0F3B1C2D3E4F5A6"],
         esperado: "imóvel rural em Blumenau/SC",
+      },
+      {
+        name: "Filme pelo ID da IMDb",
+        desc: "`tt` e 7 ou 8 dígitos — a forma mais fechada que a bancada tem (rejeição de 100,000% medida contra o acervo de provas). Mesmo assim ela **não responde pela forma**: responde quando o Wikidata confirma o ID, e devolve título, ano, duração e direção. **A ressalva é o item, não um rodapé:** medido em 20/08/2026, só 6,2% dos filmes de 2019 com ID da IMDb têm título em português do Brasil no Wikidata — 35,6% entre os de 25 wikis, 66,7% entre os de 50. Quando o título brasileiro falta, o card mostra o original e **diz que é o original**; o título de Portugal aparece rotulado como de Portugal e nunca ocupa o lugar do daqui, porque “Regresso ao Futuro” no lugar de “De Volta Para o Futuro” é um nome plausível, em português, e errado. E quando a fonte não conhece o ID, a resposta é “não consegui confirmar”, nunca “esse filme não existe”: o Wikidata cobre uma fração do catálogo da IMDb. O que encadeia é o **título**; o QID nunca — 61% dos QIDs são lidos como coordenada pela própria bancada.",
+        examples: ["tt0111161", "tt0088763"],
+        esperado: "Um Sonho de Liberdade (1994) · 142 min · dir. Frank Darabont",
       },
       {
         name: "Aeroporto (IATA/ICAO)",
@@ -762,7 +893,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "CEP (Santa Catarina)",
-        desc: "CEP exato ou curinga (88xxx500) → logradouro e mapa; com só os 6 dígitos finais, testa os dois prefixos de SC (88 e 89).",
+        desc: "CEP exato ou curinga (88xxx500) → logradouro e mapa; com só os 6 dígitos finais, testa os dois prefixos de SC (88 e 89). O curinga aceita padrão largo — 8xxxxxxx lista todo CEP que começa com 8 —, e o card mostra os 12 primeiros com o total real ao lado; o botão Baixar CSV traz TODOS num arquivo para planilha. 86 CEPs da base não têm nome de município na origem e saem com essa célula vazia.",
         examples: ["010000"],
         esperado: "88010-000 Florianópolis · 89010-000 Blumenau",
       },
@@ -786,6 +917,12 @@ export const HELP_SECTIONS: HelpSection[] = [
     intro: "Além do Decodificador, abas com funções dedicadas.",
     entries: [
       {
+        name: "Lote",
+        desc: "A bancada no plural, e só a metade que o Decodificador desliga quando você cola uma lista. Uma entrada por linha, um botão com o número de consultas escrito dentro dele, e **uma linha de saída por linha de entrada — inclusive as que não resolveram**. É a diferença entre as três coisas que pareciam a mesma: “perguntei nestas bases e nenhuma tinha”, “não perguntei, porque não sei procurar isto” e “não sei dizer se cheguei a perguntar”. A palavra “não existe” não aparece nesta aba. No fim há uma coluna pronta para copiar, com o campo escolhido por você (resposta, logradouro, bairro, cidade, UF, coordenada) entre os que de fato foram preenchidos, e o que não resolveu sai marcado com `?` — porque uma linha em branco no meio de um bloco colado é uma não-resposta viajando disfarçada. **Ela não roda as cifras**: sessenta palpites ranqueados numa coluna que vai para a folha da prova é o pior formato possível para um chute; cada linha tem um botão que manda aquele item para o Decodificador. Limites, todos ditos na tela: 60 entradas distintas por rodada, e um orçamento de requisições, porque o teto do servidor é por IP e a equipe inteira atrás do wi-fi do local divide o mesmo balde. Item repetido custa uma consulta e desenha as duas linhas.",
+        examples: ["89010000\n89012000\ntt0111161\nGRU"],
+        esperado: "4 linhas: dois CEPs, um filme, um aeroporto — cada uma com o seu desfecho",
+      },
+      {
         name: "Arquivo",
         desc: "Solte QUALQUER arquivo e descubra o que ele esconde. Ele identifica o que o arquivo é pelos BYTES (não pela extensão, que qualquer um renomeia), mede quantos bytes existem depois do fim declarado, procura outros arquivos embutidos e os RECORTA para você abrir e baixar, extrai o texto legível de dentro do binário e desenha o mapa de entropia. Cada achado leva ao byte exato no hexdump, para você conferir em vez de acreditar. Um recorte vira arquivo novo e volta ao topo da análise, com trilha de migalhas. Tudo local — com UMA exceção, e ela está sempre a um clique de distância: o botão “Identificar música”, no painel de Áudio, envia o trecho que você recortou para um serviço de reconhecimento. Nada mais sai daqui, e nada sai sozinho.",
         example: {
@@ -803,7 +940,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Arquivo · Imagem",
-        desc: "Planos de bit (é onde se esconde: o bit menos significativo muda 1/255 da cor e some a olho nu), canais isolados, canal alfa forçado a opaco — pixel transparente ainda carrega cor — e EXIF, com a MINIATURA embutida, que costuma ser do original não editado e revela o que foi apagado da foto grande. Tem também o botão **Ler QR / código de barras**: ele lê o código direto da FOTO da prova, sem app de celular no meio, e o resultado vai para a bancada com um toque em “usar como entrada”. Serve para QR, EAN e Code 128.",
+        desc: "Planos de bit (é onde se esconde: o bit menos significativo muda 1/255 da cor e some a olho nu), canais isolados, canal alfa forçado a opaco — pixel transparente ainda carrega cor — e EXIF, com a MINIATURA embutida, que costuma ser do original não editado e revela o que foi apagado da foto grande. Onde os planos de bit deixam você **ver** o bit baixo, o botão **Procurar texto no bit menos significativo** o **lê**: são 20 interpretações (quais canais, varredura por linha ou por coluna, ordem dos bits) e a tela diz quantas foram testadas e qual o corte de tamanho usado — quanto mais se testa, mais acaso se colhe, e você precisa desse número para saber o que “achou” significa. **Ele se desliga sozinho em JPEG e WebP**, e diz por quê: formato com perda descarta justamente o bit baixo, então ali a busca devolveria ruído com a mesma cara de “não achei”. Tem também o botão **Ler QR / código de barras**: ele lê o código direto da FOTO da prova, sem app de celular no meio, e o resultado vai para a bancada com um toque em “usar como entrada”. Serve para QR, EAN e Code 128.",
         example: {
           in: "um PNG com texto no bit 0 do azul",
           out: "a frase aparece nítida no plano isolado",
@@ -875,8 +1012,43 @@ export const HELP_SECTIONS: HelpSection[] = [
         example: { in: "amor", out: "roma · ramo · mora" },
       },
       {
+        name: "Retrato",
+        desc: "Responde a pergunta ANTERIOR a decifrar: que família de cifra é esta? Substituição e transposição preservam o índice de coincidência do idioma — embaralhar o alfabeto ou a ordem das letras não mexe na distribuição, só no perfil. Polialfabética derruba o IC, e ele VOLTA quando o texto é fatiado no comprimento certo da chave: é isso que separa César de Vigenère sem chutar nenhuma das duas, e é isso que diz o tamanho da chave antes de o quebrador rodar. A aba mostra IC, IC por coluna, frequências de letra, bigramas, trigramas e o qui-quadrado contra pt e en. **Abaixo de 150 letras ela se recusa a concluir** e diz por quê: medido, em 60 letras um texto cifrado às vezes casa com o perfil do idioma melhor que um texto real.",
+        // O `example` estático, e não `examples`: o guia RODA os exemplos plurais
+        // no fan-out de decoders, e esta aba não é decoder — a saída viva seria
+        // uma lista de cifras sem relação, mentindo sobre o que a aba faz.
+        //
+        // A cifra abaixo foi GERADA e conferida (Vigenère de "GINCANA" sobre um
+        // enunciado de 264 letras), não escrita à mão: a primeira versão deste
+        // verbete trazia uma cifra inventada que a própria aba lia como "texto
+        // em claro". É o mesmo defeito que derrubou quatro exemplos na auditoria
+        // de 18/08.
+        example: {
+          in: "GZRUPBSZIQGSGAVZBXARSZIRUCBNJQQCNBMUVHOEATUIBUPVOTMVTOFQ… (Vigenère de 264 letras)",
+          out: "Polialfabética, chave de 7 letras — IC 0,0448, quase aleatório; fatiado em 7 colunas cada fatia recupera IC de idioma (encaixe 129%)",
+        },
+      },
+      {
+        name: "Anagramas · Buscar por padrão",
+        desc: "O que fazer quando os solvers calam. O de substituição não emite abaixo de 200 letras e o de Vigenère precisa de 150 — e a prova curta existe: seis letras num muro, uma palavra num acróstico. Duas sintaxes: no MOLDE a letra é literal, `?` é uma letra qualquer e `*` é um trecho qualquer (`p?nt?` acha ponte, pinta, ponta, penta; `*ção` acha os sufixos). Só DÍGITOS vira molde de repetição — `1221` acha *anna* e *otto*, porque a 1ª letra é igual à 4ª e a 2ª à 3ª, e as duas classes diferem. Essa segunda é a que resolve criptograma: nele não se sabe QUE letra é qual, só onde a mesma se repete. Devolve lista de candidatas, nunca resposta — quem escolhe é quem está jogando.",
+        // Estático pela mesma razão do Retrato: `p?nt?` no fan-out de decoders
+        // não produz a busca por padrão, produz ruído.
+        example: {
+          in: "p?nt?   ·   1221",
+          out: "ponte · pinta · ponta · penta   |   anna · otto",
+        },
+      },
+      {
+        name: "Texto · letras por linha",
+        desc: "A aba Texto conta palavras por linha, palavras por parágrafo e itens por bloco — e agora conta LETRAS por linha, que é outra coisa: a contagem de palavras inclui números (“1400” conta como palavra), e para a leitura A1Z26 isso desloca tudo. A âncora é a p04/2024, onde as linhas têm 20, 5, 14, 5 e 20 letras e a leitura dá TENET. A série entra sozinha na lista de contagens e o decoder de chave por contagem a lê de graça.",
+        example: {
+          in: "cinco linhas com 20, 5, 14, 5 e 20 letras",
+          out: "letras por linha → 20-5-14-5-20 → A1Z26 → TENET",
+        },
+      },
+      {
         name: "Fontes",
-        desc: "O lado “vejo um símbolo, que letra é essa?”. Separa as duas famílias que a prova confunde: FONTE DE SÍMBOLO do sistema (Wingdings, Webdings, Symbol, Zapf Dingbats) é desenho que a fonte dá para a letra — só existe se estiver instalada e não se copia (copiar devolve a letra), então a aba MEDE a disponibilidade e diz “não instalada” em vez de mostrar letras latinas caladamente; ESTILO UNICODE é code point, funciona em qualquer máquina e se copia. Traz a grade de referência letra→glifo (é assim que se lê a P22 de 2023, escrita em Wingdings), os 24 estilos copiáveis e o conversor Symbol ⇄ grego.",
+        desc: "O lado “vejo um símbolo, que letra é essa?”. Separa as duas famílias que a prova confunde: FONTE DE SÍMBOLO do sistema (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol e Zapf Dingbats) é desenho que a fonte dá para a letra — só existe se estiver instalada e não se copia (copiar devolve a letra), então a aba MEDE a disponibilidade e diz “não instalada” em vez de mostrar letras latinas caladamente; ESTILO UNICODE é code point, funciona em qualquer máquina e se copia. Traz a grade de referência letra→glifo (é assim que se lê a P22 de 2023, escrita em Wingdings), os 24 estilos copiáveis e o conversor Symbol ⇄ grego.",
         example: {
           in: "SOMA + fonte Symbol",
           out: "ΣΟΜΑ (copiável: grego é caractere de verdade)",
@@ -901,7 +1073,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Biblioteca",
-        desc: "Tudo que a bancada conhece, com o tamanho real de cada base (a contagem vem do banco, não de um número escrito à mão), e embaixo as bases públicas que ainda se consultam à mão, com o link oficial. Cada base abre para navegar; a de postes abre no mapa.",
+        desc: "As bases que a **API** serve, com o tamanho real de cada uma — a contagem vem do banco, não de um número escrito à mão —, e embaixo as bases públicas que ainda se consultam à mão, com o link oficial. Cada uma abre para navegar, com uma exceção: o vocabulário, que é só contagem. **Não é tudo que a bancada conhece:** ficam de fora as bases que vivem embarcadas no próprio app (as 491 estações geodésicas, as 1.031 folhas da articulação de Blumenau, as votações de 2024 e os eixos com código de logradouro), porque elas não passam pela API. Essas se consultam digitando no Decodificador.",
       },
       {
         name: "Geolocalização",
@@ -910,7 +1082,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Frota",
-        desc: "Mapa ao vivo dos celulares da equipe (Traccar): posição, status, bateria e quem está mais perto — o mesmo cálculo que aparece no cartão de localização.",
+        desc: "Mapa ao vivo dos celulares da equipe (Traccar): posição, velocidade, bateria, “visto há quanto tempo” e o telefone para ligar num toque. **Ela é a ORIGEM do dado, não o lugar onde a proximidade aparece:** “quem está mais perto” é calculado e mostrado dentro dos cartões de localização, de rua e de ponte. Sem o Traccar configurado, a aba diz isso em vez de ficar vazia.",
       },
       {
         name: "Atalho por URL",
@@ -931,7 +1103,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     entries: [
       {
         name: "Backend (the-decrypter-api)",
-        desc: "Porta de entrada das consultas externas (/cnpj, /isbn, /ncm, /cnae, /registrobr, /pix, /produto, /what3words, /geocode, /fleet) e a consulta multiplexada /lookup, que numa resposta só devolve CEP, município, poste, aeroporto, CID-10 e lote e, agora, das bases grandes: CEP, municípios, aeroportos e postes vêm dele em vez de serem baixados pelo navegador. Toda chamada leva o token da sessão.",
+        desc: "Porta de entrada das consultas externas (/cnpj, /isbn, /ncm, /cnae, /registrobr, /pix, /produto, /what3words, /geocode, /fleet) e a consulta multiplexada /lookup, que numa resposta só devolve CEP, município, poste, aeroporto, CID-10 e lote e, agora, das bases grandes: CEP, municípios, aeroportos e postes vêm dele em vez de serem baixados pelo navegador. Uma rota foge do padrão porque devolve arquivo e não JSON: /cep/export, o CSV completo do curinga. Toda chamada leva o token da sessão.",
         example: { in: "/api/lookup?q=…", out: "uma resposta só, com o que a entrada podia ser" },
       },
       {

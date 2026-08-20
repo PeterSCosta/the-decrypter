@@ -7,6 +7,7 @@ import { ScanLine, Wand2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { type CodigoLido, lerCodigos, rotuloDoFormato, temLeitorNativo } from "../codigo";
 import { type Exif, lerExif } from "../exif";
+import { MAX_BYTES, type VarreduraLsbImagem, varrerLsbImagem } from "../lsb";
 import { alfaOpaco, apenasCanal, medirPlanos, planoDeBit } from "../planos";
 
 type Vista =
@@ -42,6 +43,7 @@ export function ImagemPainel({
   const [vista, setVista] = useState<Vista>({ tipo: "original" });
   const [erro, setErro] = useState<string | null>(null);
   const [codigos, setCodigos] = useState<CodigoLido[] | null>(null);
+  const [lsb, setLsb] = useState<VarreduraLsbImagem | null>(null);
   const [motivoCodigo, setMotivoCodigo] = useState<string | null>(null);
   const [lendoCodigo, setLendoCodigo] = useState(false);
   const ref = useRef<HTMLCanvasElement>(null);
@@ -108,6 +110,24 @@ export function ImagemPainel({
   }, [bytes]);
 
   // ── pintar a vista escolhida ──────────────────────────────────────────────
+  /**
+   * O LSB só existe em formato SEM PERDA. JPEG e WebP com perda descartam
+   * justamente o bit baixo, e rodar neles devolveria ruído indistinguível de
+   * "não achei" — pior que não rodar, porque quem lê não teria como saber.
+   * Decidido pelos BYTES, não pela extensão, que qualquer um renomeia.
+   */
+  const semPerda = useMemo(() => {
+    if (bytes.length < 12) return null;
+    const b = bytes;
+    if (b[0] === 0x89 && b[1] === 0x50) return true; // PNG
+    if (b[0] === 0x42 && b[1] === 0x4d) return true; // BMP
+    if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46) return true; // GIF
+    if ((b[0] === 0x49 && b[1] === 0x49) || (b[0] === 0x4d && b[1] === 0x4d)) return true; // TIFF
+    if (b[0] === 0xff && b[1] === 0xd8) return false; // JPEG
+    if (String.fromCharCode(b[8], b[9], b[10], b[11]) === "WEBP") return false;
+    return null;
+  }, [bytes]);
+
   const alfa = useMemo(() => (px ? alfaOpaco(px.dados) : null), [px]);
   const medida = useMemo(() => (px ? medirPlanos(px.dados, px.w) : null), [px]);
 
@@ -228,6 +248,75 @@ export function ImagemPainel({
             — o navegador não os desenha, e eles continuam ali. Veja a vista Alfa.
           </p>
         ) : null}
+
+        {/* ── O LSB, irmão TEXTUAL dos planos de bit acima ──────────────────
+            Ali se VÊ o bit baixo; aqui se LÊ. Fica sob botão, e não automático,
+            pela mesma razão do leitor de código: são 20 interpretações sobre
+            até 64 KB cada, e travar a aba a cada imagem aberta seria pagar esse
+            custo por quem só queria olhar a foto. */}
+        <div className="mt-4 border-t border-[var(--border-subtle)] pt-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={!px || semPerda === false}
+              onClick={() => px && setLsb(varrerLsbImagem(px.dados, px.w, px.h))}
+            >
+              <ScanLine className="h-4 w-4" />
+              Procurar texto no bit menos significativo
+            </Button>
+            {semPerda === false ? (
+              <span className="text-xs text-[var(--pulse)]">
+                desligado: este formato tem PERDA (JPEG/WebP). A compressão descarta justamente o
+                bit baixo — rodar aqui devolveria ruído com cara de “não achei”.
+              </span>
+            ) : null}
+          </div>
+
+          {lsb ? (
+            <div className="mt-3 space-y-2">
+              <p className="text-xs text-[var(--text-muted)]">
+                {lsb.testadas} interpretações testadas (canais × ordem de varredura × ordem dos
+                bits) · corte de {lsb.corte} caracteres para um trecho contar
+              </p>
+              {lsb.achados.length === 0 ? (
+                <p className="text-sm text-[var(--text-secondary)]">
+                  Nenhum trecho passou do corte. Isso não quer dizer que não haja nada: quer dizer
+                  que nada apareceu <strong>nestas</strong> interpretações, começando do primeiro
+                  pixel e lendo até {Math.round(MAX_BYTES / 1024)} KB.
+                </p>
+              ) : (
+                lsb.achados.slice(0, 3).map((a) => (
+                  <div
+                    key={`${a.opcoes.conjunto}${a.opcoes.varredura}${a.opcoes.ordem}`}
+                    className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] p-2"
+                  >
+                    <p className="font-mono text-[0.6875rem] text-[var(--text-muted)]">
+                      {a.opcoes.conjunto} · por {a.opcoes.varredura} · {a.opcoes.ordem}
+                    </p>
+                    {a.trechos.slice(0, 3).map((t) => (
+                      <div key={t} className="mt-1 flex items-start gap-2">
+                        <p className="min-w-0 flex-1 break-all font-mono text-sm text-[var(--text-primary)]">
+                          {t.slice(0, 400)}
+                        </p>
+                        {onDecodificador ? (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => onDecodificador(t)}
+                            title="Abrir no Decodificador"
+                          >
+                            <Wand2 className="h-3.5 w-3.5" />
+                          </Button>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                ))
+              )}
+            </div>
+          ) : null}
+        </div>
 
         {/* Código impresso na imagem — QR, EAN, Code128. É a outra forma de a
             prova esconder texto numa foto, e não tem nada a ver com os planos

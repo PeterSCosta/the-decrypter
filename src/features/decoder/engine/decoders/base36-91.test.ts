@@ -12,7 +12,10 @@ describe("Base36 (número)", () => {
   it("decodifica com o mesmo resultado do toString(36) do JS", () => {
     // Verdade de referência: (2**31 - 1).toString(36) === "zik0zj"
     expect(d36("zik0zj")[0].output).toBe("2147483647");
-    expect(d36("hello")[0].output).toBe(String(Number.parseInt("hello", 36)));
+    // `hello` saiu do teste porque saiu do portão: sem dígito, não dispara mais
+    // (ver o bloco do portão em `base36.ts`). A verdade de referência continua
+    // sendo o `parseInt(_, 36)`, agora num token que a bancada de fato aceita.
+    expect(d36("h3llo")[0].output).toBe(String(Number.parseInt("h3llo", 36)));
   });
 
   it("caixa não importa", () => {
@@ -20,11 +23,30 @@ describe("Base36 (número)", () => {
   });
 
   it("passa de MAX_SAFE_INTEGER sem arredondar", () => {
-    // 13 caracteres: o Number perderia precisão aqui e devolveria outro número.
-    const s = "zzzzzzzzzzzzz";
-    const exato = 36n ** 13n - 1n;
+    // 13 caracteres, com dígito para passar no portão novo. O que este teste
+    // prende é o `BigInt`: com `Number` o resultado sairia arredondado — errado
+    // sem avisar, que é o pior tipo de resposta nesta bancada.
+    const s = "1zzzzzzzzzzzz";
+    let exato = 0n;
+    for (const c of s) exato = exato * 36n + BigInt(Number.parseInt(c, 36));
     expect(d36(s)[0].output).toBe(exato.toString());
     expect(Number(d36(s)[0].output)).toBeGreaterThan(Number.MAX_SAFE_INTEGER);
+  });
+
+  /**
+   * O portão apertou na Onda 0: a rejeição medida era 1,8% contra o piso de
+   * admissão de 79,8% da casa, porque TODA palavra portuguesa é um Base36
+   * válido. Exigir letra E dígito leva a rejeição a 77,7% na mesma amostra, e o
+   * que sai são exatamente as palavras.
+   */
+  it("palavra portuguesa pura não dispara mais", () => {
+    for (const p of ["resposta", "monumento", "prefeitura", "blumenau", "hello"]) {
+      expect(d36(p), p).toEqual([]);
+    }
+  });
+
+  it("acima de 13 caracteres não é identificador, é texto", () => {
+    expect(d36("a1b2c3d4e5f6g7")).toEqual([]);
   });
 
   it("só dígitos não dispara — é decimal, e o conversor de base já cobre", () => {

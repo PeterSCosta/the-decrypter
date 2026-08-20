@@ -320,26 +320,51 @@ const GLUED_MAX = 64;
  * por acaso é palavra. Programação dinâmica: `dp[i]` = maior nº de letras
  * cobertas nos primeiros `i` caracteres.
  */
-function gluedCoverage(token: string, words: WordLookup): number {
-  if (token.length < GLUED_MIN) return 0;
+interface Colagem {
+  /** Letras cobertas por palavra real dentro do trecho analisado. */
+  cobertas: number;
+  /** Quantas letras foram de fato analisadas — `min(token, GLUED_MAX)`. */
+  analisadas: number;
+  /** O maior pedaço reconhecido. Ver `maiorPedaco()`. */
+  maior: number;
+}
+
+function gluedCoverage(token: string, words: WordLookup): Colagem {
+  if (token.length < GLUED_MIN) return { cobertas: 0, analisadas: 0, maior: 0 };
   // Acima do teto, analisa o começo em vez de desistir. Devolver 0 fazia uma
   // resposta colada de 65 caracteres — um a mais que o teto — pontuar como
   // lixo, enquanto a de 64 pontuava no topo: um degrau invisível bem no meio do
   // formato que a bancada mais recebe. O teto continua protegendo o custo por
   // tecla; o que muda é que ele passa a truncar, não a zerar.
+  //
+  // ── E POR ISSO `analisadas` SAI DAQUI ───────────────────────────────────────
+  // Truncar conserta o numerador e cria um problema no denominador: quem lê
+  // `covered/total` compara letras cobertas de 64 contra o comprimento INTEIRO
+  // do token. Medido: o mesmo texto colado dá razão 0,81 com 64 letras e 0,41
+  // com 128 — o numerador congela e o denominador segue crescendo. A razão
+  // honesta é sobre o que se olhou, e é isso que `analisadas` permite.
   const n = Math.min(token.length, GLUED_MAX);
   const dp = new Int32Array(n + 1);
+  // `pedaco[i]` = o maior pedaço reconhecido no melhor caminho até `i`. Anda
+  // junto com a DP porque o máximo de um caminho não é o máximo global: um
+  // caminho pior em cobertura pode ter um pedaço maior, e quem vale é o pedaço
+  // do caminho que a DP escolheu.
+  const pedaco = new Int32Array(n + 1);
   for (let i = 1; i <= n; i++) {
     dp[i] = dp[i - 1]; // pular este caractere (letra não coberta)
+    pedaco[i] = pedaco[i - 1];
     const from = Math.max(0, i - 18); // maior palavra plausível em pt-BR
     for (let j = from; j <= i - MIN_PIECE_LEN; j++) {
       if (words.has(token.slice(j, i))) {
         const cand = dp[j] + (i - j);
-        if (cand > dp[i]) dp[i] = cand;
+        if (cand > dp[i]) {
+          dp[i] = cand;
+          pedaco[i] = Math.max(pedaco[j], i - j);
+        }
       }
     }
   }
-  return dp[n];
+  return { cobertas: dp[n], analisadas: n, maior: pedaco[n] };
 }
 
 /** Letras cobertas por palavra real, e o total de letras. */
@@ -352,11 +377,35 @@ function gluedCoverage(token: string, words: WordLookup): number {
  * cifra colada de 267 letras e deixava o card em 0,34, na gaveta — a chave é a
  * resposta da prova, e ela estava certa.
  */
-export function coverage(text: string): { covered: number; total: number; hits: string[] } {
+export interface Cobertura {
+  /** Letras reconhecidas por palavra real. */
+  covered: number;
+  /** Comprimento total do texto em letras. */
+  total: number;
+  /** As palavras reconhecidas, na ordem. */
+  hits: string[];
+  /**
+   * Quantas letras foram de fato ANALISADAS.
+   *
+   * Igual a `total` em tudo que não seja token colado acima de `GLUED_MAX`.
+   * Acima dele, `total` conta o token inteiro e `analisado` conta o que a
+   * segmentação olhou — e é `covered/analisado` que é a razão honesta.
+   * `covered/total` continua existindo intocado porque o realce depende dele e
+   * o degrau dele já foi calibrado; trocar o denominador do realce sem
+   * re-medir seria mexer no ranking às cegas.
+   */
+  analisado: number;
+  /** O maior pedaço reconhecido em qualquer token. Ver `maiorPedaco()`. */
+  maior: number;
+}
+
+export function coverage(text: string): Cobertura {
   const hits: string[] = [];
   let covered = 0;
   let total = 0;
-  if (!WORDS) return { covered, total, hits };
+  let analisado = 0;
+  let maior = 0;
+  if (!WORDS) return { covered, total, hits, analisado, maior };
   for (const token of stripDiacritics(text)
     .toLowerCase()
     .split(/[^a-z]+/)) {
@@ -364,12 +413,33 @@ export function coverage(text: string): { covered: number; total: number; hits: 
     total += token.length;
     if (token.length >= MIN_HIT_LEN && WORDS.has(token)) {
       covered += token.length;
+      analisado += token.length;
+      maior = Math.max(maior, token.length);
       hits.push(token);
     } else {
-      covered += gluedCoverage(token, WORDS);
+      const c = gluedCoverage(token, WORDS);
+      covered += c.cobertas;
+      // Token curto demais para segmentar (`< GLUED_MIN`) foi olhado inteiro e
+      // não deu nada — ele conta como analisado, senão a razão vira 0/0 e um
+      // texto de palavras curtas passaria a "não sei" em vez de "não é".
+      analisado += c.analisadas || token.length;
+      maior = Math.max(maior, c.maior);
     }
   }
-  return { covered, total, hits };
+  return { covered, total, hits, analisado, maior };
+}
+
+/**
+ * O maior pedaço de palavra real que o texto contém.
+ *
+ * Existe porque cobertura por RAZÃO não distingue uma resposta de um acidente:
+ * a lista tem 7.402 palavras de 4 letras, então quatro cacos de 4 costurados
+ * cobrem 16 de 16 e parecem certeza. O tamanho do maior pedaço separa os dois
+ * casos e não tem como ser fabricado por acaso — é o mesmo defeito que o
+ * comentário do realce em `scorePlaintext` já descreve, agora medível de fora.
+ */
+export function maiorPedaco(text: string): number {
+  return coverage(text).maior;
 }
 
 /**

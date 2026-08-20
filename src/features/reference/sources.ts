@@ -290,6 +290,17 @@ export const SOURCES: DataSourceRef[] = [
     anchors: ["GIA-25"],
   },
   {
+    id: "samae-blumenau",
+    name: "Matrícula do SAMAE (Blumenau)",
+    indexes:
+      "Matrícula de 5 dígitos → 2ª via da conta de água (nome, endereço e débitos do titular).",
+    use: "Se uma prova der uma matrícula, a consulta se faz no site oficial, à mão.",
+    url: "https://www.samae.com.br",
+    urlLabel: "samae.com.br",
+    status: "bloqueada",
+    note: "Não entra na bancada, e a razão é dupla. Técnica: o GSAN protege o formulário com reCAPTCHA v2 em toda busca — controle anti-automação deliberado, e a regra da casa é que base com captcha não vira raspagem, em nenhuma hipótese. E de privacidade, que pesa mais: a 2ª via entrega nome, endereço e débitos do TITULAR só com a matrícula, sem autenticação nenhuma. Isso é dado pessoal de terceiro, e quem consulta tem de ser a pessoa, no site do SAMAE, não nós. Conferido: a Equipe Arromba chegou à mesma conclusão e o decoder deles é só um link. Se o dado for necessário algum dia, o caminho é o pedido oficial pela LAI.",
+  },
+  {
     id: "cod-log-blumenau",
     name: "Código de logradouro de Blumenau (COD_LOG)",
     indexes: "Nome da rua ↔ COD_LOG, um número estável de 1 a 4 dígitos; e bairro e CEP do trecho.",
@@ -400,7 +411,7 @@ export const BANCADAS_EXTERNAS: BancadaExterna[] = [
     use: "Quando a prova é CIFRA CLÁSSICA que esta bancada ainda não tem: ADFGX/ADFGVX, Four-Square, Trifid, Nihilist, Morbit, Pollux, Scytale, AMSCO, Grandpré, Route e Double Transposition, Book Cipher.",
     url: "https://www.boxentriq.com/code-breaking",
     urlLabel: "boxentriq.com/code-breaking",
-    note: "O mais útil ali não são as cifras: é a seção de ALFABETOS. Ela tem as bandeiras marítimas do Código Internacional de Sinais e as runas Elder Futhark — as duas mecânicas que o Challenge 2024 usou e para as quais a Cola ainda não tem legenda. Também Semáforo, Hexahue, Dancing Men e Pigpen.",
+    note: "O mais útil ali não são as cifras: é a seção de ALFABETOS. Ela tem as bandeiras marítimas do Código Internacional de Sinais e as runas Elder Futhark — as duas mecânicas que o Challenge 2024 usou. **A Cola já tem as duas legendas** (“Bandeiras do Código Internacional de Sinais” e “Runas — o que engana”), então o motivo de abrir o Boxentriq hoje é outro: o solver interativo dele. Também Semáforo, Hexahue, Dancing Men e Pigpen.",
   },
   {
     id: "cryptii",
@@ -428,5 +439,14 @@ export const BANCADAS_EXTERNAS: BancadaExterna[] = [
     url: "https://www.dcode.fr/tools-list",
     urlLabel: "dcode.fr/tools-list",
     note: "Largura tem preço: boa parte é solver de sudoku, gerador de anagrama e alfabeto de videogame. O identificador de cifra dele CHUTA um nome; o fan-out daqui resolve e ordena por evidência. E em geolocalização brasileira ele tem sete formatos contra os 26 desta bancada.",
+  },
+  {
+    id: "wikidata-filme",
+    name: "Wikidata — filme por ID da IMDb",
+    size: "Consulta SPARQL, sem chave e sem cota.",
+    use: "É a fonte por trás do card de filme: cole um `tt0111161` e a bancada devolve título, ano, duração e direção. O ID da IMDb é a chave (propriedade P345).",
+    url: "https://query.wikidata.org/",
+    urlLabel: "query.wikidata.org",
+    note: "A ressalva é a razão de ela estar escrita aqui e não só no código. MEDIDO em 20/08/2026: dos filmes de 2019 com ID da IMDb, só 6,2% têm título em português do Brasil no Wikidata — sobe para 35,6% entre os que têm 25 wikis e 66,7% entre os de 50. Ou seja, um terço dos filmes MAIS conhecidos de 2019 não tem título brasileiro na fonte. Quando falta, o card mostra o original e DIZ que é o original: o título de Portugal existe na ficha, rotulado, e nunca ocupa o lugar do daqui — “Regresso ao Futuro” no lugar de “De Volta Para o Futuro” seria um nome plausível, em português, e errado. E “o Wikidata não conhece este ID” nunca vira “esse filme não existe”: a cobertura é uma fração do catálogo da IMDb.",
   },
 ];

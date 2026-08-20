@@ -16,6 +16,20 @@ export interface CepsData {
   rows: CepRow[];
 }
 
+/**
+ * O que o card do curinga precisa e o `CepHit[]` sozinho não carrega: o PADRÃO
+ * (para pedir o arquivo) e o TOTAL real (para dizer quantos o arquivo traz).
+ *
+ * Um payload próprio, e não campos novos no `render: "cep"`, porque aquele
+ * render é compartilhado por três decoders — mudar a forma de `data` lá quebraria
+ * os outros dois.
+ */
+export interface CepCuringaData {
+  padrao: string;
+  total: number;
+  hits: CepHit[];
+}
+
 export interface CepHit {
   cep: string;
   logradouro: string;

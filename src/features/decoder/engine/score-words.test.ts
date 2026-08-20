@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { realWords, scorePlaintext, setWordSet } from "./score";
+import { coverage, maiorPedaco, realWords, scorePlaintext, setWordSet } from "./score";
 
 // Conjunto mínimo, no formato do `words.ts`: dobrado, minúsculo, >= 4 letras.
 const WORDS = new Set(["lapis", "teatro", "louros", "vencedor", "signo", "topo", "geotude"]);
@@ -113,5 +113,78 @@ describe("regressão medida: lixo de 4 letras não pode roubar o topo", () => {
     setWordSet(LISTA);
     expect(scorePlaintext(noTeto)).toBeGreaterThan(0);
     expect(scorePlaintext(umAMais)).toBeGreaterThan(baseAcima);
+  });
+});
+
+/**
+ * O DEGRAU DO `GLUED_MAX`, e os dois campos que o tornam visível.
+ *
+ * `gluedCoverage` trunca a segmentação em 64 caracteres para proteger o custo
+ * por tecla — decisão certa. O efeito colateral é que o numerador congela e o
+ * denominador continua crescendo: quem lê `covered/total` vê a mesma resposta
+ * piorar sozinha conforme o texto fica mais longo.
+ *
+ * `analisado` é o denominador honesto. `covered/total` fica intocado de
+ * propósito — o realce depende dele e o degrau dele já foi calibrado.
+ */
+describe("cobertura de texto colado longo", () => {
+  const PALAVRAS = new Set([
+    "aresposta",
+    "resposta",
+    "monumento",
+    "pioneiros",
+    "praca",
+    "prefeitura",
+    "blumenau",
+    "santa",
+    "catarina",
+    "casa",
+    "amor",
+    "roja",
+    "rova",
+    "cuda",
+  ]);
+  const COLADO = "arespostaeomonumentoaospioneirosnapracadaprefeituradeblumenauemsantacatarina";
+
+  it("`covered/total` piora com o comprimento; `covered/analisado` não", () => {
+    setWordSet({ has: (w: string) => PALAVRAS.has(w) });
+    const curto = coverage(COLADO.slice(0, 64));
+    const longo = coverage(COLADO);
+
+    // O numerador é o mesmo — a segmentação parou no mesmo ponto.
+    expect(longo.covered).toBe(curto.covered);
+    // E é exatamente aqui que a leitura antiga mente.
+    expect(longo.covered / longo.total).toBeLessThan(curto.covered / curto.total - 0.1);
+    // A razão sobre o analisado fica plana, que é o que se espera de um teto.
+    expect(longo.covered / longo.analisado).toBeCloseTo(curto.covered / curto.analisado, 5);
+  });
+
+  it("`analisado` é igual a `total` quando não há truncamento", () => {
+    setWordSet({ has: (w: string) => PALAVRAS.has(w) });
+    const c = coverage("casa amor praca blumenau");
+    expect(c.analisado).toBe(c.total);
+  });
+
+  it("`analisado` nunca é zero num texto com letras — 0/0 viraria “não sei”", () => {
+    setWordSet({ has: () => false });
+    const c = coverage("xyz abc de");
+    expect(c.total).toBeGreaterThan(0);
+    expect(c.analisado).toBe(c.total);
+  });
+
+  /**
+   * O maior pedaço separa resposta de acidente onde a razão não separa:
+   * "rojarovacudanoxz" é lixo costurado de quatro cacos de 4 letras e cobre 12
+   * de 16 — razão 0,75, que passaria em qualquer portão por razão.
+   */
+  it("`maiorPedaco` distingue quatro cacos de 4 de uma palavra de verdade", () => {
+    setWordSet({ has: (w: string) => PALAVRAS.has(w) });
+    expect(maiorPedaco("rojarovacuda")).toBeLessThan(6);
+    expect(maiorPedaco("arespostaeomonumento")).toBeGreaterThanOrEqual(6);
+  });
+
+  it("`maiorPedaco` é 0 sem vocabulário — nunca inventa evidência", () => {
+    setWordSet(null);
+    expect(maiorPedaco("arespostaeomonumento")).toBe(0);
   });
 });

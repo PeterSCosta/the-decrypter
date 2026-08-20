@@ -1,6 +1,9 @@
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { Loader2, Shuffle, Sparkles } from "lucide-react";
+import { useMemo, useState } from "react";
+import { MAX_RESULTADOS, buscarPorPadrao } from "../padrao";
 import { MAX_INPUT_LETTERS } from "../solve";
 import { type AnagramSource, MIN_PAIR_LETTERS, useAnagram } from "../use-anagram";
 
@@ -26,6 +29,7 @@ export function AnagramPanel() {
   const {
     input,
     setInput,
+    palavras,
     source,
     setSource,
     maxLeftover,
@@ -182,6 +186,78 @@ export function AnagramPanel() {
           </div>
         </div>
       )}
+
+      <BuscaPorPadrao palavras={palavras} carregando={loading} />
     </div>
+  );
+}
+
+/**
+ * BUSCA POR PADRÃO — o que fazer quando os solvers calam.
+ *
+ * O solver de substituição não emite abaixo de 200 letras e o quebrador de
+ * Vigenère precisa de 150. Abaixo disso a bancada cala, e a prova curta existe:
+ * seis letras num muro, uma palavra num acróstico. Aqui a pessoa sabe a FORMA e
+ * pergunta que palavras existem.
+ *
+ * Vive na aba Anagramas porque o vocabulário já está carregado aqui — e porque
+ * uma lista de candidatas é ferramenta, não resposta: ela não pode virar card no
+ * leque do Decodificador.
+ */
+function BuscaPorPadrao({ palavras, carregando }: { palavras: string[]; carregando: boolean }) {
+  const [padrao, setPadrao] = useState("");
+  const deb = useDebouncedValue(padrao, 250);
+
+  const busca = useMemo(() => {
+    if (!deb.trim() || palavras.length === 0) return null;
+    return buscarPorPadrao(palavras, deb);
+  }, [deb, palavras]);
+
+  return (
+    <section className="flex flex-col gap-3 border-t border-[var(--border-subtle)] pt-5">
+      <div>
+        <h3 className="font-display text-sm uppercase tracking-wide text-[var(--text-secondary)]">
+          Buscar palavra por padrão
+        </h3>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
+          <code className="font-mono text-[var(--text-primary)]">p?nt?</code> — letra é literal,{" "}
+          <code className="font-mono text-[var(--text-primary)]">?</code> é uma letra qualquer e{" "}
+          <code className="font-mono text-[var(--text-primary)]">*</code> é um trecho qualquer.{" "}
+          <strong>Só dígitos</strong> vira molde de repetição:{" "}
+          <code className="font-mono text-[var(--text-primary)]">1221</code> acha <em>anna</em> e{" "}
+          <em>otto</em> — a forma que resolve criptograma curto, quando não se sabe QUE letra é
+          qual, só onde a mesma se repete.
+        </p>
+      </div>
+
+      <Input
+        value={padrao}
+        onChange={(e) => setPadrao(e.target.value)}
+        placeholder="p?nt?  ·  *ção  ·  1221"
+        aria-label="Padrão da palavra"
+        className="font-mono"
+      />
+
+      {carregando && palavras.length === 0 && (
+        <p className="text-sm text-[var(--text-tertiary)]">Carregando o vocabulário…</p>
+      )}
+
+      {busca && (
+        <>
+          <p className="text-xs text-[var(--text-tertiary)]">
+            {busca.lido.tipo === "invalido"
+              ? busca.lido.descricao
+              : `${busca.lido.descricao} ${busca.achados.length} palavra${busca.achados.length === 1 ? "" : "s"}${busca.truncado ? ` (cortado em ${MAX_RESULTADOS})` : ""}.`}
+          </p>
+          {busca.achados.length > 0 && (
+            <div className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-sm text-[var(--text-primary)]">
+              {busca.achados.map((w) => (
+                <span key={w}>{w}</span>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </section>
   );
 }

@@ -6,6 +6,7 @@ import {
   countWords,
   countsToLetters,
   itemsPerParagraph,
+  lettersPerLine,
   splitParagraphs,
   wordsPerLine,
   wordsPerParagraph,
@@ -84,5 +85,57 @@ describe("contagem como chave (A5)", () => {
       const s = countSeries("Ana e Ada\nsol e mar", "a").find((x) => x.id === "char-line");
       expect(s?.counts).toEqual([4, 1]);
     });
+  });
+});
+
+/**
+ * LETRAS POR LINHA — a série que faltava, e a prova que a pediu.
+ *
+ * p04/2024 esconde a resposta na contagem de LETRAS de cada linha: 20-5-14-5-20
+ * lido em A1Z26 dá TENET. A bancada tinha quatro séries de contagem e nenhuma
+ * contava letras, então essa prova era invisível para ela.
+ */
+describe("letras por linha", () => {
+  it("conta letra, e não o que `RE_WORD` chama de palavra", () => {
+    // `RE_WORD` casa dígito também; para a leitura A1Z26 isso é ruído.
+    expect(lettersPerLine("abc 123\nde")).toEqual([3, 2]);
+  });
+
+  it("acento conta como letra", () => {
+    expect(lettersPerLine("ação\ncoração")).toEqual([4, 7]);
+  });
+
+  it("pontuação e espaço não contam", () => {
+    expect(lettersPerLine("a, b. c!\nd - e")).toEqual([3, 2]);
+  });
+
+  it("entra em `countSeries` com o id próprio", () => {
+    const s = countSeries("abcde fg\nhi\njklmnop qrs");
+    expect(s.map((x) => x.id)).toContain("letters-line");
+    expect(s.find((x) => x.id === "letters-line")?.counts).toEqual([7, 2, 10]);
+  });
+
+  /**
+   * Numa lista de uma palavra por linha, "palavras por linha" e "letras por
+   * linha" podem coincidir — e duas séries iguais viram dois cards idênticos no
+   * `count-key`.
+   */
+  it("não se repete quando é a mesma série de outra", () => {
+    const s = countSeries("a\nb\nc");
+    const iguais = s.filter((x) => x.counts.join() === "1,1,1");
+    expect(iguais.length).toBeLessThanOrEqual(1);
+  });
+
+  it("a âncora: 20-5-14-5-20 chega ao `count-key` como TENET", () => {
+    const alvo = [
+      "a".repeat(20),
+      "b".repeat(5),
+      "c".repeat(14),
+      "d".repeat(5),
+      "e".repeat(20),
+    ].join("\n");
+    expect(countSeries(alvo).find((x) => x.id === "letters-line")?.counts).toEqual([
+      20, 5, 14, 5, 20,
+    ]);
   });
 });

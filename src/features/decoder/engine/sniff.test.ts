@@ -61,3 +61,59 @@ describe("sniffer de formato", () => {
     expect(sniff("   ", CTX)).toEqual([]);
   });
 });
+
+/**
+ * O CHIP DE ADFGVX — ele diz o nome e NÃO decifra.
+ *
+ * Medido antes de existir: num ADFGVX de verdade a bancada emitia **5 cards
+ * acima do corte, todos errados** (`affine` 0,49, `caesar` 0,46…) e nenhum
+ * nomeava a cifra. O chip troca cinco respostas erradas por uma frase certa.
+ */
+describe("chip de ADFGVX", () => {
+  const chip = (s: string) => sniff(s, CTX).filter((c) => c.id === "adfgvx-shape");
+
+  it("reconhece o ADFGVX (com V) e o ADFGX (sem)", () => {
+    expect(chip("DFFGDDAFVDAAVFAAAXDAGXDAAVGDAAGDXAFVDGAXVDAAFGXDVAAGXDFA")[0]?.label).toContain(
+      "ADFGVX",
+    );
+    expect(chip("ADFGXADFGXADFGXA")[0]?.label).toContain("ADFGX");
+  });
+
+  it("diz que não decifra, e por quê", () => {
+    expect(chip("ADFGXADFGXADFGXA")[0]?.detail).toContain("duas chaves");
+  });
+
+  it("recusa curto demais e comprimento ímpar", () => {
+    expect(chip("ADFGX")).toHaveLength(0);
+    expect(chip("DFFGDDAFVDAAVFA")).toHaveLength(0);
+  });
+
+  it("não dispara em prosa nem em outro formato", () => {
+    for (const s of ["A resposta esta na praca", "SGVsbG8gbXVuZG8=", "89010000"]) {
+      expect(chip(s), s).toHaveLength(0);
+    }
+  });
+
+  /**
+   * O portão é literal, e o número que autoriza: **0 de 30.000** strings
+   * alfanuméricas sorteadas acendem.
+   */
+  it("não acende em string alfanumérica aleatória", () => {
+    let x = 99;
+    const r = () => {
+      x ^= x << 13;
+      x ^= x >>> 17;
+      x ^= x << 5;
+      return (x >>> 0) / 4294967296;
+    };
+    const alfabeto = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let acende = 0;
+    for (let i = 0; i < 8000; i++) {
+      const n = 8 + Math.floor(r() * 40);
+      let s = "";
+      for (let j = 0; j < n; j++) s += alfabeto[Math.floor(r() * 36)];
+      if (chip(s).length) acende++;
+    }
+    expect(acende).toBe(0);
+  });
+});

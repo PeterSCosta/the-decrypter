@@ -7,7 +7,21 @@
  * em `docs/TODO-CIFRAS.md`). Item entregue sai daqui — quem quer saber o que a
  * bancada já faz abre a Ajuda, não o Roadmap.
  */
-export type RoadStatus = "todo" | "idea" | "blocked";
+/**
+ * Os estados de um item da vitrine — e por que dois deles nasceram tarde.
+ *
+ * Até a Onda 0 a união tinha só `todo | idea | blocked`, e o efeito não era uma
+ * limitação de interface: era uma **mentira estrutural**. Um item que entregou
+ * não tinha como dizer isso, então ficava como *Ideia* para sempre; e um item
+ * que o dono cancelou não tinha como sair, então continuava prometido ao
+ * usuário. Os dois casos existiam de verdade: o "Engine esperto" seguia como
+ * *Ideia* com o solver de substituição, a quebra de Vigenère e o identificador
+ * de cifra **os três em produção**, e o "Compartilhar a ENTRADA por URL" seguia
+ * como *A fazer* depois de cancelado.
+ *
+ * `done` e `wont` existem para que a vitrine possa envelhecer sem mentir.
+ */
+export type RoadStatus = "todo" | "idea" | "blocked" | "done" | "wont";
 
 export interface RoadItem {
   title: string;
@@ -26,6 +40,8 @@ export const STATUS_LABEL: Record<RoadStatus, string> = {
   todo: "A fazer",
   idea: "Ideia",
   blocked: "Em estudo",
+  done: "Entregue",
+  wont: "Cancelado",
 };
 
 export const ROADMAP_INTRO =
@@ -49,7 +65,7 @@ export const ROADMAP: RoadGroup[] = [
       {
         title: "Datas ao contrário",
         status: "idea",
-        desc: "Timestamp Unix ou serial do Excel → data. Hoje a bancada só vai da data para eles.",
+        desc: "O serial do Excel → data. O timestamp Unix JÁ ENTROU (10 e 13 dígitos, com faixa de 2001 a 2033 e a hora do Vale ao lado do UTC); falta a volta do serial do Excel, que é a outra metade do item.",
         note: "A outra metade deste item — número por extenso ↔ dígitos — já entrou.",
       },
       {
@@ -60,15 +76,15 @@ export const ROADMAP: RoadGroup[] = [
       },
       {
         title: "Compartilhar a ENTRADA por URL",
-        status: "todo",
-        desc: "A tela já vai no endereço (/geolocalizacao, /usuarios…). Falta o conteúdo: chave, 2º campo, título e a cadeia se perdem ao recarregar e não viajam no link.",
-        note: "A navegação saiu em 19/08. O que sobrou é o mais delicado: a entrada pode ser longa e pode ser material de prova, então ela não vai para a barra de endereço a cada tecla — precisa de um botão explícito de “copiar link desta análise”.",
+        status: "wont",
+        desc: "A tela já vai no endereço (/geolocalizacao, /usuarios…). O conteúdo — chave, 2º campo, título e cadeia — fica só na sessão.",
+        note: "Cancelado a pedido: o que se quis dos links foi o atalho para a ferramenta, não o compartilhamento do resultado — e /cifra/base64 já resolve isso. A entrada é material de prova e não tem por que viajar na barra de endereço.",
       },
       {
         title: "Runas e nyctográfico na Cola",
-        status: "idea",
-        desc: "Completar a prateleira de alfabetos que se leem: o Pigpen e o alfabeto de Libras já estão lá.",
-        note: "Ficaram de fora por falta de prova-âncora: a “prova de runas” de 2019 não usa alfabeto rúnico — cada runa é um desenho de dígito feito com células de planilha. Entra quando aparecer uma prova de verdade.",
+        status: "todo",
+        desc: "FEITO: a Cola ganhou “Runas — o que engana” e “Nyctográfico — a regra de construção”. O que segue aberto é só o caminho da FOTO para o caractere. Texto antigo: completar a prateleira de alfabetos que se leem. O Pigpen e o alfabeto de Libras já estão lá — e as runas TAMBÉM já decodificam; o que falta é a legenda desenhada.",
+        note: "O verbete dizia que as runas ficaram de fora “por falta de prova-âncora”, e as duas metades disso estavam erradas: o Elder e o Younger Futhark transliteram desde sempre, e a âncora existe. O buraco real é de FORMA — quem vê o traço numa foto e não tem o caractere para digitar. O nyctográfico, esse sim, falta inteiro.",
       },
     ],
   },
@@ -117,9 +133,9 @@ export const ROADMAP: RoadGroup[] = [
       },
       {
         title: "Engine esperto",
-        status: "idea",
+        status: "done",
         desc: "Solver de substituição automático, quebrador de Vigenère sem chave e detector de qual cifra é.",
-        note: "A parte barata já entrou: a faixa de dicas diz o que a entrada parece ser (ASCII e não A1Z26, MDC latente, DV que não fecha) e o selo marca a saída que é palavra real.",
+        note: "Os três entregaram. O solver de substituição decifra 90% em 200 letras e 100% em 400, e não emite abaixo de 200; a quebra de Vigenère recupera a chave inteira a partir de 150 letras; e o identificador ordena por evidência em vez de chutar um nome — inclusive dizendo quando NÃO é. Tudo pontuando em português, que é o que nenhuma ferramenta de fora faz.",
       },
       {
         title: "Cadeia automática",

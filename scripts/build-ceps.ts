@@ -2,7 +2,7 @@
  * build-ceps.ts — parse the Santa Catarina CEP export into compact JSON.
  *
  * Input : data-sources/ceps-sc.csv  (BigQuery export; path overridable via $CEP_CSV)
- * Output: public/data/ceps.json
+ * Output: seed-data/ceps.json
  *
  * Drops the heavy `estabelecimentos` column (lean v1). Município names are
  * de-duplicated into a lookup array referenced by index to keep the file small.
@@ -13,11 +13,12 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { fonteAusente } from "./lib/fonte-ausente";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(here, "..");
 const SRC = process.env.CEP_CSV || resolve(ROOT, "data-sources/ceps-sc.csv");
-const OUT = resolve(ROOT, "public/data/ceps.json");
+const OUT = resolve(ROOT, "seed-data/ceps.json");
 
 export type CepRow = [
   cep: string,
@@ -75,6 +76,20 @@ function parsePoint(raw: string): [number | null, number | null] {
 }
 
 function main() {
+  // A fonte é um export de BigQuery que não é versionado (pesa demais). O
+  // artefato É versionado, porque é ele que a API semeia. Numa clonagem limpa
+  // este passo pulava a cadeia inteira com ENOENT — agora ele avisa e sai.
+  if (
+    fonteAusente({
+      fonte: SRC,
+      saida: OUT,
+      passo: "build:ceps",
+      comoObter:
+        "export de CEPs de SC pela Base dos Dados (BigQuery) para data-sources/ceps-sc.csv, ou CEP_CSV=/caminho/para.csv",
+    })
+  )
+    return;
+
   const grid = parseCsv(readFileSync(SRC, "utf8"));
   const header = grid.shift();
   if (!header) throw new Error("empty CSV");

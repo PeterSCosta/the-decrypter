@@ -2,14 +2,14 @@
  * build-municipios.ts — gera a lista de municípios do IBGE (código de 7 dígitos
  * → nome + UF) a partir da API oficial de localidades (mesmos códigos da DTB).
  *
- * Saída: public/data/municipios.json
+ * Saída: seed-data/municipios.json
  * Run: pnpm build:municipios
  */
 import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "public/data/municipios.json");
+const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "seed-data/municipios.json");
 
 // UF a partir dos 2 primeiros dígitos do código IBGE (100% confiável).
 const UF_BY_CODE: Record<string, string> = {

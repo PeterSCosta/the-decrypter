@@ -5,8 +5,11 @@ import { CopyButton } from "@/components/ui/copy-button";
 import { PonteCard } from "@/features/bridge/components/ponte-card";
 import type { BridgeRow } from "@/features/bridge/types";
 import { CepCard } from "@/features/cep/components/cep-card";
-import type { CepHit } from "@/features/cep/types";
+import { CepCuringaCard } from "@/features/cep/components/cep-curinga-card";
+import type { CepCuringaData, CepHit } from "@/features/cep/types";
 import { CidCard } from "@/features/cid/components/cid-card";
+import { FilmeCard } from "@/features/filme/components/filme-card";
+import type { Filme } from "@/features/filme/types";
 import type { MathReport } from "@/features/math/arith";
 import { PosteCard } from "@/features/poste/components/poste-card";
 import type { Poste } from "@/features/poste/types";
@@ -106,6 +109,8 @@ export function ResultCard({
               <StreetCard key={`${row.codigo}-${row.bairro}-${i}`} row={row} />
             ))}
           </div>
+        ) : c.render === "cep-curinga" ? (
+          <CepCuringaCard data={c.data as CepCuringaData} />
         ) : c.render === "cep" ? (
           <div className="flex flex-col gap-2">
             {(c.data as CepHit[]).map((hit, i) => (
@@ -133,6 +138,8 @@ export function ResultCard({
           <FipeCard hint={c.data as FipeHint} />
         ) : c.render === "cnae" ? (
           <CnaeCard hint={c.data as CnaeHint} />
+        ) : c.render === "filme" ? (
+          <FilmeCard filme={c.data as Filme} />
         ) : c.render === "cid" ? (
           <CidCard dado={c.data as Cid | Cid[]} />
         ) : c.render === "ponte" ? (

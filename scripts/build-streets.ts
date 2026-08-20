@@ -11,7 +11,7 @@
  *
  * Run: pnpm build:streets
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -96,13 +96,72 @@ function main() {
 
   rows.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR") || a.codigo - b.codigo);
 
+  /**
+   * FUNDIR, NUNCA SOBRESCREVER.
+   *
+   * O `streets.json` versionado não é só o que este script produz: ele carrega
+   * a coordenada de 3.178 das 4.426 ruas, posta depois por `build:streets-geo`
+   * e por `enrich:streets` (1.108 delas vieram dos eixos). Escrever o payload
+   * cru por cima **apagava tudo isso** — e o pior é que apagava em silêncio, no
+   * primeiro passo de `pnpm build:data`, deixando o repositório pior do que o
+   * comando o encontrou e derrubando os testes de enriquecimento.
+   *
+   * Aqui a coordenada existente é reindexada por `codigo` e recolocada nas
+   * linhas novas. O que o PDF traz (nome, bairro, lei, extensão) é atualizado;
+   * o que só a geocodificação sabe é preservado. Rua que sumiu do PDF perde a
+   * coordenada junto, que é o correto — ela não existe mais.
+   */
+  const anterior = existsSync(OUT)
+    ? (JSON.parse(readFileSync(OUT, "utf8")) as {
+        rows?: { codigo: number; lat?: number; lng?: number }[];
+        geocoded?: number;
+        geocodedAt?: string;
+        geocodadoPorEixos?: number;
+      })
+    : null;
+
+  let preservadas = 0;
+  if (anterior?.rows?.length) {
+    const geoPorCodigo = new Map<number, { lat?: number; lng?: number }>();
+    for (const r of anterior.rows)
+      if (r.lat != null && r.lng != null) geoPorCodigo.set(r.codigo, { lat: r.lat, lng: r.lng });
+    for (const r of rows) {
+      const g = geoPorCodigo.get(r.codigo);
+      if (g) {
+        Object.assign(r, g);
+        preservadas++;
+      }
+    }
+  }
+
   const payload = {
     source: "Prefeitura de Blumenau — Rol de Ruas com Gabaritos",
     generatedAt: new Date().toISOString().slice(0, 10),
     count: rows.length,
     rows,
+    /**
+     * Os contadores viajam **verbatim**, não recalculados.
+     *
+     * Este script não geocodifica nada — ele parseia o PDF. Quem é autoridade
+     * sobre `geocoded` é o `geocode-streets.ts` e o `enrich-streets-eixos.ts`,
+     * e recalcular aqui seria trocar a semântica de um campo alheio de carona
+     * num conserto de outra coisa.
+     *
+     * (Fica registrado que o valor gravado hoje — 3.178 — não bate com as 4.286
+     * linhas que de fato têm coordenada: o último passo a escrever foi o
+     * `geocode-streets`, que grava o próprio `matched` por cima do total do
+     * enriquecimento por eixos. É defeito anterior a este conserto, é dos dois
+     * scripts de geocodificação, e não se conserta em silêncio aqui.)
+     */
+    ...(anterior?.geocoded !== undefined ? { geocoded: anterior.geocoded } : {}),
+    ...(anterior?.geocodedAt !== undefined ? { geocodedAt: anterior.geocodedAt } : {}),
+    ...(anterior?.geocodadoPorEixos !== undefined
+      ? { geocodadoPorEixos: anterior.geocodadoPorEixos }
+      : {}),
   };
   writeFileSync(OUT, JSON.stringify(payload));
+  if (anterior?.rows?.length)
+    console.log(`         preservou coordenada de ${preservadas} rua(s) do artefato anterior`);
 
   const missed = headLines - rows.length;
   console.log(

@@ -1,10 +1,19 @@
 import { Card } from "@/components/ui/card";
 import { GRUPOS_GEO } from "@/features/geo/formatos";
 import type { ReactNode } from "react";
+import {
+  ICS_NOTAS,
+  ICS_SIGNIFICADOS,
+  NYCTOGRAFICO_NOTAS,
+  RUNAS_ARMADILHAS,
+  RUNAS_NOTAS,
+} from "../alfabetos-visuais";
 import { COLORS } from "../colors";
 import { COMPOUNDS } from "../compounds";
 import { DOC_FORMATS, lengthLabel } from "../digit-table";
 import { LIBRAS, LIBRAS_NOTES, PIGPEN_GROUPS, PIGPEN_NOTES } from "../glyphs";
+import { REGUA_IC, REGUA_IC_NOTAS } from "../regua-ic";
+import { SOLETRACAO, SOLETRACAO_DIGITOS, SOLETRACAO_NOTAS } from "../soletracao";
 import { BANCADAS_EXTERNAS, SOURCES_INTRO, sourcesByStatus } from "../sources";
 
 // Documentos/códigos agrupados por quantidade de dígitos (ordem do gabarito).
@@ -82,6 +91,20 @@ const CHECKLIST: { title: string; items: string[] }[] = [
     ],
   },
 ];
+
+/** Lista de notas — o formato que toda legenda desta Cola usa. */
+function Notas({ itens }: { itens: string[] }) {
+  return (
+    <ul className="flex flex-col gap-1.5 text-sm text-[var(--text-secondary)]">
+      {itens.map((n) => (
+        <li key={n.slice(0, 40)} className="flex gap-2">
+          <span className="text-[var(--text-muted)]">·</span>
+          <span>{n}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -391,6 +414,181 @@ export function ReferencePanel() {
           </table>
         </Card>
       </Section>
+
+      {/*
+        LEGENDAS DE FORMA — o caminho inverso: da FOTO para a letra.
+        O conteúdo é a lista do que ENGANA, não arte ASCII: 24 runas desenhadas
+        em monoespaçada saem ruins e ocupam a Cola; o que resolve às 23h é saber
+        que ᛖ parece M e vale E.
+      */}
+      <Section title="Runas — o que engana">
+        <Card className="overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-sunken)]/50 text-left text-xs text-[var(--text-muted)]">
+                <th className="px-3 py-2 font-medium">Glifo</th>
+                <th className="px-3 py-2 font-medium">Vale</th>
+                <th className="px-3 py-2 font-medium">A armadilha</th>
+              </tr>
+            </thead>
+            <tbody>
+              {RUNAS_ARMADILHAS.map((r) => (
+                <tr key={r.glifo} className="border-b border-[var(--border-subtle)] last:border-0">
+                  <td className="px-3 py-2 align-top font-mono text-lg text-[var(--text-primary)]">
+                    {r.glifo}
+                  </td>
+                  <td className="px-3 py-2 align-top whitespace-nowrap text-[var(--text-primary)]">
+                    {r.valor}
+                  </td>
+                  <td className="px-3 py-2 align-top text-[var(--text-secondary)]">
+                    {r.armadilha}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+        <Notas itens={RUNAS_NOTAS} />
+      </Section>
+
+      <Section title="Nyctográfico — a regra de construção">
+        <Notas itens={NYCTOGRAFICO_NOTAS} />
+      </Section>
+
+      <Section title="Bandeiras do Código Internacional de Sinais">
+        <Card className="overflow-hidden">
+          <table className="w-full text-sm">
+            <tbody>
+              {ICS_SIGNIFICADOS.map((b) => (
+                <tr key={b.letra} className="border-b border-[var(--border-subtle)] last:border-0">
+                  <td className="px-3 py-1.5 align-top font-mono text-[var(--text-primary)]">
+                    {b.letra}
+                  </td>
+                  <td className="px-3 py-1.5 text-[var(--text-secondary)]">{b.significado}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+        <Notas itens={ICS_NOTAS} />
+      </Section>
+
+      {/*
+        SOLETRAÇÃO — legenda, e não tabela de decoder. Ver o cabeçalho de
+        `soletracao.ts`: não existe norma brasileira em palavras portuguesas, e a
+        lista mais citada não tem fonte primária. Quem decodifica é a FORMA
+        "X de Palavra", que se autoverifica pela acrofonia.
+      */}
+      <Section title="Soletração — “A de Amor”">
+        <Card className="overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-sunken)]/50 text-left text-xs text-[var(--text-muted)]">
+                <th className="px-3 py-2 font-medium">Letra</th>
+                <th className="px-3 py-2 font-medium">ICAO (oficial no Brasil)</th>
+                <th className="px-3 py-2 font-medium">Corrente BR (sem fonte)</th>
+                <th className="px-3 py-2 font-medium">ICAO 1947 América Latina</th>
+              </tr>
+            </thead>
+            <tbody className="font-mono">
+              {SOLETRACAO.map((l) => (
+                <tr key={l.letra} className="border-b border-[var(--border-subtle)] last:border-0">
+                  <td className="px-3 py-1.5 text-[var(--text-primary)]">{l.letra}</td>
+                  <td className="px-3 py-1.5 text-[var(--text-secondary)]">{l.icao}</td>
+                  <td className="px-3 py-1.5 text-[var(--text-secondary)]">{l.br}</td>
+                  <td className="px-3 py-1.5 text-[var(--text-muted)]">{l.latina}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+        <Card className="overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-sunken)]/50 text-left text-xs text-[var(--text-muted)]">
+                <th className="px-3 py-2 font-medium">Dígito</th>
+                <th className="px-3 py-2 font-medium">Brasil (DECEA MCA 100-16)</th>
+                <th className="px-3 py-2 font-medium">ICAO</th>
+              </tr>
+            </thead>
+            <tbody className="font-mono">
+              {SOLETRACAO_DIGITOS.map((d) => (
+                <tr key={d.digito} className="border-b border-[var(--border-subtle)] last:border-0">
+                  <td className="px-3 py-1.5 text-[var(--text-primary)]">{d.digito}</td>
+                  <td className="px-3 py-1.5 text-[var(--text-secondary)]">{d.brasil}</td>
+                  <td className="px-3 py-1.5 text-[var(--text-muted)]">{d.icao}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+        <ul className="flex flex-col gap-1.5 text-sm text-[var(--text-secondary)]">
+          {SOLETRACAO_NOTAS.map((nota) => (
+            <li key={nota.slice(0, 40)} className="flex gap-2">
+              <span className="text-[var(--text-muted)]">·</span>
+              <span>{nota}</span>
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      {/*
+        A RÉGUA DO IC — a legenda da aba Retrato.
+        Fica por último de propósito: é a única seção que não é tabela de
+        consulta, e sim leitura de um número. Quem chega aqui já viu o número.
+      */}
+      <Section title="Índice de coincidência — o que o número quer dizer">
+        <Card className="overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-sunken)]/50 text-left text-xs text-[var(--text-muted)]">
+                <th className="px-3 py-2 font-medium">Faixa</th>
+                <th className="px-3 py-2 font-medium">IC</th>
+                <th className="px-3 py-2 font-medium">Significa</th>
+              </tr>
+            </thead>
+            <tbody>
+              {REGUA_IC.map((f) => (
+                <tr key={f.faixa} className="border-b border-[var(--border-subtle)] last:border-0">
+                  <td className="px-3 py-2 align-top text-[var(--text-primary)]">{f.faixa}</td>
+                  <td className="px-3 py-2 align-top font-mono text-xs text-[var(--text-muted)]">
+                    {f.ic}
+                  </td>
+                  <td className="px-3 py-2 align-top">
+                    <span className="block text-[var(--text-primary)]">{f.significa}</span>
+                    <span className="mt-0.5 block text-xs text-[var(--text-secondary)]">
+                      {f.ondeOlhar}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+        <ul className="flex flex-col gap-1.5 text-sm text-[var(--text-secondary)]">
+          {REGUA_IC_NOTAS.map((nota) => (
+            <li key={nota.slice(0, 40)} className="flex gap-2">
+              <span className="text-[var(--text-muted)]">·</span>
+              <span>{semNegrito(nota)}</span>
+            </li>
+          ))}
+        </ul>
+      </Section>
     </div>
+  );
+}
+
+/** As notas usam `**` para marcar a abertura; a Cola renderiza texto puro. */
+function semNegrito(t: string): ReactNode {
+  const partes = t.split(/\*\*(.+?)\*\*/g);
+  return partes.map((p, i) =>
+    i % 2 === 1 ? (
+      // biome-ignore lint/suspicious/noArrayIndexKey: as partes vêm de um split posicional
+      <strong key={i} className="text-[var(--text-primary)]">
+        {p}
+      </strong>
+    ) : (
+      p
+    ),
   );
 }

@@ -32,12 +32,23 @@ describe("todas as leituras, a mais confiável em cima", () => {
     expect(r[1].confianca).toBe(CONFIANCA.frouxa);
   });
 
-  it("g7rpj devolve Blumenau E a Islândia, nessa ordem", () => {
+  it("g7rpj devolve as leituras do Vale E a Islândia, o Vale primeiro", () => {
     const r = detectLocations("g7rpj");
+    // A cauda de geohash é ambígua: ela devolve 2-3 candidatos, todos no Vale.
+    // Antes a bancada escolhia UM e o apresentava como resposta — e em 62,6%
+    // dos pontos de Blumenau escolhia o errado, com 27 km de erro médio.
+    const locais = r.filter((x) => x.format.includes("assumindo"));
+    expect(locais.length).toBeGreaterThan(1);
+    expect(locais.every((x) => x.format.includes("de "))).toBe(true);
+
+    // O ponto verdadeiro de `6gjng7rpj` continua entre eles, e em cima.
     expect(r[0].format).toContain("Blumenau");
     expect(r[0].lat).toBeCloseTo(-26.919, 2);
-    expect(r[1].format).toBe("Geohash");
-    expect(r[1].lat).toBeCloseTo(64.53, 1);
+
+    // E a de longe fica, embaixo — a regra da casa não apaga leitura distante.
+    const islandia = r.find((x) => x.format === "Geohash");
+    expect(islandia?.lat).toBeCloseTo(64.53, 1);
+    expect(r.indexOf(islandia!)).toBeGreaterThan(r.indexOf(locais.at(-1)!));
   });
 
   it("um Plus Code INTEIRO vale forma própria; uma cauda, não", () => {

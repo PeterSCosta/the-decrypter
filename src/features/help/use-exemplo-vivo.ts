@@ -1,6 +1,14 @@
 import { runDecoders } from "@/features/decoder/engine/run";
 import type { DecodeContext } from "@/features/decoder/engine/types";
 import { prepararDeteccao } from "@/features/location/formats";
+import {
+  loadArticulacao,
+  loadBridges,
+  loadEixos,
+  loadEstacoes,
+  loadStreets,
+  loadVotacoes,
+} from "@/lib/data";
 import { useEffect, useState } from "react";
 
 export interface LeituraDoExemplo {
@@ -39,11 +47,37 @@ export function useExemploVivo(entrada: string, ativo: boolean): LeituraDoExempl
     // O H3 e o Placekey moram numa lib que entra por `import()`. Sem esperar por
     // ela, o primeiro passe devolve null e o exemplo aparece como se estivesse
     // quebrado — foi o que já aconteceu na aba de Geolocalização.
-    void prepararDeteccao(entrada).then(() => {
+    /**
+     * ── AS BASES DE ARQUIVO ENTRAM, E ISTO É CONSERTO ─────────────────────
+     * O contexto era `{ key: "", streets: null }` e mais nada. Consequência
+     * medida: os exemplos de **nove verbetes** — estação geodésica, folha
+     * cartográfica, ponte, votação, quadra, código de rua, nome de rua, nº da
+     * lei e data da lei — não produziam o card prometido, e a tela exibia o
+     * rodapé "nada offline — esta leitura depende de consulta".
+     *
+     * Só que não depende: são arquivos locais. O guia estava atribuindo à rede
+     * um silêncio que era dele mesmo — e o comentário deste arquivo promete o
+     * contrário ("o guia não tem como mentir"). Carregar as bases é o que faz a
+     * promessa valer.
+     */
+    void Promise.all([
+      prepararDeteccao(entrada),
+      loadStreets().catch(() => null),
+      loadBridges().catch(() => null),
+      loadVotacoes().catch(() => null),
+      loadEixos().catch(() => null),
+      loadEstacoes().catch(() => null),
+      loadArticulacao().catch(() => null),
+    ]).then(([, streets, bridges, votacoes, eixos, estacoes, articulacao]) => {
       if (!vivo) return;
       const r = runDecoders(entrada, {
         key: "",
-        streets: null,
+        streets,
+        bridges,
+        votacoes,
+        eixos,
+        estacoes,
+        articulacao,
       } as unknown as DecodeContext) as unknown as {
         results: { decoderName: string; output: string }[];
       };

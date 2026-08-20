@@ -120,6 +120,30 @@ export function MapCard({ data }: { data: LocationData }) {
           {error ?? "Sem coordenada para exibir no mapa."}
         </p>
       )}
+
+      {/*
+        O QUE HÁ NESTE PONTO — enriquecimento, não card novo.
+        A descrição de uma estação geodésica costuma ser enunciado pronto
+        ("chapa cravada na cabeceira da ponte de concreto sobre o Rio Perequê"),
+        e é o tipo de referência física que a organização usa como âncora. Sai
+        de uma varredura local sobre 491 linhas — sem rede, sem espera.
+      */}
+      {data.perto && data.perto.length > 0 && (
+        <div className="mt-2 border-t border-[var(--border-subtle)] pt-2">
+          <span className="text-[0.6875rem] uppercase tracking-wide text-[var(--text-muted)]">
+            Marcos geodésicos por perto
+          </span>
+          <ul className="mt-1 flex flex-col gap-0.5">
+            {data.perto.map((e) => (
+              <li key={e.codigo} className="text-xs text-[var(--text-secondary)]">
+                <span className="font-mono text-[var(--text-primary)]">{e.codigo}</span>
+                <span className="text-[var(--text-muted)]"> · {e.km.toFixed(1)} km · </span>
+                {e.descricao || e.municipio}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

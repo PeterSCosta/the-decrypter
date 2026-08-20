@@ -22,11 +22,11 @@ describe("a nota segue a camada que resolveu", () => {
   it("assinatura literal vale mais que forma própria, que vale mais que frouxo", () => {
     expect(detectLocation("geo:-26.9194,-49.0661")!.confianca).toBe(CONFIANCA.literal);
     expect(detectLocation("-26.9194, -49.0661")!.confianca).toBe(CONFIANCA.forma);
-    // `1400m` só casa como Geohash, e em duas leituras: a cauda local
-    // (0,55 — prior de gincana do Vale, sem evidência na string) e a global
-    // (0,50 — a camada frouxa). A de baixo continua existindo.
+    // `1400m` só casa como Geohash, e em várias leituras: as caudas locais
+    // (0,52 — a cauda é AMBÍGUA, devolve 2-3 pontos; ver `decodeGeohashLocal`)
+    // e a global (0,50 — a camada frouxa). A de baixo continua existindo.
     const leituras = detectLocations("1400m");
-    expect(leituras[0].confianca).toBe(CONFIANCA.atalhoFraco);
+    expect(leituras[0].confianca).toBe(CONFIANCA.atalhoAmbiguo);
     expect(leituras.at(-1)!.confianca).toBe(CONFIANCA.frouxa);
   });
 
