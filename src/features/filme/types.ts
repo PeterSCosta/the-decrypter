@@ -32,6 +32,24 @@ export interface Filme {
   fonte: string;
 }
 
+/**
+ * As DUAS leituras que a tela sempre mostra quando existem.
+ *
+ * Pedido do dono, e ele tem razão: numa prova, o título em inglês e o
+ * brasileiro servem a coisas diferentes — um casa com o que está escrito no
+ * enunciado, o outro com o que está escrito no cartaz. Escolher um e esconder o
+ * outro obriga a pessoa a adivinhar qual a bancada escolheu.
+ */
+export interface Titulos {
+  /** Marcado `pt-br`: é o daqui, sem ambiguidade. */
+  br: string | null;
+  /** Marcado só `pt`: português, SEM marca de país — ver abaixo. */
+  pt: string | null;
+  /** O original, e o inglês quando o original não é em inglês. */
+  original: string | null;
+  ingles: string | null;
+}
+
 /** De onde veio o título que a tela está mostrando. */
 export type OrigemTitulo = "br" | "original" | "nenhum";
 
@@ -61,10 +79,26 @@ export function tituloPrincipal(f: Filme): TituloEscolhido {
       // A frase importa: ela distingue "o filme se chama assim no Brasil" de
       // "a fonte não sabe como ele se chama no Brasil". São coisas diferentes
       // e a fonte não permite decidir entre elas.
-      ressalva: "título original — o Wikidata não registra um título brasileiro para este filme",
+      ressalva: "título original — o Wikidata não registra um título marcado como brasileiro",
     };
   }
   return { texto: f.imdbId, origem: "nenhum", ressalva: "sem título registrado na fonte" };
+}
+
+/**
+ * Os títulos que a tela deve listar, sempre que existirem e forem diferentes.
+ *
+ * Nada é escondido por ser redundante: quando o filme se chama igual nos dois
+ * lados (Skyfall, Oppenheimer), a linha some sozinha porque os valores
+ * coincidem — mas quando diferem, as duas aparecem.
+ */
+export function titulosDe(f: Filme): Titulos {
+  return {
+    br: f.tituloBr,
+    pt: f.tituloPt,
+    original: f.tituloOriginal,
+    ingles: f.tituloIngles && f.tituloIngles !== f.tituloOriginal ? f.tituloIngles : null,
+  };
 }
 
 /** `181` → `3 h 1 min`. Duração de filme se lê em horas. */

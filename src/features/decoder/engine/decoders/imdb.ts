@@ -33,22 +33,52 @@ const NAME = "Filme (IMDb)";
 /** `tt` e 7 ou 8 dígitos — a mesma forma que o servidor confere em `ImdbId`. */
 export const PARECE_IMDB = /^tt\d{7,8}$/i;
 
+/**
+ * `Q` e dígitos — o código do MESMO filme no catálogo do Wikidata.
+ *
+ * ── POR QUE ELE É UMA SEGUNDA PORTA ───────────────────────────────────────
+ * `Q4941` é Skyfall, igual ao `tt1074638`; é o que se copia de uma página do
+ * Wikidata. Sem esta porta a bancada lia `Q4941` como **cauda de Geohash** e
+ * devolvia cinco pontos em Blumenau — medido, 61% dos QIDs fazem isso — sem
+ * nunca dizer que aquilo era um filme.
+ *
+ * As duas leituras continuam na tela. O que muda é a ordem, e a razão está na
+ * régua da casa: a cauda vale 0,52 porque é palpite entre cinco, todas
+ * assumindo um prefixo de cidade; um acerto exato numa base real é evidência
+ * de outra natureza.
+ *
+ * ── E ISTO NÃO CONTRADIZ A REGRA DO QID ───────────────────────────────────
+ * A regra escrita é que o QID nunca vira valor clicável, encadeável ou
+ * copiável — ela é sobre o QID como SAÍDA, porque encadeá-lo joga a volta
+ * seguinte na leitura de coordenada. Como ENTRADA ele é chave legítima, e
+ * resolvê-lo é o oposto de propagar o engano: é encerrá-lo.
+ */
+export const PARECE_QID = /^Q[1-9]\d{0,10}$/i;
+
 export const decoders = defineDecoder({
   id: ID,
   name: NAME,
   category: "lookup",
   decode(input, ctx) {
     const t = input.trim();
-    if (!PARECE_IMDB.test(t)) return [];
+    const porQid = PARECE_QID.test(t);
+    if (!PARECE_IMDB.test(t) && !porQid) return [];
     // A resposta precisa ser DESTA entrada: um acerto de duas teclas atrás
     // apareceria como se fosse deste texto.
     if (ctx.hits?.q !== t) return [];
 
     const f = ctx.hits.filme as Filme | null | undefined;
     if (!f) {
-      // Perguntamos e a fonte não conhece. Isso é informação — e é diferente de
-      // "o filme não existe". O card sai com nota baixa: ele não resolveu nada,
-      // só evita que a pessoa fique achando que a bancada ignorou o ID.
+      /**
+       * Perguntamos e a fonte não confirmou. Isso é informação — e é diferente
+       * de "o filme não existe".
+       *
+       * Pela porta do QID o silêncio é COMPLETO, de propósito: um `Q…` não
+       * promete ser filme (`Q42` é Douglas Adams), então dizer "não confirmei
+       * o filme" para todo número Q seria ruído — e a leitura de Geohash, que
+       * continua na tela, é a resposta honesta ali.
+       */
+      if (porQid) return [];
       return [
         {
           decoderId: ID,
@@ -63,8 +93,14 @@ export const decoders = defineDecoder({
     }
 
     const titulo = tituloPrincipal(f);
+    // O SEGUNDO título entra na própria linha do resultado, e não só na ficha:
+    // é o que aparece na lista, no que se copia e no que se encadeia. Um filme
+    // que se chama diferente aqui e lá fora tem dois nomes, e a prova pode citar
+    // qualquer um dos dois.
+    const outro = [f.tituloOriginal, f.tituloIngles].find((x) => x && x !== titulo.texto);
     const partes = [
       titulo.texto,
+      outro ? `/ ${outro}` : "",
       f.ano ? `(${f.ano})` : "",
       f.duracaoMin ? `· ${f.duracaoMin} min` : "",
       f.direcao?.length ? `· dir. ${f.direcao.join(", ")}` : "",
@@ -75,7 +111,9 @@ export const decoders = defineDecoder({
         decoderId: ID,
         decoderName: NAME,
         category: "lookup" as const,
-        label: `${titulo.texto}${f.ano ? ` (${f.ano})` : ""}`,
+        // Entrando pelo QID, o rótulo diz de onde veio: quem colou um `Q…`
+        // precisa ver que a bancada o reconheceu como filme, e não como cauda.
+        label: `${porQid ? `${t.toUpperCase()} → ` : ""}${titulo.texto}${f.ano ? ` (${f.ano})` : ""}`,
         output: partes.join(" "),
         // Acerto confirmado numa fonte externa, com assinatura de forma fechada.
         forcedScore: 0.88,

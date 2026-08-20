@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type Filme, duracaoLegivel, tituloPrincipal } from "./types";
+import { type Filme, duracaoLegivel, tituloPrincipal, titulosDe } from "./types";
 
 const base: Filme = {
   imdbId: "tt0111161",
@@ -40,7 +40,13 @@ describe("qual título a tela mostra", () => {
    * O TESTE QUE JUSTIFICA A CLASSE. Sem título brasileiro, a escada NÃO desce
    * para o português de Portugal — ela vai para o original e AVISA.
    */
-  it("sem título brasileiro, jamais cai no de Portugal", () => {
+  /**
+   * A etiqueta `pt` do Wikidata é PORTUGUÊS, não Portugal — "Regresso ao
+   * Futuro" é de lá, mas "007 - Operação Skyfall", marcado igual, é daqui. Como
+   * o dado não distingue, ele nunca entra nesta escada: cair nele acertaria
+   * metade das vezes e erraria a outra, que é resposta errada com confiança.
+   */
+  it("sem título brasileiro, jamais cai no que está só marcado `pt`", () => {
     const t = tituloPrincipal({
       ...base,
       tituloBr: null,
@@ -50,7 +56,7 @@ describe("qual título a tela mostra", () => {
     expect(t.texto).toBe("Back to the Future");
     expect(t.texto).not.toBe("Regresso ao Futuro");
     expect(t.origem).toBe("original");
-    expect(t.ressalva).toContain("não registra um título brasileiro");
+    expect(t.ressalva).toContain("não registra um título marcado como brasileiro");
   });
 
   it("sem título nenhum, mostra o ID e diz que não há título", () => {
@@ -97,5 +103,39 @@ describe("duração legível", () => {
     expect(duracaoLegivel(null)).toBeNull();
     expect(duracaoLegivel(0)).toBeNull();
     expect(duracaoLegivel(-3)).toBeNull();
+  });
+});
+
+/**
+ * OS DOIS TÍTULOS, SEMPRE — pedido do dono, e a razão é de prova: o inglês casa
+ * com o enunciado, o brasileiro casa com o cartaz.
+ */
+describe("os dois títulos viajam juntos", () => {
+  it("quando diferem, os dois vêm", () => {
+    const t = titulosDe({
+      ...base,
+      tituloBr: "Um Sonho de Liberdade",
+      tituloOriginal: "The Shawshank Redemption",
+      tituloIngles: "The Shawshank Redemption",
+    });
+    expect(t.br).toBe("Um Sonho de Liberdade");
+    expect(t.original).toBe("The Shawshank Redemption");
+    // O inglês só aparece quando difere do original — senão é a mesma linha
+    // duas vezes, que é ruído com cara de informação.
+    expect(t.ingles).toBeNull();
+  });
+
+  it("quando o original não é em inglês, os dois aparecem", () => {
+    const t = titulosDe({ ...base, tituloOriginal: "کلوزآپ", tituloIngles: "Close-Up" });
+    expect(t.original).toBe("کلوزآپ");
+    expect(t.ingles).toBe("Close-Up");
+  });
+
+  /** Skyfall se chama igual aqui e lá — não há segundo título a mostrar. */
+  it("quando o filme tem um nome só, não se inventa o segundo", () => {
+    const t = titulosDe({ ...base, tituloOriginal: "Skyfall", tituloIngles: "Skyfall" });
+    expect(t.original).toBe("Skyfall");
+    expect(t.ingles).toBeNull();
+    expect(t.br).toBeNull();
   });
 });

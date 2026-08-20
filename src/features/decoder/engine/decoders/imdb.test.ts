@@ -1,7 +1,7 @@
 import type { Filme } from "@/features/filme/types";
 import { describe, expect, it } from "vitest";
 import type { DecodeContext } from "../types";
-import { PARECE_IMDB, decoders } from "./imdb";
+import { PARECE_IMDB, PARECE_QID, decoders } from "./imdb";
 
 const d = Array.isArray(decoders) ? decoders[0] : decoders;
 
@@ -87,5 +87,40 @@ describe("o decoder de filme", () => {
   it("o que não tem a forma nem chega à consulta", () => {
     for (const s of ["A resposta", "89010000", "nm0000151"])
       expect(d.decode(s, ctx(s, shawshank)), s).toHaveLength(0);
+  });
+});
+
+/**
+ * A SEGUNDA PORTA — o código do Wikidata.
+ *
+ * `Q4941` é o mesmo filme que `tt1074638`. Sem esta porta, a bancada o lia como
+ * cauda de Geohash e devolvia cinco pontos em Blumenau, sem nunca dizer que
+ * aquilo era um filme. As duas leituras continuam na tela; o que muda é a
+ * ordem, e a razão é a régua da casa: a cauda é palpite entre cinco, e acerto
+ * exato numa base real é evidência de outra natureza.
+ */
+describe("o filme pelo código do Wikidata", () => {
+  it("a forma aceita Q e dígitos, e recusa o resto", () => {
+    for (const s of ["Q4941", "Q42", "q4941", "Q220741"]) expect(PARECE_QID.test(s), s).toBe(true);
+    for (const s of ["Q", "Q0", "Q12x", "4941", "tt0111161"])
+      expect(PARECE_QID.test(s), s).toBe(false);
+  });
+
+  it("com a ficha confirmada, o card diz que veio do QID", () => {
+    const r = d.decode("Q4941", ctx("Q4941", { ...shawshank, imdbId: "tt1074638" }));
+    expect(r).toHaveLength(1);
+    expect(r[0].label).toContain("Q4941 →");
+    expect(r[0].forcedScore).toBe(0.88);
+  });
+
+  /**
+   * Um `Q…` NÃO promete ser filme — `Q42` é Douglas Adams. Sem confirmação, o
+   * silêncio é completo: dizer "não confirmei o filme" para todo número Q seria
+   * ruído, e a leitura de Geohash que fica na tela é a resposta honesta ali.
+   */
+  it("sem confirmação, o silêncio é completo — ao contrário do `tt…`", () => {
+    expect(d.decode("Q999999999", ctx("Q999999999", null))).toEqual([]);
+    // Já o `tt…` promete ser título, então ali o silêncio seria pior.
+    expect(d.decode("tt9999999", ctx("tt9999999", null))).toHaveLength(1);
   });
 });
