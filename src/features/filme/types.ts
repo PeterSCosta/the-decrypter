@@ -108,3 +108,29 @@ export function duracaoLegivel(min: number | null): string | null {
   const m = min % 60;
   return h > 0 ? `${h} h ${m} min (${min} min)` : `${min} min`;
 }
+
+/**
+ * Um item QUALQUER do Wikidata — o que sobra quando o `Q…` não é filme.
+ *
+ * ── POR QUE ISTO EXISTE, E POR QUE NÃO CONTRADIZ A ONDA 10 ────────────────
+ * A avaliação da Onda 10 recusou resolver NOME → entidade, e a razão era a
+ * ambiguidade: "Bacurau" é filme e é ave, "Maria" são 113 candidatos. Um QID
+ * não tem esse problema — ele identifica **um** item e só um, por construção.
+ * É acerto exato, não triagem.
+ *
+ * E o que ele devolve cai no domínio central desta casa: quando o item tem
+ * COORDENADA, o card vira ponto no mapa. `Q155` é o Brasil.
+ */
+export interface ItemWikidata {
+  qid: string;
+  rotulo: string | null;
+  /** A língua do rótulo — a tela diz de onde o nome veio, em vez de fingir. */
+  lingua: string | null;
+  descricao: string | null;
+  tipos: string[] | null;
+  /** `tt…` para título, `nm…` para pessoa. O prefixo diz o que é. */
+  imdbId: string | null;
+  lat: number | null;
+  lng: number | null;
+  ehFilme: boolean;
+}

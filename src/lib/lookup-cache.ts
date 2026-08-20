@@ -1,4 +1,4 @@
-import type { Filme } from "@/features/filme/types";
+import type { Filme, ItemWikidata } from "@/features/filme/types";
 import type { Poste } from "@/features/poste/types";
 import { apiFetch } from "./api";
 
@@ -62,6 +62,13 @@ export interface LookupHits {
    * catálogo da IMDb.
    */
   filme?: Filme | null;
+  /**
+   * O item do Wikidata quando a entrada é um `Q…`.
+   *
+   * Vem JUNTO do `filme` quando o item também é um filme — é a mesma resposta,
+   * lida de dois jeitos, e não duas requisições.
+   */
+  item?: ItemWikidata | null;
 }
 
 /**
