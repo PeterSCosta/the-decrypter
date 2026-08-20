@@ -85,8 +85,8 @@ por causa dela.
 |---|---|---|
 | **Náutico** | "zero provas náuticas em dez anos… isso é dado, não falta de amostra" (`PLANO-2026-08.md:119`) | ITC 2024 p13: bandeiras do alfabeto náutico (ICS) nos navios do desenho |
 | **Enigma** | "teria de entregar a configuração inteira, e aí a equipe usa um simulador" (`:458`) | ITC 2024 p09 entrega o emulador E fixa rotores I,II,III + anel A,A,A, sem plugboard |
-| **Runas** | "adiadas por falta de âncora" (`TODO-CIFRAS.md:8`) | ITC 2024 p12-E6: duas runas físicas escrevendo PAX HIC |
-| **Anagrama** | "adormecida no Challenge desde 2019" (`:155`) | ITC 2024 p08: NEPTE → PENTE |
+| **Runas** | ~~"adiadas por falta de âncora"~~ — **RESOLVIDO em 19/08/2026**: a frase saiu de `TODO-CIFRAS.md:8` e `:399`, e o decoder já estava na bancada desde `alphabets.ts:513` | ITC 2024 p12-E6: duas runas físicas escrevendo PAX HIC |
+| **Anagrama** | ~~"adormecida no Challenge desde 2019"~~ — **RESOLVIDO em 19/08/2026**: retirado de `TODO-CIFRAS.md:155`. E a razão não é a âncora de 2024: é que ausência no acervo nunca foi argumento, como `QUEBRAR-PROVAS.md:854` já dizia | ITC 2024 p08: NEPTE → PENTE |
 | **A31 "cofre"** | arquivado como mecânica física | ITC 2025 p15-Et.3: anel de 14 letras percorrido por sequência numérica — **digitável de ponta a ponta** |
 
 **Ação:** nenhum deles vira decoder automaticamente. O náutico e as runas são

@@ -5,9 +5,12 @@
 > reescopados — o **8** virou a aba Diferenças, o **12** virou inspetor de espaçamento e não
 > "resolve a prova 41", o **18** virou cidade→DDD em vez de coordenada→cidade), o **19** entregue
 > como documentação (a seção "Bases e onde consultar" da Cola, com o status de cada base), o **14**
-> **parcial** (entraram `letter-values` e as legendas de Pigpen e Libras; runas seguem adiadas por
-> falta de âncora) e o **17** **descartado** por projeto — zero provas resolvidas no acervo contra
-> centenas de KB de dataset. **As 5 melhorias transversais entraram todas**: cadeia, 2º campo,
+> **parcial** (entraram `letter-values`, as legendas de Pigpen e Libras **e as runas** —
+> `reference/alphabets.ts:513`/`:573`; falta só a legenda desenhada) e o **17** **descartado** por
+> projeto — o argumento agora é o **peso**: centenas de KB de dataset para uma capacidade que
+> ninguém pediu. A metade que dizia "zero provas resolvidas no acervo" saiu em 19/08/2026, pela
+> regra que este repositório já escrevia em `QUEBRAR-PROVAS.md:854` e não aplicava aqui:
+> **nunca trate "adormecida" como "extinta"** — o acervo não é censo. **As 5 melhorias transversais entraram todas**: cadeia, 2º campo,
 > título como pista, selo de palavra real e faixa de dicas do sniffer — com a ressalva de que o 2º
 > campo tem, por ora, um único consumidor (`PLANO-CIFRAS.md` §8-D8).
 >
@@ -152,7 +155,7 @@ o encadeamento que faltava é um clique.
 - **Nota de implementação:** transformação pura, estende o módulo existente `decoders/acrostic.ts`.
 
 #### 4. Anagrama (`anagram`) — mecânica A6
-- **Resolve:** A6, adormecida no Challenge desde 2019 mas **viva na GIA (3×)**: *O Código Songi*
+- **Resolve:** A6, **viva na GIA (3×)**: *O Código Songi*. (Dizia "adormecida no Challenge desde 2019" — retirado em 19/08/2026: o acervo é incompleto e não registra edições que ocorreram, então "não apareceu desde" mede o arquivo, não a gincana.)
   (SONGI→SIGNO), *Arte sem Nome* (contagens → anagrama de "UM MAPA"), *Quem Peleia* (Gino→Ingo,
   Torvi→Vitor…). O dono marcou como "ressuscitar" no dicionário.
 - **Padrão de uso real:** o alvo (nome de bairro/escola/filme local) chega embaralhado no título ou
@@ -396,7 +399,7 @@ A coluna de prioridade não faz mais sentido — a fila acabou. No lugar dela, o
 | 11 | A28 Conversões de cor | **ENTREGUE** | `color-convert` (255 cores pt-BR, ΔE em CIELab) + `faber-castell` |
 | 12 | A16 Estego por espaçamento | **ENTREGUE como inspetor** | `whitespace-stego`: 4 leituras × 2 direções + perfil linha a linha. A prova 41 segue irrecuperável do acervo |
 | 13 | A25 Cores de resistor | **ENTREGUE** | `resistor` — o único do lote com `encode`; emite valor **e** dígitos |
-| 14 | A9/A10 Pigpen/runas/gematria | **PARCIAL** | `letter-values` (primos/gematria/redução) + legendas de Pigpen e Libras na Cola. **Runas adiadas por falta de âncora** |
+| 14 | A9/A10 Pigpen/runas/gematria | **PARCIAL** | `letter-values` (primos/gematria/redução) + legendas de Pigpen e Libras na Cola. **Runas: o decoder EXISTE** (`reference/alphabets.ts:513` Elder, `:573` Younger) — o que falta é a legenda desenhada, para quem vê o traço numa foto e não tem o caractere. A nota antiga ("adiadas por falta de âncora") estava errada nas duas metades e saiu em 19/08/2026 |
 | 15 | A19/A23 Fórmula molecular | **ENTREGUE** | 4º modo do `periodic-table` + `reference/compounds.ts` (nome pt-BR → fórmula) |
 | 16 | A20 Grade rotativa 4 braços | **ENTREGUE** | decoder `grid-read` (4 braços, espirais, serpentinas) |
 | 17 | A25 Burocráticos extra | **DESCARTADO em parte** | CID-10/CNAE/FIPE/Anatel seguem fora (são dataset). Rastreio **Correios** e **placa Mercosul** entraram na onda 6 por não precisarem de dataset — `correios` e `placa-veiculo` |

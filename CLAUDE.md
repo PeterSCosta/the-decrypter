@@ -26,12 +26,15 @@ with `html.dark` toggle. Use the semantic CSS vars (`--text-*`, `--surface-*`, `
 - `src/lib/data.ts` — lazy, cached fetch of the datasets still served as static files
   (`public/data/`: streets, bridges, the word lists). CEP, municipalities, airports, postes and
   CID-10 moved to the API — see `src/lib/lookup-cache.ts`, which multiplexes them into a single
-  `/api/lookup?q=` call so the ~106-decoder fan-out runs **once** per keystroke, not once per
+  `/api/lookup?q=` call so the 129-decoder fan-out runs **once** per keystroke, not once per
   dataset. `src/lib/cn.ts`, `src/lib/use-debounced-value.ts`.
 - `src/components/ui/` (primitives) + `src/components/layout/` (topbar, theme toggle). `App.tsx` =
-  **14 tabs**: Decodificador, Arquivo, Texto, Posições, Matriz, Diferenças, Anagramas, Fontes,
-  Cola, Geolocalização, Triangulação, Postes, Biblioteca, Frota. The map-bearing ones are
-  `React.lazy` — Leaflet must not sit in the entry chunk.
+  **16 tabs**, listed once in `src/app-tabs.ts` (a `Record<TabId, …>` so a missing entry is a
+  compile error, plus `ORDEM` for the order): Decodificador, Arquivo, Lote, Texto, Posições,
+  Matriz, Diferenças, Anagramas, Fontes, Cola, Retrato, Geolocalização, Triangulação, Postes,
+  Biblioteca, Frota. The map-bearing ones are `React.lazy` — Leaflet must not sit in the entry
+  chunk. `src/app-tabs.test.ts` reads `App.tsx` and fails if a tab has no render branch: a tab with
+  a button and no screen produces a blank area and **no error anywhere**.
 - Tests colocated as `*.test.ts`.
 
 ## Data
