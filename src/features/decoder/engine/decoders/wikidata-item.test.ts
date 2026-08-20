@@ -95,3 +95,52 @@ describe("o item do Wikidata", () => {
     expect(d.decode("Q2", ctx("Q155", base))).toEqual([]);
   });
 });
+
+/**
+ * AS OUTRAS DUAS ESPÉCIES. `P345` é o CAMPO, não uma coisa chamada assim; `L1`
+ * é a palavra "ama", e em SUMÉRIO — ler isso como português numa bancada cujo
+ * vocabulário é pt-BR seria o disfarce perfeito para uma resposta errada.
+ */
+describe("propriedade e lexema", () => {
+  it("uma propriedade se anuncia como campo", () => {
+    const r = d.decode(
+      "P345",
+      ctx("P345", {
+        ...base,
+        qid: "P345",
+        rotulo: "identificador IMDb",
+        lingua: "pt",
+        descricao: "identificador do IMDb (com o prefixo 'tt', 'nm', 'co')",
+        tipos: ["propriedade do Wikidata"],
+      }),
+    );
+    expect(r).toHaveLength(1);
+    expect(r[0].label).toContain("propriedade do Wikidata");
+    expect(r[0].output).toContain("identificador IMDb");
+  });
+
+  it("um lexema traz o lema, a classe e a língua", () => {
+    const r = d.decode(
+      "L1",
+      ctx("L1", {
+        ...base,
+        qid: "L1",
+        rotulo: "ama",
+        lingua: null,
+        descricao: "mãe · mother",
+        tipos: ["lexema", "nome", "língua suméria"],
+      }),
+    );
+    expect(r[0].output).toContain("ama");
+    expect(r[0].label).toContain("língua suméria");
+    // Sem língua de rótulo, a nota não inventa uma.
+    expect(r[0].notes).not.toContain("rótulo em");
+  });
+
+  it("as três formas passam, e o resto não", () => {
+    for (const s of ["Q2", "P345", "L1", "q155", "p625"])
+      expect(d.decode(s, ctx(s, base)).length, s).toBeGreaterThan(0);
+    for (const s of ["X1", "Q0", "155", "tt0111161"])
+      expect(d.decode(s, ctx(s, base)), s).toEqual([]);
+  });
+});

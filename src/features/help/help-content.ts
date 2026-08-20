@@ -695,10 +695,11 @@ export const HELP_SECTIONS: HelpSection[] = [
         esperado: "imóvel rural em Blumenau/SC",
       },
       {
-        name: "Item do Wikidata (Q…)",
-        desc: "O código `Q` do Wikidata resolvido pelo que ele **é**: `Q2` é a Terra, `Q42` é Douglas Adams, `Q155` é o Brasil. Vem o rótulo, a frase de uma linha que diz o que a coisa é, a classificação — e, **quando o item tem coordenada, o card vira ponto no mapa**, que é o que mais serve aqui. A bancada continua lendo todo `Q…` como cauda de Geohash (medido, 61% deles saem assim) e as cinco leituras continuam na tela: o que muda é a ordem, porque acerto exato num identificador que aponta para **um** item vale mais que palpite assumindo prefixo de cidade. Nem todo código do Wikidata começa com `Q` — `P` é propriedade (`P345` = “identificador IMDb”) e `L` é lexema (uma palavra); a bancada resolve só o `Q`, que é onde moram as coisas. E um detalhe honesto: quando o rótulo não existe em português, o card **diz em que língua ele está** em vez de apresentá-lo como se fosse daqui — o nome de Douglas Adams no Wikidata vive na língua `mul`, e uma consulta que ignorasse isso devolveria zero para um item que existe.",
-        examples: ["Q2", "Q155"],
-        esperado: "Terra — terceiro planeta a partir do Sol · e o Brasil, com ponto no mapa",
+        name: "Código do Wikidata (Q, P ou L)",
+        desc: "Nem tudo no Wikidata começa com `Q`, e a diferença muda a resposta. **`Q…` é uma COISA** — `Q2` é a Terra, `Q42` é Douglas Adams, `Q155` é o Brasil; quando o item tem coordenada, o card vira **ponto no mapa**, que é onde isto encosta no que a bancada faz. **`P…` é uma PROPRIEDADE**, o campo em si e não uma coisa chamada assim: `P345` é “identificador IMDb”, e a descrição dele explica os prefixos `tt` (título), `nm` (pessoa) e `co` (empresa). **`L…` é um LEXEMA**, uma palavra com língua, classe gramatical e sentidos — e a língua é o item: `L1` é “ama”, mas em **sumério**, e lê-la como português numa bancada cujo vocabulário é pt-BR seria o disfarce perfeito para uma resposta errada. As três são **acerto exato**: um código aponta para um registro e só um. É por isso que elas existem e a busca por NOME não — “Maria” devolve 113 candidatos, `L1` devolve `L1`. A bancada continua lendo todo código como cauda de Geohash (medido, 61% dos `Q` saem assim) e as leituras de coordenada continuam na tela: o que muda é a ordem, porque palpite que assume prefixo de cidade vale menos que acerto exato. O código nunca é o que se encadeia — sai o rótulo, ou a coordenada quando existe. E quando o rótulo não é português, o card **diz em que língua está**: o nome de Douglas Adams vive na língua `mul`, e uma consulta que a ignorasse devolveria zero para um registro que existe.",
+        examples: ["Q2", "Q155", "P345", "L1"],
+        esperado:
+          "Terra · Brasil com ponto no mapa · o campo “identificador IMDb” · a palavra “ama”, em sumério",
       },
       {
         name: "Filme pelo ID da IMDb",

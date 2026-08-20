@@ -1,10 +1,15 @@
 import type { ItemWikidata } from "@/features/filme/types";
 import { defineDecoder } from "../define";
-import { PARECE_QID } from "./imdb";
+import { PARECE_CODIGO_WD } from "./imdb";
 import type { LocationData } from "./location";
 
 /**
- * Um item do Wikidata pelo código `Q…` — o que a coisa É.
+ * Um registro do Wikidata pelo código — `Q…`, `P…` ou `L…`.
+ *
+ * ── AS TRÊS ESPÉCIES, E POR QUE ELAS NÃO SÃO A MESMA PERGUNTA ─────────────
+ *   `Q2`    item        a Terra — uma COISA
+ *   `P345`  propriedade o CAMPO "identificador IMDb", não uma coisa chamada assim
+ *   `L1`    lexema      a PALAVRA "ama", e em SUMÉRIO — a língua é o item
  *
  * ── POR QUE UM QID PODE, E UM NOME NÃO ────────────────────────────────────
  * A avaliação da Onda 10 recusou resolver NOME → entidade, e a razão era a
@@ -36,7 +41,7 @@ export const decoders = defineDecoder({
   category: "lookup",
   decode(input, ctx) {
     const t = input.trim();
-    if (!PARECE_QID.test(t)) return [];
+    if (!PARECE_CODIGO_WD.test(t)) return [];
     if (ctx.hits?.q !== t) return [];
 
     const i = ctx.hits.item as ItemWikidata | null | undefined;

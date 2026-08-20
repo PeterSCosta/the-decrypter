@@ -55,6 +55,19 @@ export const PARECE_IMDB = /^tt\d{7,8}$/i;
  */
 export const PARECE_QID = /^Q[1-9]\d{0,10}$/i;
 
+/**
+ * As TRÊS espécies de código do Wikidata — e nem todas são coisa.
+ *
+ *   `Q2`    item        a Terra
+ *   `P345`  propriedade o CAMPO "identificador IMDb"
+ *   `L1`    lexema      a PALAVRA "ama", em sumério
+ *
+ * As três são acerto exato: um código aponta para um registro e só um. É o
+ * oposto do problema que manteve a busca por nome fechada — "Maria" devolve
+ * 113 candidatos, `L1` devolve `L1`.
+ */
+export const PARECE_CODIGO_WD = /^[QPL][1-9]\d{0,10}$/i;
+
 export const decoders = defineDecoder({
   id: ID,
   name: NAME,
