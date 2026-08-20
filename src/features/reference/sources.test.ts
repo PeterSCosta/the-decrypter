@@ -293,6 +293,11 @@ describe("decisões registradas — não regredir", () => {
   it("as bases que já respondem na bancada estão todas listadas como abertas", () => {
     const abertas = SOURCES.filter((s) => s.status === "aberta").map((s) => s.id);
     expect(abertas).toEqual([
+      // As duas bases EMBARCADAS que faltavam na Cola: a bancada as consulta
+      // todo dia e, quando elas calam, não havia link para conferir por fora —
+      // e calar sem caminho manual é meio silêncio, que a casa não aceita.
+      "estacoes-ibge",
+      "articulacao-blumenau",
       "ruas-blumenau",
       "ceps-sc",
       "municipios-ibge",
@@ -318,9 +323,16 @@ describe("decisões registradas — não regredir", () => {
       // caso que o SIATU não fechava (número burocrático → pedaço de cidade).
       "lotes-blumenau",
     ]);
-    // O CID-10 entra no meio da lista, e não no fim: a ordem aqui é a do
-    // arquivo, e ele foi para junto das outras bases embarcadas.
-    expect(abertas.indexOf("cid10")).toBe(3);
+    /**
+     * O CID-10 fica junto das outras bases EMBARCADAS, e não no fim da lista.
+     *
+     * Isto era um índice fixo (`toBe(3)`), e o índice quebrou na primeira vez
+     * que duas bases embarcadas entraram antes dele — sem que nada de errado
+     * tivesse acontecido. Um teste que falha quando o código está certo é um
+     * teste que alguém apaga na primeira pressa. A afirmação passou a ser a
+     * INTENÇÃO: o embarcado vem antes do que depende de rede de terceiro.
+     */
+    expect(abertas.indexOf("cid10")).toBeLessThan(abertas.indexOf("tse"));
   });
 
   it("as ressalvas honestas dos datasets embarcados continuam escritas", () => {

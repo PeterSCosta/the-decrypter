@@ -23,7 +23,7 @@ Três colunas de responsabilidade, porque misturá-las é o que faz item ficar p
 
 | # | item | onde |
 |---|---|---|
-| **A** | **O teste que impede o inventário de mentir** (item 0.10 da Onda 0). Ele lê os ids que um documento afirma ausentes e **falha se o decoder existir**. Hoje `grep` por `ARROMBA-INVENTARIO` em `src/` devolve zero. É o último item aberto da Onda 0. | `docs/ARROMBA-INVENTARIO.md` + um teste no CI |
+| ~~**A**~~ | ✅ **FEITO em 20/08/2026** — `src/features/reference/inventario.test.ts`. Ele falha quando uma linha do inventário diz `trazer` e o decoder já existe. **Pegou três mentiras na primeira execução**: alfabeto dado, Morbit e Pollux, todos entregues pela Onda 9 e ainda listados como pendentes. A Onda 0 está fechada. | `docs/INVENTARIO-CATALOGOS.md` + o teste |
 | **C** | **O `leetspeak` herda a legibilidade da prosa que ele NÃO decodificou.** Medido: em `Fatore em primos: 60 84 210` ele devolve `Fatore em primos: go ba zio` e tira **0,73**, acima do `math-helper` (0,62) que resolveu a pergunta. A prosa passa intacta, só os dígitos mudam, e o `scorePlaintext` vê um texto quase todo português. Vale para qualquer decoder que altere pouco da entrada. Consertar toca a pontuação global — provavelmente uma penalidade proporcional à fração NÃO alterada —, então não entrou de carona numa onda. | `engine/score.ts` + `bruteDecoder` |
 | **B** | **A transliteração de `ᛇ` (eihwaz).** A bancada escreve `ei`; a convenção acadêmica é `ï`. Divergência estética — o repositório dobra tudo para ASCII, como já faz com `th` (þ) e `ng` (ŋ) —, e está registrada na legenda de runas. Se for alinhar, é uma linha. | `src/features/reference/alphabets.ts:513` |
 

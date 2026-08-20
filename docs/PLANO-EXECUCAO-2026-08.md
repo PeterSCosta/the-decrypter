@@ -17,7 +17,7 @@ Este documento **não substitui** `docs/PLANO-CATALOGOS.md`. Ele funde as quatro
 
 | onda | estado |
 |---|---|
-| **0 · a bancada mente** | **FEITA**, menos o item 0.10 (o teste que prende o inventário) |
+| **0 · a bancada mente** | **FEITA** — 10/10. O item 0.10 fechou em 20/08 e pegou três mentiras na primeira execução |
 | **1 · o portão que falta** | **FEITA** — `coverage().analisado` e `maiorPedaco()`, aditivos |
 | **2 · transposição sem chave** | **FEITA** — o portão foi recalibrado contra o vocabulário real |
 | **3 · só existe aqui** | **FEITA** — 6/6. A soletração mudou de desenho: virou acrofônica, sem tabela (ver abaixo) |

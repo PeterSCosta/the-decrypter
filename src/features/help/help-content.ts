@@ -146,9 +146,13 @@ export const HELP_SECTIONS: HelpSection[] = [
       {
         name: "Caracteres invisíveis (4 famílias)",
         desc: "São quatro esconderijos diferentes, e a bancada os separa porque são coisas diferentes. **Tags** (U+E0000–E007F) carregam ASCII 1:1 e costumam vir grudadas num emoji — é o truque moderno. **Seletores de variação** carregam um BYTE cada, e foram o “variation selector smuggling” de 2025. **Bidi** não esconde nada: reordena o que você lê, então ali o achado é “a tela mente”, não “achei texto”. E o **largura-zero clássico**, que vira canal binário. Antes a bancada conhecia 7 pontos de código; agora são 406 — e o que passava batido recebia “não há nada escondido”, o pior erro possível numa prova.",
-        // Não há exemplo digitável: o caractere é invisível por definição.
+        // O exemplo abaixo PARECE um cadeado sozinho, e é esse o ponto: as cinco
+        // letras estão grudadas nele, em Tags. Copie e cole — é assim que a
+        // coisa chega numa prova, e um verbete que só DESCREVE o invisível não
+        // ajuda ninguém a reconhecê-lo.
+        examples: ["\u{1F512}\u{E0050}\u{E004F}\u{E004E}\u{E0054}\u{E0045}"],
         esperado:
-          "texto oculto em Tags · byte a byte em seletores · reordenação Bidi · canal binário",
+          "texto oculto em Tags: PONTE (o emoji parece sozinho; as letras estão grudadas nele)",
       },
       {
         name: "Espaços escondidos (whitespace)",
@@ -919,8 +923,14 @@ export const HELP_SECTIONS: HelpSection[] = [
       {
         name: "Lote",
         desc: "A bancada no plural, e só a metade que o Decodificador desliga quando você cola uma lista. Uma entrada por linha, um botão com o número de consultas escrito dentro dele, e **uma linha de saída por linha de entrada — inclusive as que não resolveram**. É a diferença entre as três coisas que pareciam a mesma: “perguntei nestas bases e nenhuma tinha”, “não perguntei, porque não sei procurar isto” e “não sei dizer se cheguei a perguntar”. A palavra “não existe” não aparece nesta aba. No fim há uma coluna pronta para copiar, com o campo escolhido por você (resposta, logradouro, bairro, cidade, UF, coordenada) entre os que de fato foram preenchidos, e o que não resolveu sai marcado com `?` — porque uma linha em branco no meio de um bloco colado é uma não-resposta viajando disfarçada. **Ela não roda as cifras**: sessenta palpites ranqueados numa coluna que vai para a folha da prova é o pior formato possível para um chute; cada linha tem um botão que manda aquele item para o Decodificador. Limites, todos ditos na tela: 60 entradas distintas por rodada, e um orçamento de requisições, porque o teto do servidor é por IP e a equipe inteira atrás do wi-fi do local divide o mesmo balde. Item repetido custa uma consulta e desenha as duas linhas.",
-        examples: ["89010000\n89012000\ntt0111161\nGRU"],
-        esperado: "4 linhas: dois CEPs, um filme, um aeroporto — cada uma com o seu desfecho",
+        // ESTÁTICO, e este é o caso que prova a regra: rodado no executor ao
+        // vivo, o exemplo saía como “César — força bruta”, “Leetspeak” e
+        // “Quadrado de Políbio” — ou seja, o guia demonstrava justamente o que
+        // este verbete diz, em negrito, que a aba NÃO faz.
+        example: {
+          in: "89010000 / 89012000 / tt0111161 / GRU, uma por linha",
+          out: "4 linhas: dois CEPs, um filme, um aeroporto — cada uma com o seu desfecho",
+        },
       },
       {
         name: "Arquivo",
@@ -959,6 +969,12 @@ export const HELP_SECTIONS: HelpSection[] = [
       {
         name: "Decodificador",
         desc: "A busca única: cola a entrada e vê todas as interpretações ranqueadas. Tem campo de chave, 2º campo (a fonte a indexar, a lista, o texto original), ruas e CEP de Blumenau/SC (com curinga, ex.: 88xxx500) e uma barra lateral pra rodar só uma cifra — que, quando ela sabe, também CODIFICA.",
+        // A aba principal era o único verbete do guia inteiro sem uma entrada
+        // sequer. O curinga é o exemplo certo porque mostra as duas coisas de
+        // uma vez: que a bancada consulta base de verdade, e que ela devolve a
+        // CONTAGEM quando há muitos, em vez de eleger um.
+        examples: ["88xxx500"],
+        esperado: "os CEPs de SC que casam o padrão, com o total verdadeiro ao lado",
       },
       {
         name: "Cadeia (usar como entrada)",
@@ -986,7 +1002,10 @@ export const HELP_SECTIONS: HelpSection[] = [
       {
         name: "Texto",
         desc: "Extrai mensagens escondidas: 1ª/última letra de linha e palavra, maiúsculas, após pontuação, espelhado, leitura em coluna/diagonal e repetidas — mais as séries de contagem (palavras por parágrafo/linha, itens por bloco, ocorrências de um caractere), cada uma com a leitura A1Z26 ao lado.",
-        example: { in: "bloco de texto", out: "iniciais, espelhado, contagens…" },
+        example: {
+          in: "Talvez a resposta\nEsteja escondida\nAqui, na primeira\nTecla de cada linha\nRealmente\nO tempo dirá",
+          out: "primeira letra de cada linha: TEATRO",
+        },
       },
       {
         name: "Posições",
@@ -1004,7 +1023,10 @@ export const HELP_SECTIONS: HelpSection[] = [
       {
         name: "Diferenças",
         desc: "Compara o texto da prova com a fonte original (sem acento e sem caixa, devolvendo a grafia certa) e entrega quatro tiras copiáveis: palavras trocadas, originais correspondentes, letras que mudaram e contagem de letras de cada trecho.",
-        example: { in: "texto alterado + original", out: "as palavras que não estão no original" },
+        example: {
+          in: "prova: “a ponte de ferro sobre o rio” · original: “a ponte de pedra sobre o rio”",
+          out: "trocadas: ferro · originais: pedra · letras que mudaram: f-e-r-r-o vs p-e-d-r-a",
+        },
       },
       {
         name: "Anagramas",
@@ -1057,6 +1079,13 @@ export const HELP_SECTIONS: HelpSection[] = [
       {
         name: "Cola",
         desc: "Referência do gabarito: cores, quantidade de dígitos, A1Z26, formatos de coordenada, checklist de técnicas, “Bases e onde consultar” (com o selo de aberta/manual/bloqueada/adiada), alfabeto Pigpen, alfabeto manual de Libras e compostos químicos (nome → fórmula).",
+        // Exemplo ESTÁTICO, e de propósito: `examples[]` alimenta o executor ao
+        // vivo, que roda o fan-out de cifras. Numa aba isso mostraria palpites
+        // de César onde deveria mostrar o que a aba faz.
+        example: {
+          in: "buscar “índice de coincidência”",
+          out: "a régua do IC: o que 0,0443 significa e onde olhar",
+        },
       },
       {
         name: "Triangulação",
@@ -1074,6 +1103,11 @@ export const HELP_SECTIONS: HelpSection[] = [
       {
         name: "Biblioteca",
         desc: "As bases que a **API** serve, com o tamanho real de cada uma — a contagem vem do banco, não de um número escrito à mão —, e embaixo as bases públicas que ainda se consultam à mão, com o link oficial. Cada uma abre para navegar, com uma exceção: o vocabulário, que é só contagem. **Não é tudo que a bancada conhece:** ficam de fora as bases que vivem embarcadas no próprio app (as 491 estações geodésicas, as 1.031 folhas da articulação de Blumenau, as votações de 2024 e os eixos com código de logradouro), porque elas não passam pela API. Essas se consultam digitando no Decodificador.",
+        // Estático pela mesma razão da Cola — ver o comentário lá.
+        example: {
+          in: "abrir a base “poste”",
+          out: "45.285 linhas, contagem vinda do banco, navegáveis e no mapa",
+        },
       },
       {
         name: "Geolocalização",
@@ -1083,6 +1117,11 @@ export const HELP_SECTIONS: HelpSection[] = [
       {
         name: "Frota",
         desc: "Mapa ao vivo dos celulares da equipe (Traccar): posição, velocidade, bateria, “visto há quanto tempo” e o telefone para ligar num toque. **Ela é a ORIGEM do dado, não o lugar onde a proximidade aparece:** “quem está mais perto” é calculado e mostrado dentro dos cartões de localização, de rua e de ponte. Sem o Traccar configurado, a aba diz isso em vez de ficar vazia.",
+        // Estático: é fluxo de tela, não entrada de decoder.
+        example: {
+          in: "abrir a aba com o Traccar ligado",
+          out: "cada celular com velocidade, bateria e “visto há 3 min”, e o telefone para ligar num toque",
+        },
       },
       {
         name: "Atalho por URL",
@@ -1092,6 +1131,11 @@ export const HELP_SECTIONS: HelpSection[] = [
       {
         name: "Entrar e aprovar acesso",
         desc: "O login é um campo só: apelido ou e-mail, o que você tiver. Quem se cadastrou antes do apelido continua entrando pelo e-mail de sempre, sem fazer nada; quem se cadastra agora escolhe um apelido (3 a 24 caracteres, sem acento e sem @) e o e-mail é opcional. Quem se cadastra entra como “aguardando aprovação” e só usa depois que um administrador liberar — não há confirmação por e-mail, a porta é a aprovação. Não existe recuperação automática de senha: quem esquece fala com o administrador, que redefine pelo painel de usuários — o mesmo lugar onde se aprova, bloqueia, define apelido e remove contas.",
+        // Estático: é fluxo de tela, não entrada de decoder.
+        example: {
+          in: "criar conta com apelido “peter” e senha de 8+ caracteres",
+          out: "cadastro fica PENDENTE até um admin aprovar — e a tela diz isso, em vez de um 401 genérico",
+        },
       },
     ],
   },
