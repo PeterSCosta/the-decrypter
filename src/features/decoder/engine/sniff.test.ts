@@ -47,6 +47,18 @@ describe("sniffer de formato", () => {
     expect(ids("11144477735")).not.toContain("cpf-bad");
   });
 
+  /**
+   * Diagnóstico negativo com endereço, no mesmo espírito do `ean-bad`. O caso
+   * do acervo é a etapa 1 da madrugada de 2026 (`docs/ACERVO-ARROMBA-PROVAS.md`
+   * §4.2): 11458750330 tem o 1º DV certo e o 2º errado — não é telefone nem
+   * sequência, é um número quase válido, e isso muda o que se faz com ele.
+   */
+  it("diz QUAL dígito verificador do CPF falhou", () => {
+    const detalhe = (n: string) => sniff(n, CTX).find((h) => h.id === "cpf-bad")?.detail;
+    expect(detalhe("11458750330")).toBe("o 1º DV confere; o 2º deveria ser 7, não 0");
+    expect(detalhe("47999887766")).toBe("o 1º DV deveria ser 8, não 6");
+  });
+
   it("reconhece a forma do GeoTude sem decodificar", () => {
     expect(ids("68130.89.91.15.12")).toContain("geotude-shape");
     // Número de 5 dígitos sozinho não é geocódigo.

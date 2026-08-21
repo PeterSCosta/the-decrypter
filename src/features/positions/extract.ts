@@ -47,6 +47,27 @@ export function stepPositions(step: number, total: number): number[] {
   return out;
 }
 
+/** Par ou trinca colados: `7-3`, `33.9`, `8-4-3`. */
+const MULTINIVEL = /\d+[-.]\d+/;
+
+/**
+ * O aviso de que esta aba está ACHATANDO uma chave de dois ou três níveis.
+ *
+ * `parsePositions` quebra em tudo que não é dígito, então `8-4-3` vira
+ * `[8, 4, 3]` — três posições soltas, que não é o que a folha pediu. O
+ * achatamento não é errado por si: às vezes é exatamente a leitura desejada. O
+ * que era errado é entregá-lo **calado**, com cara de resultado, quando a chave
+ * tem a forma de endereçamento. Quem quer o endereçamento usa o modo N-fontes.
+ *
+ * Fica como função à parte, e não no retorno de `parsePositions`, para não mexer
+ * na assinatura que a aba e os testes já usam.
+ */
+export function avisoMultinivel(raw: string): string | undefined {
+  return MULTINIVEL.test(raw)
+    ? "a chave tem pares ou trincas (ex.: 8-4-3), e este modo lê índices soltos — o que está abaixo é o achatamento, não o endereçamento. Para fonte → letra, use o modo N-fontes."
+    : undefined;
+}
+
 /** "3, 7, 12" / "3 7 12" → [3, 7, 12] (ignora não-dígitos, descarta < 1). */
 export function parsePositions(raw: string): number[] {
   return raw

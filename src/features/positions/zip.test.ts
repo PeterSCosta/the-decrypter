@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { constIndex, letterAt, pairIndex, parseIndexSpecs, romanValue, zipIndex } from "./zip";
+import {
+  constIndex,
+  letterAt,
+  pairIndex,
+  parseIndexSpecs,
+  romanValue,
+  tripleIndex,
+  zipIndex,
+} from "./zip";
 
 describe("letterAt (contagem)", () => {
   it("acentuado vale UM caractere: 'Capitão Caverna'[10] = V (GIA-05, E Agora)", () => {
@@ -159,5 +167,59 @@ describe("parseIndexSpecs (a porta de entrada)", () => {
   it("palavra que só tem letras romanas mas não é romano válido é recusada", () => {
     for (const w of ["MIL", "CIVIL", "LIVID", "IIII"]) expect(romanValue(w)).toBeNull();
     expect(romanValue("MIX")).toBe(1009); // romano válido: passa, mas não acha letra
+  });
+
+  /**
+   * O acervo da Gincana Cidade de Blumenau escreve o par com HÍFEN, e antes
+   * disto a chave inteira caía em `null` — o decoder não acendia. Ver
+   * `docs/ACERVO-ARROMBA-PROVAS.md` §2.2 (prova 32 SALGADINHO).
+   */
+  it("lê o par escrito com hífen, marcando-o como ambíguo", () => {
+    expect(parseIndexSpecs("7-3")).toEqual([
+      { source: 7, position: 3, fromEnd: false, viaHifen: true },
+    ]);
+    expect(parseIndexSpecs("494-9 432-8")?.map((s) => [s.source, s.position])).toEqual([
+      [494, 9],
+      [432, 8],
+    ]);
+  });
+
+  it("lê a trinca fonte→palavra→letra da cifra de livro", () => {
+    expect(parseIndexSpecs("8-4-3")).toEqual([{ source: 8, sub: 4, position: 3, fromEnd: false }]);
+    expect(parseIndexSpecs("8-4-3|26-8-4")?.map((s) => [s.source, s.sub, s.position])).toEqual([
+      [8, 4, 3],
+      [26, 8, 4],
+    ]);
+  });
+
+  it("o hífen novo não engole o índice negativo nem o par com letra", () => {
+    // "-5" não tem dígito à esquerda do hífen: continua sendo contagem do fim.
+    expect(parseIndexSpecs("-5")).toEqual([{ position: 5, fromEnd: true }]);
+    // "A3L6" continua saindo SEM a marca de ambiguidade — ele não é ambíguo.
+    expect(parseIndexSpecs("A3L6")).toEqual([{ source: 3, position: 6, fromEnd: false }]);
+  });
+});
+
+describe("tripleIndex (cifra de livro: fonte → palavra → letra)", () => {
+  const fontes = ["nada aqui", "o rio corre", "sem uso"];
+
+  it("desce os três níveis: linha 2, palavra 3, letra 4 de 'corre' = R", () => {
+    const r = tripleIndex(fontes, [{ source: 2, sub: 3, position: 4, fromEnd: false }]);
+    expect(r.result).toBe("r");
+    expect(r.misses).toBe(0);
+  });
+
+  it("nível do meio fora da linha é miss, não letra de outro lugar", () => {
+    const r = tripleIndex(fontes, [{ source: 2, sub: 9, position: 1, fromEnd: false }]);
+    expect(r.result).toBe("");
+    expect(r.misses).toBe(1);
+  });
+
+  it("lida com a mesma chave lida como par — as duas leituras diferem", () => {
+    const spec = [{ source: 2, sub: 3, position: 4, fromEnd: false }];
+    // Como trinca: palavra 3 ("corre"), letra 4 → "r".
+    expect(tripleIndex(fontes, spec).result).toBe("r");
+    // Como par, o `sub` é ignorado: 4ª letra da linha 2 inteira ("oriocorre") → "o".
+    expect(pairIndex(fontes, spec).result).toBe("o");
   });
 });

@@ -79,6 +79,36 @@ function nameJoin(lines: string[], tail: boolean): string | null {
 
 const MAX_K = 5;
 
+/**
+ * Mínimo de unidades para a leitura da letra CENTRAL sequer ser tentada.
+ *
+ * "Todas as unidades têm tamanho ímpar" é assinatura fraca em amostra curta:
+ * ~55% das palavras em português têm número ímpar de letras, então TODAS ímpares
+ * acontece por acaso em 17,9% dos casos com 3 unidades — e em **1,35%** com 8.
+ * Abaixo de 8 esta leitura entulharia o topo, que é exatamente o defeito que
+ * baixou o `keep` deste decoder de 4 para 2.
+ */
+const MIN_CENTRO = 8;
+
+/**
+ * Letra do MEIO de cada unidade. Não é `nth`: ali o k é fixo para todas as
+ * unidades, e aqui ele varia com o tamanho de cada uma (⌈n/2⌉).
+ *
+ * Devolve null se QUALQUER unidade tiver tamanho par — sem letra central em
+ * todas, não existe leitura, e o autor que monta a ficha garante a paridade.
+ * É a prova 29 do acervo da GCB (CONHECIMENTO), cujas 31 palavras são todas
+ * ímpares e cuja coluna do meio soletra BLUMENAU EM CADERNOS TOMO I NUMERO UM.
+ */
+function middle(units: string[]): string | null {
+  let out = "";
+  for (const u of units) {
+    const ls = letters(u);
+    if (ls.length === 0 || ls.length % 2 === 0) return null;
+    out += ls[(ls.length - 1) / 2];
+  }
+  return out;
+}
+
 /** k-ésima letra (do início ou do fim) de cada linha/palavra, e a alternância. */
 const positional = bruteDecoder({
   id: "acrostic-nth",
@@ -130,6 +160,12 @@ const positional = bruteDecoder({
       push("iniciais das palavras ímpares", alternating(words, true));
       push("iniciais das palavras pares", alternating(words, false));
     }
+
+    // A leitura central vem por último e com portão próprio: ela só existe
+    // quando TODAS as unidades são ímpares, e esse "todas" é o que a torna
+    // barata — `middle` devolve null na primeira unidade par.
+    if (words.length >= MIN_CENTRO) push("letra central de cada palavra", middle(words));
+    if (lines.length >= MIN_CENTRO) push("letra central de cada linha", middle(lines));
 
     return out;
   },

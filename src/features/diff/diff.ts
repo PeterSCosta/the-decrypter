@@ -277,6 +277,22 @@ export interface DiffStrips {
   letters: string[];
   /** (d) contagem de letras de cada trecho. */
   counts: number[];
+  /** (e) o ORDINAL de cada palavra trocada, 1-based, no texto alterado. */
+  ordinals: number[];
+}
+
+/**
+ * A posição de cada palavra trocada, contada em palavras.
+ *
+ * Sai de graça: `tokenize` só emite matches de `WORD`, então o índice do token
+ * **é** o ordinal da palavra — `changedA` já guardava a série inteira, e ela
+ * nunca tinha sido mostrada. É a chave literal da prova 26 do acervo da GCB
+ * (PROVINHA MAIS OU MENAS), onde os 19 erros propositais valem pela POSIÇÃO e
+ * não pela palavra: 81, 92, 105, 108… Antes disto só se chegava nela contando à
+ * mão até a 314ª palavra.
+ */
+function changedOrdinals(result: DiffResult): number[] {
+  return [...result.changedA].map((i) => i + 1).sort((a, b) => a - b);
 }
 
 export function buildStrips(
@@ -289,6 +305,7 @@ export function buildStrips(
     original: hunkWords(result, "b"),
     letters: hunkLetters(result, lettersSide),
     counts: hunkLetterCounts(result, countsSide),
+    ordinals: changedOrdinals(result),
   };
 }
 

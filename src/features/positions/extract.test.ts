@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countUnits, extract, parsePositions, stepPositions } from "./extract";
+import { avisoMultinivel, countUnits, extract, parsePositions, stepPositions } from "./extract";
 
 describe("position extraction", () => {
   it("counts every Nth letter (step mode)", () => {
@@ -26,6 +26,21 @@ describe("position extraction", () => {
 
   it("parses a position list from mixed separators", () => {
     expect(parsePositions("3, 7  12;1")).toEqual([3, 7, 12, 1]);
+  });
+
+  it("avisa quando a chave é de 2 ou 3 níveis e este modo a está achatando", () => {
+    // O achatamento continua acontecendo — o que muda é que ele deixa de ser mudo.
+    expect(parsePositions("8-4-3")).toEqual([8, 4, 3]);
+    expect(avisoMultinivel("8-4-3")).toMatch(/achatamento/);
+    expect(avisoMultinivel("7-3 14-5")).toMatch(/achatamento/);
+    expect(avisoMultinivel("33.9")).toMatch(/achatamento/);
+  });
+
+  it("não avisa em lista de índices soltos, que é o uso normal do modo", () => {
+    expect(avisoMultinivel("3, 7 12")).toBeUndefined();
+    expect(avisoMultinivel("")).toBeUndefined();
+    // "-5" é contagem do fim, não par: nada de aviso.
+    expect(avisoMultinivel("-5")).toBeUndefined();
   });
 
   it("ignores out-of-range positions and records picked indices", () => {

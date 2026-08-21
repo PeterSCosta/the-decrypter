@@ -18,6 +18,7 @@ export function PositionsPanel() {
     setOnlyLetters,
     positions,
     result,
+    aviso,
     sources,
     zipResult,
   } = usePositions();
@@ -184,6 +185,17 @@ export function PositionsPanel() {
         </p>
       ) : (
         <>
+          {/*
+            O achatamento não é errado — às vezes é a leitura desejada. O que era
+            errado é entregá-lo calado: `8-4-3` vira [8,4,3] e a tela mostrava
+            isso com cara de resposta. O aviso vem ANTES do resultado.
+          */}
+          {aviso ? (
+            <p className="rounded-[var(--radius-sm)] border border-[var(--color-pulse-600)]/40 bg-[var(--surface-sunken)] px-3 py-2 text-xs text-[var(--color-pulse-600)]">
+              {aviso}
+            </p>
+          ) : null}
+
           <p className="text-xs text-[var(--text-secondary)]">
             {result.totalUnits} {onlyLetters ? "letras" : "caracteres"} · pegando as posições{" "}
             <span className="font-mono text-[var(--text-primary)]">{previewPositions}</span>

@@ -26,6 +26,28 @@ export function isValidCpf(value: string): boolean {
   return true;
 }
 
+/**
+ * Os dois dígitos verificadores que este CPF DEVERIA ter — `null` se não tiver
+ * 11 dígitos.
+ *
+ * O segundo é calculado sobre o primeiro **como impresso**, não sobre o
+ * corrigido: é isso que permite dizer "o 1º confere, o 2º não", que é um
+ * diagnóstico bem mais útil que "não é CPF válido". O acervo tem o caso — a
+ * etapa 1 da madrugada de 2026 imprime 11458750330, cujo DV1 fecha e DV2 não.
+ */
+export function cpfCheckDigits(value: string): [number, number] | null {
+  const v = onlyDigits(value);
+  if (v.length !== 11) return null;
+  const d = [...v].map(Number);
+  const dv = (t: number) => {
+    let sum = 0;
+    for (let i = 0; i < t; i++) sum += d[i] * (t + 1 - i);
+    const r = (sum * 10) % 11;
+    return r === 10 ? 0 : r;
+  };
+  return [dv(9), dv(10)];
+}
+
 export function formatCpf(value: string): string {
   const v = onlyDigits(value).padStart(11, "0").slice(0, 11);
   return `${v.slice(0, 3)}.${v.slice(3, 6)}.${v.slice(6, 9)}-${v.slice(9)}`;
@@ -57,6 +79,16 @@ export function isValidCnpj(value: string): boolean {
     cnpjDv(v.slice(0, 12), DV1_WEIGHTS) === Number(v[12]) &&
     cnpjDv(v.slice(0, 13), DV2_WEIGHTS) === Number(v[13])
   );
+}
+
+/**
+ * Os dois DV que este CNPJ deveria ter — `null` se a forma não for de CNPJ.
+ * Como no CPF, o segundo usa o primeiro **como impresso**.
+ */
+export function cnpjCheckDigits(value: string): [number, number] | null {
+  const v = cleanCnpj(value);
+  if (!CNPJ_SHAPE.test(v)) return null;
+  return [cnpjDv(v.slice(0, 12), DV1_WEIGHTS), cnpjDv(v.slice(0, 13), DV2_WEIGHTS)];
 }
 
 /** Tem letra → é o novo CNPJ alfanumérico. */

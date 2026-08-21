@@ -175,3 +175,27 @@ describe("segments (realce na leitura)", () => {
     expect(t).toMatchObject({ raw: "olá", norm: "ola", start: 2, end: 5 });
   });
 });
+
+/**
+ * A forma da prova 26 do acervo da GCB (PROVINHA MAIS OU MENAS): o texto traz
+ * erros propositais ("mais" por "mas"), e o que vale é a POSIÇÃO de cada erro na
+ * contagem de palavras, não a palavra. Ver `docs/ACERVO-ARROMBA-PROVAS.md` §2.2.
+ */
+describe("tira (e): posição das palavras trocadas", () => {
+  it("devolve o ordinal 1-based de cada palavra trocada, em ordem", () => {
+    const alterado = "um dois mais quatro cinco seis menas oito";
+    const original = "um dois mas quatro cinco seis menos oito";
+    const strips = buildStrips(diffWords(alterado, original));
+    // "mais" é a 3ª palavra e "menas" é a 7ª.
+    expect(strips.ordinals).toEqual([3, 7]);
+  });
+
+  it("a tira cola direto no campo de posições — é o mesmo formato", () => {
+    const strips = buildStrips(diffWords("a b mais d", "a b mas d"));
+    expect(parsePositions(formatCounts(strips.ordinals))).toEqual(strips.ordinals);
+  });
+
+  it("texto sem troca nenhuma devolve tira vazia, não zero", () => {
+    expect(buildStrips(diffWords("igual igual", "igual igual")).ordinals).toEqual([]);
+  });
+});

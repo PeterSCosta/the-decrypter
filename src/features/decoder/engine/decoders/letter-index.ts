@@ -4,6 +4,7 @@ import {
   constIndex,
   pairIndex,
   parseIndexSpecs,
+  tripleIndex,
   zipIndex,
 } from "@/features/positions/zip";
 import { defineDecoder } from "../define";
@@ -57,11 +58,33 @@ function modes(sources: string[], specs: IndexSpec[]): (DecodeCandidate | null)[
   // Só oferece a leitura do fim quando a chave não escolheu a direção.
   const reversible = specs.every((s) => !s.fromEnd);
 
+  if (specs.some((s) => s.sub !== undefined)) {
+    // Trinca fonte→palavra→letra (a cifra de livro, `8-4-3`). Mesma regra do
+    // par: misturar trinca com o resto seria adivinhação.
+    if (!specs.every((s) => s.sub !== undefined)) return [];
+    return [cand("trincas fonte → palavra → letra", tripleIndex(sources, specs), 0.6)];
+  }
+
   if (specs.some((s) => s.source !== undefined)) {
     // Par fonte→letra (A3L6 do estatuto, 33.9 do mapa da Oktoberfest): misturar
     // par com índice solto seria adivinhação, então exige-se o par em todos.
     if (!specs.every((s) => s.source !== undefined)) return [];
-    return [cand("pares fonte → letra", pairIndex(sources, specs), 0.6)];
+    const out = [cand("pares fonte → letra", pairIndex(sources, specs), 0.6)];
+    // `7-3` admite as DUAS leituras e a folha não diz qual — então saem as duas,
+    // rotuladas, e quem lê decide. `A3L6` e `33.9` não são ambíguos e seguem com
+    // um cartão só. A leitura que não fechar morre sozinha no `cand` (misses>0).
+    if (specs.every((s) => s.viaHifen)) {
+      const soltos = specs.flatMap((s) => [s.source as number, s.position]);
+      const base = sources.length === 1 ? soltos.map(() => sources[0]) : sources;
+      out.push(
+        cand(
+          `${soltos.length} índices soltos (o hífen lido como separador)`,
+          zipIndex(base, soltos),
+          0.5,
+        ),
+      );
+    }
+    return out;
   }
 
   if (sources.length === 1) {
@@ -100,7 +123,10 @@ export const decoders = defineDecoder({
   name: NAME,
   category: "transform",
   inputs: {
-    key: { label: "Índices", placeholder: "1 5 2 4 4 3  ·  I V II IV  ·  -5  ·  A3L6" },
+    key: {
+      label: "Índices",
+      placeholder: "1 5 2 4 4 3  ·  I V II IV  ·  -5  ·  A3L6  ·  7-3  ·  8-4-3",
+    },
   },
   decode(input, ctx) {
     const specs = parseIndexSpecs(ctx.key ?? "");

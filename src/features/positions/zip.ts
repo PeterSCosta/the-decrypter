@@ -31,12 +31,27 @@ export interface ZipResult {
   misses: number;
 }
 
-/** Um índice pedido pela chave; `source` só existe no par A{n}L{m} / 33.9. */
+/** Um índice pedido pela chave; `source` só existe no par A{n}L{m} / 33.9 / 7-3. */
 export interface IndexSpec {
   position: number;
   fromEnd: boolean;
   /** 1-based, quando a chave diz de QUAL fonte tirar a letra. */
   source?: number;
+  /**
+   * 1-based, o nível do MEIO da trinca `8-4-3` (fonte 8 → palavra 4 → letra 3).
+   *
+   * Só existe na cifra de livro, que endereça em três níveis. Fica separado de
+   * `source` porque `pairIndex` e `tripleIndex` são leituras diferentes da mesma
+   * chave, e misturá-las devolveria letra de lugar nenhum.
+   */
+  sub?: number;
+  /**
+   * O par veio escrito com hífen (`7-3`), que é AMBÍGUO: a mesma folha pode
+   * querer "fonte 7, letra 3" ou "os índices 7 e 3". `A3L6` e `33.9` não têm
+   * essa dúvida. Quem consome usa isto para oferecer as duas leituras em vez de
+   * escolher uma calado.
+   */
+  viaHifen?: boolean;
 }
 
 function pickAt(units: Unit[], k: number, fromEnd: boolean): Unit | null {
@@ -107,6 +122,35 @@ export function pairIndex(sources: string[], specs: IndexSpec[], onlyLetters = t
   );
 }
 
+/**
+ * Trincas fonte→unidade→letra: `8-4-3` é "linha 8, palavra 4, letra 3".
+ *
+ * É a cifra de livro, e ela endereça em três níveis porque o corpus é um texto
+ * corrido: a fonte é a linha/parágrafo, a unidade é a palavra dentro dela, e só
+ * então vem a letra. Fica separada de `pairIndex` de propósito — a mesma chave
+ * lida com dois níveis daria outra letra, e escolher em silêncio entre as duas
+ * seria responder errado com cara de certo.
+ */
+export function tripleIndex(sources: string[], specs: IndexSpec[], onlyLetters = true): ZipResult {
+  return collect(
+    specs.map((s) => {
+      const src = sources[(s.source ?? 0) - 1];
+      const vazio: ZipPick = {
+        source: src ?? "",
+        position: s.position,
+        fromEnd: s.fromEnd,
+        char: "",
+        index: -1,
+      };
+      if (src === undefined || s.sub === undefined) return vazio;
+      // O nível do meio conta PALAVRAS; a letra é contada dentro da palavra.
+      const palavras = src.split(/\s+/).filter(Boolean);
+      const palavra = palavras[s.sub - 1];
+      return palavra === undefined ? vazio : pick(palavra, s.position, s.fromEnd, onlyLetters);
+    }),
+  );
+}
+
 const ROMAN: [string, number][] = [
   ["M", 1000],
   ["CM", 900],
@@ -152,10 +196,34 @@ export function romanValue(s: string): number | null {
 
 const PAIR = /^[A-Za-z]?(\d+)[A-Za-z](\d+)$/; // A3L6, P2L5
 const DOTTED = /^(\d+)\.(\d+)$/; // 33.9 (mapa da Oktoberfest)
+const HYPHEN = /^(\d+)-(\d+)$/; // 7-3 (SALGADINHO), 494-9 (COLECIONADORES)
+const TRIPLE = /^(\d+)-(\d+)-(\d+)$/; // 8-4-3 (RECONHECIMENTO): fonte → unidade → letra
 
 function parseToken(raw: string): IndexSpec | null {
+  // A trinca vem antes do par por clareza; as âncoras já as tornam disjuntas
+  // ("8-4-3" não casa HYPHEN porque `\d+` não engole "4-3").
+  const tri = TRIPLE.exec(raw);
+  if (tri) {
+    return {
+      source: Number(tri[1]),
+      sub: Number(tri[2]),
+      position: Number(tri[3]),
+      fromEnd: false,
+    };
+  }
+  // O hífen entra DEPOIS de PAIR/DOTTED e ANTES do inteiro com sinal: "-5" não
+  // casa aqui (falta dígito à esquerda), então o índice negativo segue intacto.
   const pair = PAIR.exec(raw) ?? DOTTED.exec(raw);
   if (pair) return { source: Number(pair[1]), position: Number(pair[2]), fromEnd: false };
+  const hifen = HYPHEN.exec(raw);
+  if (hifen) {
+    return {
+      source: Number(hifen[1]),
+      position: Number(hifen[2]),
+      fromEnd: false,
+      viaHifen: true,
+    };
+  }
   if (/^-?\d+$/.test(raw)) {
     const n = Number(raw);
     if (n === 0) return null;

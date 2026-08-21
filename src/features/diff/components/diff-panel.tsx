@@ -240,6 +240,11 @@ export function DiffPanel() {
                 />
               }
             />
+            <Strip
+              label="(e) posição das palavras trocadas"
+              hint="O número de cada palavra trocada, contado em palavras desde o começo. Quando o erro vale pela POSIÇÃO e não pela palavra, é esta a chave — cola direto na aba Posições."
+              value={formatCounts(strips.ordinals)}
+            />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">

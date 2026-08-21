@@ -1,5 +1,29 @@
 import { gs1CheckDigit } from "@/features/codes/barcode";
-import { isValidCnpj, isValidCpf, onlyDigits } from "@/features/documents/validate";
+import {
+  cnpjCheckDigits,
+  cpfCheckDigits,
+  isValidCnpj,
+  isValidCpf,
+  onlyDigits,
+} from "@/features/documents/validate";
+
+/**
+ * Diz QUAL dígito verificador falhou, no espírito do `ean-bad` — "13 dígitos,
+ * mas o DV não fecha; deveria ser 4, não 7" resolve o caso, e "não é válido"
+ * não resolve nada.
+ *
+ * O caso que importa é o DV1 fechar e o DV2 não: aí não é telefone nem
+ * sequência, é um número **quase** válido — provavelmente um dígito trocado de
+ * propósito, ou dado fictício mal construído.
+ */
+function detalheDv(esperado: [number, number] | null, impresso: string): string {
+  if (!esperado) return "o DV não fecha";
+  const [dv1, dv2] = esperado;
+  const [i1, i2] = [Number(impresso[0]), Number(impresso[1])];
+  if (dv1 !== i1) return `o 1º DV deveria ser ${dv1}, não ${i1}`;
+  if (dv2 !== i2) return `o 1º DV confere; o 2º deveria ser ${dv2}, não ${i2}`;
+  return "o DV não fecha";
+}
 import { lookupDDD } from "@/features/reference/phone-codes";
 import { pareceHomoglifo } from "./decoders/confusaveis";
 import type { DecodeContext } from "./types";
@@ -126,7 +150,7 @@ function sniffCheckDigits(input: string, out: Hint[]): void {
     out.push({
       id: "cpf-bad",
       label: "11 dígitos, mas não é CPF válido",
-      detail: "o DV não fecha — provavelmente é telefone, sequência ou outra coisa",
+      detail: detalheDv(cpfCheckDigits(d), d.slice(9)),
       tone: "warn",
     });
   }
@@ -135,7 +159,7 @@ function sniffCheckDigits(input: string, out: Hint[]): void {
     out.push({
       id: "cnpj-bad",
       label: "14 dígitos, mas não é CNPJ válido",
-      detail: "o DV não fecha",
+      detail: detalheDv(cnpjCheckDigits(d), d.slice(12)),
       tone: "warn",
     });
   }

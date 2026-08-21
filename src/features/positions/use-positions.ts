@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import {
   type CountMode,
+  avisoMultinivel,
   countUnits,
   extractFromUnits,
   parsePositions,
   stepPositions,
 } from "./extract";
-import { constIndex, pairIndex, parseIndexSpecs, zipIndex } from "./zip";
+import { constIndex, pairIndex, parseIndexSpecs, tripleIndex, zipIndex } from "./zip";
 
 /**
  * `step` e `list` leem UM texto em N posições. `zip` e `const` leem N FONTES —
@@ -36,6 +37,9 @@ export function usePositions() {
 
   const result = useMemo(() => extractFromUnits(units, positions), [units, positions]);
 
+  /** Acende quando o modo "lista" está achatando uma chave de 2 ou 3 níveis. */
+  const aviso = useMemo(() => (mode === "list" ? avisoMultinivel(list) : undefined), [mode, list]);
+
   /** As fontes do modo N-fontes: uma por linha, ignorando linhas em branco. */
   const sources = useMemo(
     () =>
@@ -51,6 +55,9 @@ export function usePositions() {
     const specs = parseIndexSpecs(list);
     if (!specs || specs.length === 0 || sources.length === 0) return null;
 
+    // A trinca "8-4-3" endereça em três níveis (fonte → palavra → letra); lê-la
+    // como par daria a letra de outro lugar.
+    if (specs.some((s) => s.sub != null)) return tripleIndex(sources, specs, onlyLetters);
     // "A3L6" e afins dizem de QUAL fonte tirar a letra — aí não é zip nem
     // índice constante, é endereçamento explícito.
     if (specs.some((s) => s.source != null)) return pairIndex(sources, specs, onlyLetters);
@@ -78,6 +85,7 @@ export function usePositions() {
     setOnlyLetters,
     positions,
     result,
+    aviso,
     sources,
     zipResult,
   };

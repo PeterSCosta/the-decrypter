@@ -88,3 +88,39 @@ describe("portão de entrada", () => {
     expect(initials.decode(sinfonia, ctx).map((c) => c.output)).toContain("QASOAP");
   });
 });
+
+/**
+ * Prova 29 do acervo da Equipe Arromba (CONHECIMENTO, GCB 2025). A pista
+ * estrutural é a paridade: as 31 palavras têm TODAS número ímpar de letras,
+ * logo toda palavra tem uma letra exatamente no meio — e os parágrafos vêm
+ * centralizados, alinhando essas letras numa coluna. Ver
+ * `docs/ACERVO-ARROMBA-PROVAS.md` §2.2.
+ */
+describe("letra central (acervo GCB, prova 29)", () => {
+  const conhecimento = `Sábio ele, que clamava ter tornado a estrutura intelectual uma fácil relação cordial e correta.
+Icônica, com censura sutil, por exemplo. Soa leviano.
+Irônico, igual uma soberba moral. Agora, chulo, dissimulado.`;
+
+  it("lê a coluna do meio e responde BLUMENAU EM CADERNOS TOMO I NUMERO UM", () => {
+    expect(out(conhecimento)).toContain("BLUMENAUEMCADERNOSTOMOINUMEROUM");
+    expect(labelOf(conhecimento, "BLUMENAUEMCADERNOSTOMOINUMEROUM")).toBe(
+      "letra central de cada palavra",
+    );
+  });
+
+  /** Todos os rótulos emitidos, para afirmar sobre a LEITURA e não sobre a saída. */
+  const rotulos = (input: string) => positional.decode(input, ctx).map((c) => c.label);
+
+  it("uma única palavra de tamanho par mata a leitura — não há meia coluna", () => {
+    // Experimento controlado: o MESMO texto da prova, com "Sábio" (5 letras)
+    // virando "Sábios" (6). Uma palavra par e a coluna central deixa de existir.
+    const quebrado = conhecimento.replace("Sábio ele", "Sábios ele");
+    expect(rotulos(conhecimento)).toContain("letra central de cada palavra");
+    expect(rotulos(quebrado)).not.toContain("letra central de cada palavra");
+  });
+
+  it("portão de 8 unidades: amostra curta toda ímpar não emite a leitura", () => {
+    // 5 palavras ímpares — "todas ímpares" aqui é barato demais para valer.
+    expect(rotulos("ovo mel sol luz paz")).not.toContain("letra central de cada palavra");
+  });
+});
