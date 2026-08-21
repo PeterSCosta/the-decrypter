@@ -3,6 +3,7 @@ import type { BridgesData } from "@/features/bridge/types";
 import type { CepsData } from "@/features/cep/types";
 import type { EixosData } from "@/features/eixos/types";
 import type { EstacoesData } from "@/features/estacao/types";
+import type { FichasData } from "@/features/ficha/types";
 import type { MunicipiosData } from "@/features/ibge/types";
 import type { ArticulacaoData } from "@/features/location/articulacao";
 import type { LojasData } from "@/features/loja/types";
@@ -83,6 +84,11 @@ export interface DecodeContext {
    * a quem digitou um número de unidade comercial.
    */
   lojas?: LojasData | null;
+  /**
+   * As 17 Fichas de Identificação da Comissão de Provas. Preguiçosa, 17 KB —
+   * desce quando a entrada parece um nome ou um punhado de palavras.
+   */
+  fichas?: FichasData | null;
   /** Estações geodésicas do Vale (IBGE). Preguiçosa, como as votações. */
   estacoes?: EstacoesData | null;
   /** Articulação municipal de Blumenau (1:5.000 e 1:1.000). Ver `articulacao.ts`. */
@@ -139,6 +145,7 @@ export interface DecodeCandidate {
     | "votacao"
     | "loja"
     | "youtube"
+    | "ficha-cp"
     | "filme";
   /** Structured payload for custom renderers. */
   data?: unknown;

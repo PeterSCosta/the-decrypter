@@ -2,6 +2,7 @@ import { PARECE_ESTRUTURA } from "@/features/bridge/match";
 import type { BridgesData } from "@/features/bridge/types";
 import { type EixosData, PARECE_QUADRA } from "@/features/eixos/types";
 import type { EstacoesData } from "@/features/estacao/types";
+import type { FichasData } from "@/features/ficha/types";
 import type { ArticulacaoData } from "@/features/location/articulacao";
 import { PARECE_FOLHA } from "@/features/location/articulacao";
 import { aoCarregarH3 } from "@/features/location/formats";
@@ -14,6 +15,7 @@ import {
   getBridges,
   getEixos,
   getEstacoes,
+  getFichas,
   getLojas,
   getPix,
   getStreets,
@@ -22,6 +24,7 @@ import {
   loadBridges,
   loadEixos,
   loadEstacoes,
+  loadFichas,
   loadLojas,
   loadPix,
   loadStreets,
@@ -37,6 +40,7 @@ import {
 } from "@/lib/lookup-cache";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { PARECE_FICHA } from "./engine/decoders/ficha-cp";
 import { PARECE_UNIDADE } from "./engine/decoders/loja";
 import { decoders } from "./engine/registry";
 import { partition, runDecoders } from "./engine/run";
@@ -87,6 +91,7 @@ export function useDecoder(
   const [bridges, setBridges] = useState<BridgesData | null>(getBridges);
   const [votacoes, setVotacoes] = useState<VotacoesData | null>(getVotacoes);
   const [lojas, setLojas] = useState<LojasData | null>(getLojas);
+  const [fichas, setFichas] = useState<FichasData | null>(getFichas);
   const [estacoes, setEstacoes] = useState<EstacoesData | null>(getEstacoes);
   const [eixos, setEixos] = useState<EixosData | null>(getEixos);
   const [articulacao, setArticulacao] = useState<ArticulacaoData | null>(getArticulacao);
@@ -213,6 +218,28 @@ export function useDecoder(
       alive = false;
     };
   }, [pareceUnidade, lojas]);
+
+  /**
+   * Fichas da CP: o MESMO portão do decoder, importado — a mesma disciplina das
+   * lojas, logo acima, e pelo mesmo motivo.
+   *
+   * Este portão é largo de propósito (qualquer punhado de palavras passa),
+   * porque quem decide de verdade é o casamento EXATO lá dentro. O custo do
+   * portão largo é 17 KB uma vez por sessão; o de um portão estreito seria a
+   * base não descer quando alguém digita o codinome — e o decoder calar sem
+   * dizer por quê.
+   */
+  const pareceFicha = PARECE_FICHA.test(debInput.trim());
+  useEffect(() => {
+    if (!pareceFicha || fichas) return;
+    let alive = true;
+    loadFichas()
+      .then((d) => alive && setFichas(d))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [pareceFicha, fichas]);
 
   /**
    * Estações geodésicas: dígitos com uma letra opcional (`1400M`, `8121288`).
@@ -347,6 +374,7 @@ export function useDecoder(
       bridges,
       votacoes,
       lojas,
+      fichas,
       estacoes,
       eixos,
       articulacao,
@@ -363,6 +391,7 @@ export function useDecoder(
       bridges,
       votacoes,
       lojas,
+      fichas,
       estacoes,
       eixos,
       articulacao,

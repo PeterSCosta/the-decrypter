@@ -1,6 +1,6 @@
 # The Decrypter — project notes for Claude
 
-Local-first **puzzle workbench**: one input → fan out across **106 ciphers/decoders** → rank by
+Local-first **puzzle workbench**: one input → fan out across **136 ciphers/decoders** → rank by
 plausibility. Used by a team in a treasure hunt in the Itajaí valley (Blumenau/Itajaí, SC), so the
 datasets are hyperlocal: street guide, CEP, postes, pontes, municipalities, airports, CID-10.
 Backed by **the-decrypter-api** (.NET, Postgres, Redis), which serves the big datasets and
@@ -26,7 +26,7 @@ with `html.dark` toggle. Use the semantic CSS vars (`--text-*`, `--surface-*`, `
 - `src/lib/data.ts` — lazy, cached fetch of the datasets still served as static files
   (`public/data/`: streets, bridges, the word lists). CEP, municipalities, airports, postes and
   CID-10 moved to the API — see `src/lib/lookup-cache.ts`, which multiplexes them into a single
-  `/api/lookup?q=` call so the 129-decoder fan-out runs **once** per keystroke, not once per
+  `/api/lookup?q=` call so the 136-decoder fan-out runs **once** per keystroke, not once per
   dataset. `src/lib/cn.ts`, `src/lib/use-debounced-value.ts`.
 - `src/components/ui/` (primitives) + `src/components/layout/` (topbar, theme toggle). `App.tsx` =
   **16 tabs**, listed once in `src/app-tabs.ts` (a `Record<TabId, …>` so a missing entry is a

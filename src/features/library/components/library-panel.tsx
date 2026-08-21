@@ -1,6 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Lightbox } from "@/components/ui/lightbox";
+import { buscar as buscarFichas } from "@/features/ficha/types";
 import { buscar as buscarLojas } from "@/features/loja/types";
 import {
   SOURCES,
@@ -9,7 +11,7 @@ import {
   type SourceStatus,
 } from "@/features/reference/sources";
 import { apiFetch } from "@/lib/api";
-import { loadLojas } from "@/lib/data";
+import { loadFichas, loadLojas } from "@/lib/data";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { ArrowLeft, Database, ExternalLink, Loader2, MapPinned, Search } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -32,6 +34,21 @@ interface BaseDoAcervo {
    * fora do ar, que é o caso da gincana.
    */
   local?: (termo: string) => Promise<Record<string, unknown>[]>;
+  /**
+   * Como uma LINHA desta base vira imagem: miniatura na tabela, arte inteira no
+   * clique.
+   *
+   * Opcional porque quase nenhuma base tem imagem — CEP e poste são texto. Mas
+   * a das fichas é o contrário: a arte É o registro, e uma tabela de sete
+   * colunas de texto sobre um dossiê datilografado seria a pior forma possível
+   * de mostrá-la. Quem tem `midia` ganha a primeira coluna e o diálogo.
+   *
+   * Lê as chaves com `_` do próprio registro — e o `Navegador` esconde essas
+   * chaves da tabela, porque caminho de arquivo não é coluna que alguém leia.
+   */
+  midia?: (
+    linha: Record<string, unknown>,
+  ) => { mini: string; cheia: string; titulo: string } | null;
 }
 
 /**
@@ -73,6 +90,7 @@ export function LibraryPanel({ aoAbrirPostes }: { aoAbrirPostes: () => void }) {
   const [erro, setErro] = useState<string | null>(null);
   const [aberta, setAberta] = useState<BaseDoAcervo | null>(null);
   const [lojas, setLojas] = useState<BaseDoAcervo | null>(null);
+  const [fichas, setFichas] = useState<BaseDoAcervo | null>(null);
 
   /**
    * As lojas dos shoppings são a primeira base local NAVEGÁVEL, e a contagem
@@ -112,6 +130,55 @@ export function LibraryPanel({ aoAbrirPostes }: { aoAbrirPostes: () => void }) {
     };
   }, []);
 
+  /**
+   * As fichas da CP — a primeira base do acervo cujo registro é uma IMAGEM.
+   *
+   * Local, como as lojas, e pelo mesmo motivo: são 17 registros e 17 KB, e ela
+   * tem de responder na gincana com a API fora do ar. As artes vivem em
+   * `public/fichas/`, servidas como qualquer outro estático.
+   */
+  useEffect(() => {
+    let vivo = true;
+    loadFichas()
+      .then((d) => {
+        if (!vivo) return;
+        setFichas({
+          id: "ficha-cp",
+          nome: "Fichas da Comissão de Provas (2026)",
+          indexa: "codinome, nome civil, fobia ou alvo → a ficha inteira, com a arte",
+          origem: d.source,
+          registros: d.count,
+          navegavel: true,
+          local: async (termo) =>
+            buscarFichas(d, termo).map((f) => ({
+              codinome: f.codinome,
+              "nome civil": f.nomeCivil,
+              personagem: f.personagem,
+              frase: f.frase,
+              fobia: f.fobia,
+              alvo: f.alvo,
+              diagnóstico: f.diagnostico,
+              prognóstico: f.prognostico,
+              publicada: f.publicadoEm.slice(0, 10),
+              _mini: f.mini,
+              _cheia: f.imagem,
+            })),
+          midia: (l) =>
+            l._mini
+              ? {
+                  mini: String(l._mini),
+                  cheia: String(l._cheia),
+                  titulo: `${String(l.codinome)} — ${String(l["nome civil"])}`,
+                }
+              : null,
+        });
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
   useEffect(() => {
     apiFetch<{ hits: BaseDoAcervo[] }>("/library")
       .then((r) => setBases(r.hits))
@@ -124,7 +191,10 @@ export function LibraryPanel({ aoAbrirPostes }: { aoAbrirPostes: () => void }) {
 
   // As locais entram na renderização, e não no estado, para a chegada do
   // artefato não depender da resposta da API nem o contrário.
-  const todas = bases === null ? null : [...bases, ...LOCAIS, ...(lojas ? [lojas] : [])];
+  const todas =
+    bases === null
+      ? null
+      : [...bases, ...LOCAIS, ...(lojas ? [lojas] : []), ...(fichas ? [fichas] : [])];
 
   if (aberta) return <Navegador base={aberta} aoVoltar={() => setAberta(null)} />;
 
@@ -238,6 +308,7 @@ function Navegador({ base, aoVoltar }: { base: BaseDoAcervo; aoVoltar: () => voi
   );
   const [carregando, setCarregando] = useState(false);
   const [falha, setFalha] = useState<string | null>(null);
+  const [ampliada, setAmpliada] = useState<{ src: string; titulo: string } | null>(null);
   const debQ = useDebouncedValue(q, 300);
 
   // Filtro novo volta para a primeira página: senão a pessoa filtra e cai numa
@@ -283,7 +354,12 @@ function Navegador({ base, aoVoltar }: { base: BaseDoAcervo; aoVoltar: () => voi
    * não pode sumir. As chaves saem da união de todas as linhas da página, e não
    * só da primeira, porque um campo nulo no primeiro registro apagaria a coluna.
    */
-  const colunas = dados?.hits.length ? [...new Set(dados.hits.flatMap((l) => Object.keys(l)))] : [];
+  // As chaves com `_` são metadado da linha (caminho da arte, por exemplo), não
+  // coluna: quem as usa é o `base.midia`, e mostrá-las encheria a tabela de
+  // caminho de arquivo — a informação menos legível que existe.
+  const colunas = dados?.hits.length
+    ? [...new Set(dados.hits.flatMap((l) => Object.keys(l)))].filter((c) => !c.startsWith("_"))
+    : [];
   const paginas = dados ? Math.ceil(dados.total / 50) : 0;
 
   return (
@@ -323,6 +399,11 @@ function Navegador({ base, aoVoltar }: { base: BaseDoAcervo; aoVoltar: () => voi
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--border-subtle)]">
+              {base.midia ? (
+                <th className="px-3 py-2 text-left text-[0.6875rem] uppercase tracking-wide text-[var(--text-muted)]">
+                  ficha
+                </th>
+              ) : null}
               {colunas.map((c) => (
                 <th
                   key={c}
@@ -340,6 +421,9 @@ function Navegador({ base, aoVoltar }: { base: BaseDoAcervo; aoVoltar: () => voi
                 key={i}
                 className="border-b border-[var(--border-subtle)] last:border-0"
               >
+                {base.midia ? (
+                  <CelulaDaArte midia={base.midia(linha)} aoAmpliar={setAmpliada} />
+                ) : null}
                 {colunas.map((c) => {
                   const v = linha[c];
                   const texto = v === null || v === undefined || v === "" ? "—" : String(v);
@@ -369,6 +453,15 @@ function Navegador({ base, aoVoltar }: { base: BaseDoAcervo; aoVoltar: () => voi
         ) : null}
       </Card>
 
+      {ampliada ? (
+        <Lightbox
+          src={ampliada.src}
+          alt={ampliada.titulo}
+          legenda={ampliada.titulo}
+          aoFechar={() => setAmpliada(null)}
+        />
+      ) : null}
+
       {paginas > 1 ? (
         <div className="flex items-center justify-between text-sm">
           <span className="text-[var(--text-secondary)]">
@@ -396,5 +489,36 @@ function Navegador({ base, aoVoltar }: { base: BaseDoAcervo; aoVoltar: () => voi
         </div>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * A miniatura que abre a arte inteira.
+ *
+ * Botão, e não `<img>` com `onClick`: é um alvo de toque de verdade no celular,
+ * entra na ordem do Tab e anuncia o que faz. O `loading="lazy"` é o que segura
+ * o custo — 50 linhas na tela seriam 50 requisições de imagem no mesmo
+ * instante, e a lista quase sempre é filtrada antes de alguém olhar.
+ */
+function CelulaDaArte({
+  midia,
+  aoAmpliar,
+}: {
+  midia: { mini: string; cheia: string; titulo: string } | null;
+  aoAmpliar: (v: { src: string; titulo: string }) => void;
+}) {
+  if (!midia) return <td className="px-3 py-1.5" />;
+  return (
+    <td className="px-3 py-1.5">
+      <button
+        type="button"
+        onClick={() => aoAmpliar({ src: midia.cheia, titulo: midia.titulo })}
+        title={`Ver a ficha de ${midia.titulo}`}
+        aria-label={`Ver a ficha de ${midia.titulo}`}
+        className="block overflow-hidden rounded-[var(--radius-sm)] border border-[var(--border-subtle)] transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-strong)]"
+      >
+        <img src={midia.mini} alt="" loading="lazy" className="h-14 w-10 object-cover" />
+      </button>
+    </td>
   );
 }

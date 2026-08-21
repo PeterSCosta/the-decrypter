@@ -86,3 +86,27 @@ generated JSON in `public/data/` is committed. Regenerate with `pnpm build:data`
   status from the sweep. Field coverage in `postes.json`: `bairro`/`instalacao` 99.8%,
   `pontosLuminosos` 93.9%, `ruaNome` 82.1%, `estrutura` 29.5% and `numero` 24.9% — those last two
   are simply blank upstream for most poles, not something the collector lost.
+
+## `fichas-cp-2026.json` / `fichas-cp/` — Fichas de Identificação da Comissão de Provas
+
+- **Origin:** Instagram [@comissaodeprovas](https://www.instagram.com/comissaodeprovas/) (post
+  colaborativo com @freinert), série *"Integrantes da CP - 2026"*, publicada em 21/08/2026 —
+  17 posts, um por integrante. Cada arte é 1080×1080.
+- **`fichas-cp-2026.json`** — a **transcrição**, feita à mão a partir das imagens, e a fonte de
+  verdade deste dado: codinome, nome civil, frase, fobia, alvo, diagnóstico, prognóstico e o
+  permalink de cada post. Versionada.
+- **`fichas-cp/<slug>.jpg`** — os originais baixados, **gitignorados**. Para rebaixar:
+  `https://www.instagram.com/p/<shortcode>/media/?size=l` (o shortcode está na transcrição; o
+  endpoint devolve 1080×1080 sem login).
+- **Recorte:** [`scripts/fichas-cp-imagens.py`](../scripts/fichas-cp-imagens.py) (Pillow do
+  sistema, fora do `package.json` — é uma passada por ano) → `public/fichas/<slug>.jpg` (o dossiê,
+  735×1072) e `public/fichas/mini/<slug>.jpg` (o polaroide do personagem, 216×304). As caixas são
+  fixas porque o gabarito da arte é o mesmo nas 17.
+- **Parser:** [`scripts/build-fichas-cp.ts`](../scripts/build-fichas-cp.ts) → `public/data/fichas-cp.json`
+  (17 fichas, ~17 KB). Ele **morre** se faltar o dossiê ou a miniatura de alguma ficha — imagem
+  ausente não dá erro em lugar nenhum, dá um retângulo vazio na Biblioteca.
+- **Cuidados com o dado:** os campos `ID` e `NASC` vêm **tarjados** na arte e não foram lidos. O
+  `ARQUIVO N` é o **mesmo nas 17** (`R325B4915`): é número da arte, não identificador de pessoa.
+  O campo `personagem` é leitura nossa da foto, não está escrito na ficha.
+- **Lacuna conhecida:** a série tinha **18** fichas. A do ANDY (Anderson Cesar Ignacio) foi
+  publicada e depois **removida do perfil**, antes desta coleta — não está aqui.

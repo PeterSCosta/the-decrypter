@@ -30,6 +30,10 @@ data-sources/*.pdf
 data-sources/*.jsonl
 data-sources/postes-state*.json
 public/_dev/
+# Originais 1080x1080 das fichas da CP (baixados do Instagram). O que é servido
+# — o dossiê recortado e a miniatura — está versionado em public/fichas/.
+data-sources/fichas-cp/
+
 
 # Acervo baixado do dashboard da equipe (100 MB) — material de referência, não versionado.
 acervo-arromba/

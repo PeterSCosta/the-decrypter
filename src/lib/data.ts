@@ -1,6 +1,7 @@
 import type { BridgesData } from "@/features/bridge/types";
 import type { EixosData } from "@/features/eixos/types";
 import type { EstacoesData } from "@/features/estacao/types";
+import type { FichasData } from "@/features/ficha/types";
 import type { ArticulacaoData } from "@/features/location/articulacao";
 import type { LojasData } from "@/features/loja/types";
 import type { PixData } from "@/features/pix/types";
@@ -130,6 +131,19 @@ export function loadLojas(): Promise<LojasData> {
 
 export function getLojas(): LojasData | null {
   return lojas.value;
+}
+
+// Fichas de Identificação da Comissão de Provas (17). 17 KB — preguiçosa como
+// as lojas: só desce quando a entrada parece um nome ou quando a Biblioteca
+// abre a base.
+const fichas: Slot<FichasData> = { promise: null, value: null };
+
+export function loadFichas(): Promise<FichasData> {
+  return loadOnce(fichas, dataUrl("fichas-cp.json"), asJson<FichasData>);
+}
+
+export function getFichas(): FichasData | null {
+  return fichas.value;
 }
 
 // Eixos de logradouro de Blumenau (geoportal): 9.370 trechos com a quadra e o

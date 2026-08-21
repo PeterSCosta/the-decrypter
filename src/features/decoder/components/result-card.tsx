@@ -24,6 +24,7 @@ import type { CarHint } from "../engine/decoders/car";
 import type { CipherDiskWheel } from "../engine/decoders/cipher-disk";
 import type { CnaeHint } from "../engine/decoders/cnae";
 import type { DocResult } from "../engine/decoders/documents";
+import type { FichaHint } from "../engine/decoders/ficha-cp";
 import type { FipeHint } from "../engine/decoders/fipe";
 import type { IsbnHint } from "../engine/decoders/isbn";
 import type { LocationData } from "../engine/decoders/location";
@@ -43,6 +44,7 @@ import { CnaeCard } from "./cnae-card";
 import { CodeListCard } from "./code-list-card";
 import { DocumentCard } from "./document-card";
 import { ElementsCard } from "./elements-card";
+import { FichaCard } from "./ficha-card";
 import { FipeCard } from "./fipe-card";
 import { IsbnCard } from "./isbn-card";
 import { LojaCard } from "./loja-card";
@@ -138,6 +140,8 @@ export function ResultCard({
           <VotacaoCard hint={c.data as VotacaoHint} onChain={onChain} />
         ) : c.render === "loja" ? (
           <LojaCard hint={c.data as LojaHint} onChain={onChain} />
+        ) : c.render === "ficha-cp" ? (
+          <FichaCard hint={c.data as FichaHint} onChain={onChain} />
         ) : c.render === "fipe" ? (
           <FipeCard hint={c.data as FipeHint} />
         ) : c.render === "cnae" ? (

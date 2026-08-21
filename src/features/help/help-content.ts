@@ -921,6 +921,12 @@ export const HELP_SECTIONS: HelpSection[] = [
         examples: ["ponte de ferro"],
         esperado: "Ponte Aldo Pereira de Andrade · Lei 3721/1990 · transpõe o Rio Itajaí-Açu",
       },
+      {
+        name: "Ficha da Comissão de Provas (2026)",
+        desc: "Codinome, nome civil, fobia ou alvo → a ficha daquele integrante da CP, com a arte inteira num clique. São as 17 que a comissão publicou de si mesma no Instagram em 21/08/2026. **A entrada inteira tem de ser o termo:** os codinomes são nomes próprios curtos (DIEGO, RENATA, ADRI, TATI), e uma porta por pedaço acenderia em qualquer prosa decifrada que os contivesse — busca larga (nome no meio da frase, trecho do diagnóstico) fica na Biblioteca, onde quem pergunta já escolheu o contexto. A **fobia** entra abaixo do codinome de propósito: `Claustrofobia` é palavra do dicionário, e quem a digita quase sempre quer a palavra. O `ARQUIVO N` devolve as **17 de uma vez** — é o mesmo em todas, número da arte e não identificador de pessoa. E há achado dentro da própria ficha: o ALVO do DIOGO é `MCACLCAS`, que não é palavra de língua nenhuma. **A série tinha 18:** a do ANDY foi publicada e depois removida do perfil, antes da coleta.",
+        examples: ["ZAZ", "MCACLCAS", "R325B4915"],
+        esperado: "ZAZ — CARLOS EDUARDO HOEPERS (Fronemofobia.)",
+      },
     ],
   },
   {
@@ -1110,7 +1116,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Biblioteca",
-        desc: "As bases que a **API** serve, com o tamanho real de cada uma — a contagem vem do banco, não de um número escrito à mão —, e embaixo as bases públicas que ainda se consultam à mão, com o link oficial. Cada uma abre para navegar, com uma exceção: o vocabulário, que é só contagem. **Não é tudo que a bancada conhece:** ficam de fora as bases que vivem embarcadas no próprio app (as 491 estações geodésicas, as 1.031 folhas da articulação de Blumenau, as votações de 2024 e os eixos com código de logradouro), porque elas não passam pela API. Essas se consultam digitando no Decodificador.",
+        desc: "As bases que a **API** serve, com o tamanho real de cada uma — a contagem vem do banco, não de um número escrito à mão —, e embaixo as bases públicas que ainda se consultam à mão, com o link oficial. Cada uma abre para navegar, com uma exceção: o vocabulário, que é só contagem. **Não é tudo que a bancada conhece:** ficam de fora as bases que vivem embarcadas no próprio app (as 491 estações geodésicas, as 1.031 folhas da articulação de Blumenau, as votações de 2024 e os eixos com código de logradouro), porque elas não passam pela API. Essas se consultam digitando no Decodificador. **Duas bases locais aparecem aqui mesmo assim** — as lojas dos shoppings e as 17 fichas da Comissão de Provas —, porque navegam sem a API. A das fichas é a única cujo registro é uma IMAGEM: cada linha traz a miniatura do personagem e o clique abre o dossiê inteiro.",
         // Estático pela mesma razão da Cola — ver o comentário lá.
         example: {
           in: "abrir a base “poste”",
@@ -1195,7 +1201,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         name: "Bases embutidas (sem rede)",
-        desc: "Ruas de Blumenau, as 94 pontes/passarelas/viadutos nomeados de Blumenau (lei de denominação + geometria do OSM), CEPs de SC, municípios do IBGE, aeroportos do OpenFlights, as tabelas de país (ISO 3166/COI/FIFA), moeda (ISO 4217), alfabetos do mundo e estilos Unicode e as listas de palavras pt/en vêm empacotados; boleto, chave de NF-e, título de eleitor, placa, rastreio S10 e todas as grades de coordenada (MGRS, GEOREF, GARS, carta e grade do IBGE, e as que entraram em 18/08: Geo URI, ISO 6709, link curto do OSM, Placekey e C-squares) são conta local, sem rede; as 491 estações geodésicas do IBGE no Vale e as 188 votações de Blumenau em 2024 também vêm empacotadas; o Mapcode carrega a lib por import dinâmico, também sem consulta externa.",
+        desc: "Ruas de Blumenau, as 94 pontes/passarelas/viadutos nomeados de Blumenau (lei de denominação + geometria do OSM), CEPs de SC, municípios do IBGE, aeroportos do OpenFlights, as tabelas de país (ISO 3166/COI/FIFA), moeda (ISO 4217), alfabetos do mundo e estilos Unicode e as listas de palavras pt/en vêm empacotados; boleto, chave de NF-e, título de eleitor, placa, rastreio S10 e todas as grades de coordenada (MGRS, GEOREF, GARS, carta e grade do IBGE, e as que entraram em 18/08: Geo URI, ISO 6709, link curto do OSM, Placekey e C-squares) são conta local, sem rede; as 491 estações geodésicas do IBGE no Vale, as 188 votações de Blumenau em 2024 e as 17 fichas da Comissão de Provas (com a arte de cada uma) também vêm empacotadas; o Mapcode carrega a lib por import dinâmico, também sem consulta externa.",
         example: { in: "/data/*.json", out: "offline" },
       },
     ],

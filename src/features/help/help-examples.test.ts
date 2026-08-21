@@ -39,6 +39,7 @@ const arquivo = (nome: string) =>
   JSON.parse(readFileSync(resolve(process.cwd(), `public/data/${nome}`), "utf8"));
 const ESTACOES = arquivo("estacoes-ibge.json");
 const ARTICULACAO = arquivo("articulacao-blumenau.json");
+const FICHAS = arquivo("fichas-cp.json");
 
 const OFFLINE: { entrada: string; decoder: string; contem: string; primeiro?: boolean }[] = [
   // Sem `primeiro`: nestas duas o `leetspeak` fica acima, porque ele deixa a
@@ -141,6 +142,11 @@ const OFFLINE: { entrada: string; decoder: string; contem: string; primeiro?: bo
   // A escala vive no `label`, não no `output` — quem confere a escala é o
   // `articulacao.test.ts`. Aqui o que se confere é que a folha vira PONTO.
   { entrada: "SG-22-Z-B-IV-4-SE-D-IV", decoder: "folha-blumenau", contem: "centro em -26.9" },
+  // As fichas da CP: o codinome, o alvo que não é palavra de língua nenhuma, e
+  // o número de arquivo que responde pelas 17.
+  { entrada: "ZAZ", decoder: "ficha-cp", contem: "CARLOS EDUARDO HOEPERS", primeiro: true },
+  { entrada: "MCACLCAS", decoder: "ficha-cp", contem: "DIOGO", primeiro: true },
+  { entrada: "R325B4915", decoder: "ficha-cp", contem: "o mesmo em todas", primeiro: true },
 ];
 
 const rodar = (entrada: string) =>
@@ -153,6 +159,7 @@ const rodar = (entrada: string) =>
       // que depende de `ctx.hits` — aquilo é resposta de API.
       estacoes: ESTACOES,
       articulacao: ARTICULACAO,
+      fichas: FICHAS,
     } as unknown as DecodeContext) as unknown as {
       results: { decoderId: string; output: string }[];
     }

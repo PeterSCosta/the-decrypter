@@ -1,3 +1,4 @@
+import type { FichasData } from "@/features/ficha/types";
 import type { LojasData } from "@/features/loja/types";
 import * as api from "@/lib/api";
 import * as data from "@/lib/data";
@@ -27,11 +28,12 @@ vi.mock("@/lib/api", async () => {
 });
 vi.mock("@/lib/data", async () => {
   const real = await vi.importActual<typeof data>("@/lib/data");
-  return { ...real, loadLojas: vi.fn() };
+  return { ...real, loadLojas: vi.fn(), loadFichas: vi.fn() };
 });
 
 const pedir = vi.mocked(api.apiFetch);
 const pedirLojas = vi.mocked(data.loadLojas);
+const pedirFichas = vi.mocked(data.loadFichas);
 
 const shopping = (id: string, nome: string) => ({
   id,
@@ -71,6 +73,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   pedir.mockRejectedValue(new Error("Consulta indisponível — o serviço não respondeu."));
   pedirLojas.mockResolvedValue(LOJAS);
+  pedirFichas.mockRejectedValue(new Error("sem fichas neste caso"));
 });
 
 describe("a base de lojas na Biblioteca", () => {
@@ -172,5 +175,100 @@ describe("o vazio calado", () => {
     await u.click(screen.getAllByRole("button", { name: "Navegar" })[0]);
 
     expect(await screen.findByText(/Consulta indisponível \(HTTP 502\)/)).toBeInTheDocument();
+  });
+});
+
+const ficha = (slug: string, codinome: string, nomeCivil: string) => ({
+  slug,
+  codinome,
+  nomeCivil,
+  frase: "uma frase",
+  fobia: "Fronemofobia.",
+  alvo: "o regulamento",
+  diagnostico: "um diagnóstico",
+  prognostico: "um prognóstico",
+  personagem: "alguém",
+  shortcode: "AAA",
+  url: `https://www.instagram.com/p/${slug}/`,
+  publicadoEm: "2026-08-21T01:52:44Z",
+  imagem: `/fichas/${slug}.jpg`,
+  mini: `/fichas/mini/${slug}.jpg`,
+});
+
+const FICHAS: FichasData = {
+  source: "Instagram @comissaodeprovas",
+  generatedAt: "2026-08-21",
+  coletadoEm: "2026-08-21",
+  arquivoN: "R325B4915",
+  periculosidade: "100%",
+  aviso: "ID e NASC vêm tarjados na arte",
+  normalizacao: "aspas normalizadas",
+  personagem: "leitura nossa da foto",
+  lacuna: "a ficha do ANDY foi removida do perfil",
+  count: 2,
+  fichas: [ficha("zaz", "ZAZ", "CARLOS EDUARDO HOEPERS"), ficha("tati", "TATI", "TATIANE LUCI")],
+};
+
+/**
+ * A primeira base do acervo cujo REGISTRO É UMA IMAGEM — e é isso que estes
+ * casos travam: que a miniatura aparece, que o caminho do arquivo NÃO vira
+ * coluna de tabela, e que o clique abre a arte inteira.
+ */
+describe("a base de fichas da CP na Biblioteca", () => {
+  beforeEach(() => {
+    // Só as fichas nesta suíte: com as duas bases locais na tela haveria dois
+    // botões "Navegar", e o teste passaria a falar sobre o acaso da ordem.
+    pedirLojas.mockRejectedValue(new Error("sem lojas neste caso"));
+    pedirFichas.mockResolvedValue(FICHAS);
+  });
+
+  it("aparece com a contagem vinda do artefato", async () => {
+    render(<LibraryPanel aoAbrirPostes={() => {}} />);
+    await screen.findByText(/Fichas da Comissão de Provas/);
+    expect(screen.getByText("2")).toBeInTheDocument();
+  });
+
+  it("navega sem a API, com a miniatura de cada ficha", async () => {
+    const u = userEvent.setup();
+    render(<LibraryPanel aoAbrirPostes={() => {}} />);
+    await screen.findByText(/Fichas da Comissão de Provas/);
+    await u.click(screen.getByRole("button", { name: "Navegar" }));
+
+    await screen.findByText("ZAZ");
+    expect(screen.getByRole("columnheader", { name: "ficha" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Ver a ficha de ZAZ — CARLOS EDUARDO HOEPERS/ }),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * Caminho de arquivo não é coluna que alguém leia — e era o que aconteceria
+   * sem o filtro das chaves com `_`.
+   */
+  it("não transforma o caminho da arte em coluna", async () => {
+    const u = userEvent.setup();
+    render(<LibraryPanel aoAbrirPostes={() => {}} />);
+    await screen.findByText(/Fichas da Comissão de Provas/);
+    await u.click(screen.getByRole("button", { name: "Navegar" }));
+
+    await screen.findByText("ZAZ");
+    expect(screen.queryByRole("columnheader", { name: "_mini" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "_cheia" })).not.toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "codinome" })).toBeInTheDocument();
+  });
+
+  it("o clique na miniatura abre a arte inteira, e o Esc fecha", async () => {
+    const u = userEvent.setup();
+    render(<LibraryPanel aoAbrirPostes={() => {}} />);
+    await screen.findByText(/Fichas da Comissão de Provas/);
+    await u.click(screen.getByRole("button", { name: "Navegar" }));
+    await screen.findByText("ZAZ");
+
+    await u.click(screen.getByRole("button", { name: /Ver a ficha de ZAZ/ }));
+    const dialogo = await screen.findByRole("dialog");
+    expect(within(dialogo).getByRole("img")).toHaveAttribute("src", "/fichas/zaz.jpg");
+
+    await u.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 });
