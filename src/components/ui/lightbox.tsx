@@ -65,7 +65,16 @@ export function Lightbox({
       aria-modal="true"
       aria-label={alt}
       className={cn(
-        "fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-6",
+        // As seis primeiras classes existem para DESFAZER o estilo do agente:
+        // um `<dialog open>` sem `showModal` nasce `position:absolute`,
+        // `width/height:fit-content`, `max-width:calc(100% - 6px - 2em)`,
+        // `margin:auto`, borda e `padding:1em`. Sem elas a caixa encolhe para o
+        // tamanho da imagem e ancora no CANTO da página, que foi exatamente o
+        // que apareceu na tela: o "diálogo" virou uma figura solta lá em cima.
+        "m-0 h-full max-h-none w-full max-w-none border-0 p-3 sm:p-6",
+        // z acima de tudo: o app tem `z-[400]` no mapa e `z-[500]` no combobox,
+        // e um modal que passa por baixo de um dropdown não é modal.
+        "fixed inset-0 z-[1000] flex items-center justify-center bg-black/85",
         className,
       )}
     >
@@ -82,19 +91,24 @@ export function Lightbox({
         type="button"
         onClick={aoFechar}
         aria-label="Fechar"
-        className="absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] bg-black/50 text-white hover:bg-black/70"
+        className="absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-black/70 text-white shadow-lg hover:bg-black/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand)]"
       >
         <X className="h-5 w-5" />
       </button>
 
-      <figure className="relative z-10 flex max-h-full flex-col items-center gap-2">
+      <figure className="relative z-10 flex max-h-full flex-col items-center gap-3">
         <img
           src={src}
           alt={alt}
-          className="max-h-[85vh] w-auto max-w-full rounded-[var(--radius-md)] object-contain shadow-2xl"
+          className="max-h-[80vh] w-auto max-w-full rounded-[var(--radius-md)] object-contain shadow-2xl"
         />
+        {/* A legenda tem fundo PRÓPRIO, e não texto translúcido sobre o escuro:
+            ela cai sobre a arte quando a imagem é alta, e ali um branco a 70%
+            some contra o papel claro do dossiê. */}
         {legenda ? (
-          <figcaption className="text-center font-mono text-xs text-white/70">{legenda}</figcaption>
+          <figcaption className="max-w-full truncate rounded-[var(--radius-md)] border border-white/15 bg-[var(--color-ink-900)] px-3 py-1.5 text-center font-mono text-sm text-white shadow-lg">
+            {legenda}
+          </figcaption>
         ) : null}
       </figure>
     </dialog>
