@@ -5,6 +5,7 @@ import type { EixosData } from "@/features/eixos/types";
 import type { EstacoesData } from "@/features/estacao/types";
 import type { MunicipiosData } from "@/features/ibge/types";
 import type { ArticulacaoData } from "@/features/location/articulacao";
+import type { LojasData } from "@/features/loja/types";
 import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
 import type { VotacoesData } from "@/features/votacao/types";
@@ -77,6 +78,11 @@ export interface DecodeContext {
    * motivo: 10 KB que só interessam a quem digitou um número.
    */
   votacoes?: VotacoesData | null;
+  /**
+   * Lojas dos quatro shoppings de Blumenau. Preguiçosa: 22 KB que só interessam
+   * a quem digitou um número de unidade comercial.
+   */
+  lojas?: LojasData | null;
   /** Estações geodésicas do Vale (IBGE). Preguiçosa, como as votações. */
   estacoes?: EstacoesData | null;
   /** Articulação municipal de Blumenau (1:5.000 e 1:1.000). Ver `articulacao.ts`. */
@@ -131,6 +137,7 @@ export interface DecodeCandidate {
     | "cnae"
     | "fipe"
     | "votacao"
+    | "loja"
     | "youtube"
     | "filme";
   /** Structured payload for custom renderers. */

@@ -6,6 +6,7 @@ import {
   loadBridges,
   loadEixos,
   loadEstacoes,
+  loadLojas,
   loadStreets,
   loadVotacoes,
 } from "@/lib/data";
@@ -68,7 +69,8 @@ export function useExemploVivo(entrada: string, ativo: boolean): LeituraDoExempl
       loadEixos().catch(() => null),
       loadEstacoes().catch(() => null),
       loadArticulacao().catch(() => null),
-    ]).then(([, streets, bridges, votacoes, eixos, estacoes, articulacao]) => {
+      loadLojas().catch(() => null),
+    ]).then(([, streets, bridges, votacoes, eixos, estacoes, articulacao, lojas]) => {
       if (!vivo) return;
       const r = runDecoders(entrada, {
         key: "",
@@ -78,6 +80,7 @@ export function useExemploVivo(entrada: string, ativo: boolean): LeituraDoExempl
         eixos,
         estacoes,
         articulacao,
+        lojas,
       } as unknown as DecodeContext) as unknown as {
         results: { decoderName: string; output: string }[];
       };

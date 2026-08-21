@@ -315,6 +315,9 @@ describe("decisões registradas — não regredir", () => {
       // A bancada passou a responder plaqueta de poste (aba Postes, 45.285
       // pontos pela API). A ordem aqui é a do arquivo, e o Cidade Iluminada
       // ficou no bloco que era o das bloqueadas.
+      // 372 lojas dos quatro shoppings, 119 com o número publicado. Ela entra
+      // como `aberta` porque o decoder responde — a regra do selo é sobre nós.
+      "lojas-shoppings-blumenau",
       "cidade-iluminada",
       // Achado colateral da investigação do SIATU: o COD_LOG, que é o "número
       // por rua" que se procurava lá, e este é público e consultável.

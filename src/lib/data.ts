@@ -2,6 +2,7 @@ import type { BridgesData } from "@/features/bridge/types";
 import type { EixosData } from "@/features/eixos/types";
 import type { EstacoesData } from "@/features/estacao/types";
 import type { ArticulacaoData } from "@/features/location/articulacao";
+import type { LojasData } from "@/features/loja/types";
 import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
 import type { VotacoesData } from "@/features/votacao/types";
@@ -116,6 +117,19 @@ export function loadVotacoes(): Promise<VotacoesData> {
 
 export function getVotacoes(): VotacoesData | null {
   return votacoes.value;
+}
+
+// Lojas dos quatro shoppings de Blumenau. 22 KB — preguiçosa porque a maioria
+// das sessões nunca digita um número de unidade comercial, e porque a Biblioteca
+// só a pede quando alguém abre a base.
+const lojas: Slot<LojasData> = { promise: null, value: null };
+
+export function loadLojas(): Promise<LojasData> {
+  return loadOnce(lojas, dataUrl("lojas-blumenau.json"), asJson<LojasData>);
+}
+
+export function getLojas(): LojasData | null {
+  return lojas.value;
 }
 
 // Eixos de logradouro de Blumenau (geoportal): 9.370 trechos com a quadra e o

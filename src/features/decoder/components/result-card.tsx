@@ -27,6 +27,7 @@ import type { DocResult } from "../engine/decoders/documents";
 import type { FipeHint } from "../engine/decoders/fipe";
 import type { IsbnHint } from "../engine/decoders/isbn";
 import type { LocationData } from "../engine/decoders/location";
+import type { LojaHint } from "../engine/decoders/loja";
 import type { NcmHint } from "../engine/decoders/ncm";
 import type { ElementInfo } from "../engine/decoders/periodic-table";
 import type { RegistroBrHint } from "../engine/decoders/registrobr";
@@ -44,6 +45,7 @@ import { DocumentCard } from "./document-card";
 import { ElementsCard } from "./elements-card";
 import { FipeCard } from "./fipe-card";
 import { IsbnCard } from "./isbn-card";
+import { LojaCard } from "./loja-card";
 import { MapCard } from "./map-card";
 import { MathCard } from "./math-card";
 import { NcmCard } from "./ncm-card";
@@ -134,6 +136,8 @@ export function ResultCard({
           <CarCard hint={c.data as CarHint} />
         ) : c.render === "votacao" ? (
           <VotacaoCard hint={c.data as VotacaoHint} onChain={onChain} />
+        ) : c.render === "loja" ? (
+          <LojaCard hint={c.data as LojaHint} onChain={onChain} />
         ) : c.render === "fipe" ? (
           <FipeCard hint={c.data as FipeHint} />
         ) : c.render === "cnae" ? (

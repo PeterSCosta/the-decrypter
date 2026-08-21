@@ -5,6 +5,7 @@ import type { EstacoesData } from "@/features/estacao/types";
 import type { ArticulacaoData } from "@/features/location/articulacao";
 import { PARECE_FOLHA } from "@/features/location/articulacao";
 import { aoCarregarH3 } from "@/features/location/formats";
+import type { LojasData } from "@/features/loja/types";
 import type { PixData } from "@/features/pix/types";
 import type { StreetsData } from "@/features/street-guide/types";
 import type { VotacoesData } from "@/features/votacao/types";
@@ -13,6 +14,7 @@ import {
   getBridges,
   getEixos,
   getEstacoes,
+  getLojas,
   getPix,
   getStreets,
   getVotacoes,
@@ -20,6 +22,7 @@ import {
   loadBridges,
   loadEixos,
   loadEstacoes,
+  loadLojas,
   loadPix,
   loadStreets,
   loadVotacoes,
@@ -34,6 +37,7 @@ import {
 } from "@/lib/lookup-cache";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { PARECE_UNIDADE } from "./engine/decoders/loja";
 import { decoders } from "./engine/registry";
 import { partition, runDecoders } from "./engine/run";
 import { setWordSet } from "./engine/score";
@@ -82,6 +86,7 @@ export function useDecoder(
   const [pix, setPix] = useState<PixData | null>(getPix);
   const [bridges, setBridges] = useState<BridgesData | null>(getBridges);
   const [votacoes, setVotacoes] = useState<VotacoesData | null>(getVotacoes);
+  const [lojas, setLojas] = useState<LojasData | null>(getLojas);
   const [estacoes, setEstacoes] = useState<EstacoesData | null>(getEstacoes);
   const [eixos, setEixos] = useState<EixosData | null>(getEixos);
   const [articulacao, setArticulacao] = useState<ArticulacaoData | null>(getArticulacao);
@@ -188,6 +193,26 @@ export function useDecoder(
       alive = false;
     };
   }, [pareceVotacao, votacoes]);
+
+  /**
+   * Lojas de shopping: o MESMO portão do decoder, escrito uma vez e usado nos
+   * dois lugares.
+   *
+   * A armadilha já mordeu esta casa duas vezes — alargar o portão do decoder e
+   * esquecer o da carga faz a base nunca descer, e o decoder cala sem dizer por
+   * quê. Aqui os dois são literalmente a mesma constante, importada.
+   */
+  const pareceUnidade = PARECE_UNIDADE.test(debInput.trim());
+  useEffect(() => {
+    if (!pareceUnidade || lojas) return;
+    let alive = true;
+    loadLojas()
+      .then((d) => alive && setLojas(d))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [pareceUnidade, lojas]);
 
   /**
    * Estações geodésicas: dígitos com uma letra opcional (`1400M`, `8121288`).
@@ -321,6 +346,7 @@ export function useDecoder(
       pix,
       bridges,
       votacoes,
+      lojas,
       estacoes,
       eixos,
       articulacao,
@@ -336,6 +362,7 @@ export function useDecoder(
       pix,
       bridges,
       votacoes,
+      lojas,
       estacoes,
       eixos,
       articulacao,

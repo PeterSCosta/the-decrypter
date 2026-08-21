@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { buscar as buscarLojas } from "@/features/loja/types";
 import {
   SOURCES,
   SOURCE_STATUS_HINT,
@@ -8,6 +9,7 @@ import {
   type SourceStatus,
 } from "@/features/reference/sources";
 import { apiFetch } from "@/lib/api";
+import { loadLojas } from "@/lib/data";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { ArrowLeft, Database, ExternalLink, Loader2, MapPinned, Search } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -19,6 +21,17 @@ interface BaseDoAcervo {
   origem: string;
   registros: number;
   navegavel: boolean;
+  /**
+   * Base que vive NO NAVEGADOR e navega SEM a API.
+   *
+   * Sem este campo, `navegavel: true` numa base local quebra em SILÊNCIO: o
+   * botão "Navegar" chama `/library/{id}`, o switch do backend não conhece o id
+   * e devolve 404, e o `catch` do Navegador apenas zera os dados — a pessoa fica
+   * com uma tabela sem cabeçalho e sem uma palavra dizendo o que houve. Com o
+   * provedor, a base é navegável de verdade e continua funcionando com a API
+   * fora do ar, que é o caso da gincana.
+   */
+  local?: (termo: string) => Promise<Record<string, unknown>[]>;
 }
 
 /**
@@ -59,16 +72,59 @@ export function LibraryPanel({ aoAbrirPostes }: { aoAbrirPostes: () => void }) {
   const [bases, setBases] = useState<BaseDoAcervo[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [aberta, setAberta] = useState<BaseDoAcervo | null>(null);
+  const [lojas, setLojas] = useState<BaseDoAcervo | null>(null);
+
+  /**
+   * As lojas dos shoppings são a primeira base local NAVEGÁVEL, e a contagem
+   * dela sai do próprio artefato — nunca de um literal.
+   *
+   * O `451016` chumbado do vocabulário, logo abaixo, é exatamente o defeito que
+   * o cabeçalho do `LibraryController` condena: "uma biblioteca que mente sobre
+   * o próprio tamanho é pior que não ter biblioteca". Aqui a contagem é `count`.
+   */
+  useEffect(() => {
+    let vivo = true;
+    loadLojas()
+      .then((d) => {
+        if (!vivo) return;
+        setLojas({
+          id: "loja-blumenau",
+          nome: "Lojas dos shoppings de Blumenau",
+          indexa: `número da unidade → loja, piso e ala · ${d.comIdentificador} das ${d.count} publicam o número`,
+          origem: d.source,
+          registros: d.count,
+          navegavel: true,
+          local: async (termo) =>
+            buscarLojas(d, termo).map((l) => ({
+              shopping: l.shopping.nome,
+              identificador: l.identificador,
+              loja: l.nome,
+              piso: l.piso,
+              ala: l.ala,
+              ramo: l.ramo.join(" · "),
+              quiosque: l.quiosque ? "sim" : "",
+            })),
+        });
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, []);
 
   useEffect(() => {
     apiFetch<{ hits: BaseDoAcervo[] }>("/library")
-      .then((r) => setBases([...r.hits, ...LOCAIS]))
+      .then((r) => setBases(r.hits))
       // Mesmo sem a API, as bases locais existem e devem aparecer.
       .catch((e) => {
-        setBases(LOCAIS);
+        setBases([]);
         setErro((e as Error).message);
       });
   }, []);
+
+  // As locais entram na renderização, e não no estado, para a chegada do
+  // artefato não depender da resposta da API nem o contrário.
+  const todas = bases === null ? null : [...bases, ...LOCAIS, ...(lojas ? [lojas] : [])];
 
   if (aberta) return <Navegador base={aberta} aoVoltar={() => setAberta(null)} />;
 
@@ -92,10 +148,10 @@ export function LibraryPanel({ aoAbrirPostes }: { aoAbrirPostes: () => void }) {
         <p className="border-b border-[var(--border-subtle)] px-4 py-2.5 font-display text-sm text-[var(--text-primary)]">
           No acervo
         </p>
-        {bases === null && !erro ? (
+        {todas === null && !erro ? (
           <p className="px-4 py-6 text-sm text-[var(--text-muted)]">Carregando…</p>
         ) : (
-          bases?.map((b) => (
+          todas?.map((b) => (
             <div
               key={b.id}
               className="flex flex-wrap items-center gap-3 border-b border-[var(--border-subtle)] px-4 py-3 last:border-0"
@@ -181,6 +237,7 @@ function Navegador({ base, aoVoltar }: { base: BaseDoAcervo; aoVoltar: () => voi
     null,
   );
   const [carregando, setCarregando] = useState(false);
+  const [falha, setFalha] = useState<string | null>(null);
   const debQ = useDebouncedValue(q, 300);
 
   // Filtro novo volta para a primeira página: senão a pessoa filtra e cai numa
@@ -192,16 +249,30 @@ function Navegador({ base, aoVoltar }: { base: BaseDoAcervo; aoVoltar: () => voi
   useEffect(() => {
     let vivo = true;
     setCarregando(true);
-    apiFetch<{ total: number; hits: Record<string, unknown>[] }>(
-      `/library/${base.id}?q=${encodeURIComponent(debQ)}&page=${page}&size=50`,
-    )
+    // Base local pagina em memória; base do acervo pagina no servidor. A tela
+    // daqui para baixo é a mesma nos dois casos — quem muda é só a origem.
+    const pedido = base.local
+      ? base.local(debQ).then((linhas) => ({
+          total: linhas.length,
+          hits: linhas.slice(page * 50, page * 50 + 50),
+        }))
+      : apiFetch<{ total: number; hits: Record<string, unknown>[] }>(
+          `/library/${base.id}?q=${encodeURIComponent(debQ)}&page=${page}&size=50`,
+        );
+    pedido
       .then((r) => vivo && setDados(r))
-      .catch(() => vivo && setDados(null))
+      .catch((e) => {
+        if (!vivo) return;
+        // Vazio calado é o que a casa proíbe: sem esta linha, base fora do ar e
+        // busca sem resultado ficam com exatamente a mesma tela.
+        setDados(null);
+        setFalha((e as Error).message);
+      })
       .finally(() => vivo && setCarregando(false));
     return () => {
       vivo = false;
     };
-  }, [base.id, debQ, page]);
+  }, [base.id, base.local, debQ, page]);
 
   /**
    * TODAS as colunas, não as seis primeiras.
@@ -290,6 +361,11 @@ function Navegador({ base, aoVoltar }: { base: BaseDoAcervo; aoVoltar: () => voi
         </table>
         {dados && dados.hits.length === 0 ? (
           <p className="px-4 py-6 text-sm text-[var(--text-muted)]">Nada encontrado.</p>
+        ) : null}
+        {!dados && !carregando ? (
+          <p className="px-4 py-6 text-sm text-[var(--color-pulse-600)]">
+            {falha ?? "Não consegui abrir esta base."}
+          </p>
         ) : null}
       </Card>
 

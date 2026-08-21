@@ -314,6 +314,17 @@ export const SOURCES: DataSourceRef[] = [
     note: "O Decodificador responde na hora: cole `62.01-5/01` (ou os 7 dígitos nus) e a bancada consulta o IBGE pelo backend, devolvendo atividade, classe, grupo, divisão e seção. A pontuação é a assinatura — os 7 dígitos nus entram com nota baixa e só sobrevivem se o IBGE confirmar. Armadilha medida da API: código inexistente devolve **HTTP 200 com `[]`**, não 404; quem desserializar direto estoura no primeiro número errado.",
   },
   {
+    id: "lojas-shoppings-blumenau",
+    name: "Lojas dos shoppings de Blumenau",
+    indexes:
+      "Número da unidade comercial (LUC, ou o rótulo de piso) → loja, piso e ala, nos quatro shoppings da cidade.",
+    use: "Pista que dá o número da loja. O identificador é o primeiro elo de uma cadeia que segue para o CNPJ e daí para a razão social — que é o que a PROVA 35 (GCB 2025) pedia.",
+    url: "https://www.shoppingparkeuropeu.com.br/loja.php",
+    urlLabel: "shoppingparkeuropeu.com.br",
+    status: "aberta",
+    note: "O Decodificador responde na hora: cole `L2032`, `A13`, `Loja 15` ou `Sala 400` e a bancada devolve a loja, o piso e a ala, com o botão de usar o nome como próxima entrada. Cobertura MEDIDA e desigual: Park Europeu 87 de 88 e Shopping H 32 de 32 publicam o número; Neumarkt (150 lojas) e Norte (102) entram só com o nome, porque a fonte usada foi o sitemap, que publica nome e mais nada — a página de detalhe do Neumarkt traz o campo, medido em 4 de 14 sorteadas, e não foi coletada. Duas armadilhas medidas: `A13` serve Americanas E Pittol, e `L25` e `L-25` são unidades diferentes no mesmo piso. E o número SOLTO entra com nota baixa de propósito — 83,9% das formas nuas já são código de rua, e a leitura de rua está certa.",
+  },
+  {
     id: "cidade-iluminada",
     name: "Cidade Iluminada (postes, Exati)",
     indexes: "Nº da plaqueta do poste → ponto no mapa (e, com o Street View, a placa pendurada).",
